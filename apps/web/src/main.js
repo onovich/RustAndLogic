@@ -15,6 +15,7 @@ import {
 
 let game = createGame();
 let previousState = null;
+let saveStatus = { key: "save.empty", values: {} };
 const flow = {
   deploy: false,
   collect: false,
@@ -24,6 +25,10 @@ const flow = {
   hardware: false,
   save: false,
 };
+
+const saveKey = "rust-and-logic.save.v1";
+const languageKey = "rust-and-logic.language";
+let language = detectLanguage();
 
 const elements = {
   editor: query("tape-editor"),
@@ -58,9 +63,184 @@ const elements = {
   offlineSummary: query("offline-summary"),
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
+  languageSwitch: query("language-switch"),
 };
 
-const saveKey = "rust-and-logic.save.v1";
+const i18n = {
+  en: {
+    "app.eyebrow": "TapeScript test harness",
+    "status.aria": "Simulation status",
+    "status.tick": "Tick",
+    "status.tape": "Tape",
+    "status.vm": "VM",
+    "language.aria": "Language switch",
+    "workspace.aria": "Game UI flow",
+    "tape.aria": "Tape editor",
+    "tape.title": "Tape",
+    "tape.controls": "Tape controls",
+    "world.aria": "World map",
+    "world.grid": "Robot grid",
+    "side.aria": "Progression and arena",
+    "world.title": "Scrapyard",
+    "resources.title": "Resources",
+    "resources.scrap": "Scrap",
+    "resources.cells": "Cells",
+    "resources.blankTape": "Blank tape",
+    "modules.aria": "Robot modules",
+    "modules.title": "Modules",
+    "modules.armor": "Armor",
+    "modules.weapon": "Weapon",
+    "arena.aria": "Arena preview",
+    "arena.title": "Arena Preview",
+    "offline.aria": "Offline projection",
+    "offline.title": "Offline Projection",
+    "save.aria": "Save slot",
+    "save.title": "Save Slot",
+    "flow.aria": "Flow checklist",
+    "flow.title": "Flow Checklist",
+    "flow.deploy": "Deploy a valid tape",
+    "flow.collect": "Collect scrap from the map",
+    "flow.tape": "Upgrade tape capacity",
+    "flow.arena": "Preview arena result",
+    "flow.offline": "Resolve offline projection",
+    "flow.hardware": "Upgrade robot hardware",
+    "flow.save": "Save and reload progress",
+    "console.aria": "Runtime console",
+    "console.title": "Console",
+    "diff.aria": "State diff",
+    "diff.title": "Diff",
+    "action.deploy": "Deploy",
+    "action.step": "Step",
+    "action.run": "Run 6",
+    "action.reset": "Reset",
+    "action.upgradeTape": "Upgrade tape",
+    "action.armorPlus": "Armor +",
+    "action.weaponPlus": "Weapon +",
+    "action.previewArena": "Preview arena",
+    "action.offline": "Fast-forward 24",
+    "action.save": "Save",
+    "action.load": "Load",
+    "state.idle": "Idle",
+    "state.waiting": "Waiting",
+    "state.compileOk": "Compile OK",
+    "state.compileError": "Compile error",
+    "capacity": "Capacity {value}",
+    "diff.count": "{count} {label}",
+    "diff.change": "change",
+    "diff.changes": "changes",
+    "diff.empty": "No state changes yet.",
+    "arena.empty": "No arena preview yet.",
+    "arena.victory": "Victory",
+    "arena.defeat": "Defeat",
+    "arena.victorySummary": "The robot survived the ladder ghost and recovered a data cell.",
+    "arena.defeatSummary": "The opponent forced a logic fault before extraction.",
+    "arena.summary": "{result}: {summary} Score {score}/{enemyScore}.",
+    "offline.empty": "No offline projection yet.",
+    "offline.summary": "Fast-forwarded {ticks} ticks and recovered {scrap} scrap{cellsText}.",
+    "offline.cellsText": " plus {cells} cells",
+    "save.empty": "No save written this session.",
+    "save.saved": "Saved tick {tick}.",
+    "save.loaded": "Loaded tick {tick}.",
+    "save.missing": "No save found.",
+    "save.reset": "Reset local session state.",
+    "vm.Ready": "Ready",
+    "vm.Suspended": "Suspended",
+    "vm.Halted": "Halted",
+    "vm.Fault": "Fault",
+  },
+  zh: {
+    "app.eyebrow": "TapeScript 测试工作台",
+    "status.aria": "模拟状态",
+    "status.tick": "回合",
+    "status.tape": "纸带",
+    "status.vm": "虚拟机",
+    "language.aria": "语言切换",
+    "workspace.aria": "游戏 UI 流程",
+    "tape.aria": "纸带编辑器",
+    "tape.title": "纸带",
+    "tape.controls": "纸带控制",
+    "world.aria": "世界地图",
+    "world.grid": "机器人网格",
+    "side.aria": "成长与竞技场",
+    "world.title": "废土场",
+    "resources.title": "资源",
+    "resources.scrap": "废铁",
+    "resources.cells": "电芯",
+    "resources.blankTape": "空白纸带",
+    "modules.aria": "机器人模块",
+    "modules.title": "模块",
+    "modules.armor": "装甲",
+    "modules.weapon": "武器",
+    "arena.aria": "竞技场预览",
+    "arena.title": "竞技场预览",
+    "offline.aria": "离线推演",
+    "offline.title": "离线推演",
+    "save.aria": "存档槽",
+    "save.title": "存档槽",
+    "flow.aria": "流程清单",
+    "flow.title": "流程清单",
+    "flow.deploy": "部署有效纸带",
+    "flow.collect": "从地图收集废铁",
+    "flow.tape": "升级纸带容量",
+    "flow.arena": "预览竞技场结果",
+    "flow.offline": "结算离线推演",
+    "flow.hardware": "升级机器人硬件",
+    "flow.save": "保存并读取进度",
+    "console.aria": "运行控制台",
+    "console.title": "控制台",
+    "diff.aria": "状态差异",
+    "diff.title": "差异",
+    "action.deploy": "部署",
+    "action.step": "步进",
+    "action.run": "运行 6 步",
+    "action.reset": "重置",
+    "action.upgradeTape": "升级纸带",
+    "action.armorPlus": "装甲 +",
+    "action.weaponPlus": "武器 +",
+    "action.previewArena": "预览竞技场",
+    "action.offline": "快进 24",
+    "action.save": "保存",
+    "action.load": "读取",
+    "state.idle": "空闲",
+    "state.waiting": "等待中",
+    "state.compileOk": "编译通过",
+    "state.compileError": "编译错误",
+    "capacity": "容量 {value}",
+    "diff.count": "{count} 项变化",
+    "diff.change": "项变化",
+    "diff.changes": "项变化",
+    "diff.empty": "暂无状态变化。",
+    "arena.empty": "尚未预览竞技场。",
+    "arena.victory": "胜利",
+    "arena.defeat": "失败",
+    "arena.victorySummary": "机器人撑过了天梯幽影，并回收了一枚数据电芯。",
+    "arena.defeatSummary": "对手在撤离前诱发了逻辑故障。",
+    "arena.summary": "{result}: {summary} 分数 {score}/{enemyScore}。",
+    "offline.empty": "尚未进行离线推演。",
+    "offline.summary": "已快进 {ticks} 回合，回收 {scrap} 废铁{cellsText}。",
+    "offline.cellsText": "与 {cells} 电芯",
+    "save.empty": "本轮尚未写入存档。",
+    "save.saved": "已保存第 {tick} 回合。",
+    "save.loaded": "已读取第 {tick} 回合。",
+    "save.missing": "没有找到存档。",
+    "save.reset": "已重置本地会话状态。",
+    "vm.Ready": "就绪",
+    "vm.Suspended": "暂停",
+    "vm.Halted": "停止",
+    "vm.Fault": "故障",
+  },
+};
+
+elements.languageSwitch.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-lang]");
+  if (!button) {
+    return;
+  }
+  language = button.dataset.lang === "zh" ? "zh" : "en";
+  localStorage.setItem(languageKey, language);
+  applyLanguage();
+  render(snapshot(game));
+});
 
 elements.deploy.addEventListener("click", () => {
   const state = deployProgram(game, elements.editor.value);
@@ -101,27 +281,29 @@ elements.offline.addEventListener("click", () => {
 elements.save.addEventListener("click", () => {
   localStorage.setItem(saveKey, serializeGame(game));
   flow.save = true;
-  elements.saveSummary.textContent = `Saved tick ${game.tick}.`;
+  saveStatus = { key: "save.saved", values: { tick: game.tick } };
   render(snapshot(game));
 });
 elements.load.addEventListener("click", () => {
   const serialized = localStorage.getItem(saveKey);
   if (!serialized) {
-    elements.saveSummary.textContent = "No save found.";
+    saveStatus = { key: "save.missing", values: {} };
+    render(snapshot(game));
     return;
   }
   game = restoreGame(serialized);
   game.logs.unshift(`Loaded save from tick ${game.tick}.`);
   flow.save = true;
-  elements.saveSummary.textContent = `Loaded tick ${game.tick}.`;
+  saveStatus = { key: "save.loaded", values: { tick: game.tick } };
   render(snapshot(game));
 });
 elements.reset.addEventListener("click", () => {
   game = createGame();
-  elements.saveSummary.textContent = "Reset local session state.";
+  saveStatus = { key: "save.reset", values: {} };
   render(snapshot(game));
 });
 
+applyLanguage();
 render(snapshot(game));
 
 function render(state) {
@@ -132,8 +314,8 @@ function render(state) {
   elements.tapeUsage.textContent = state.program
     ? `${state.program.tapeUsed}/${state.tapeCapacity}`
     : `0/${state.tapeCapacity}`;
-  elements.vmState.textContent = state.vm?.state ?? "Idle";
-  elements.capacityLabel.textContent = `Capacity ${state.tapeCapacity}`;
+  elements.vmState.textContent = translateVmState(state.vm?.state);
+  elements.capacityLabel.textContent = t("capacity", { value: state.tapeCapacity });
   elements.robotPosition.textContent = `${state.robot.x},${state.robot.y} ${state.robot.dir}`;
   elements.scrap.textContent = state.resources.scrap;
   elements.cells.textContent = state.resources.cells;
@@ -143,19 +325,29 @@ function render(state) {
   elements.hp.textContent = state.robot.hp;
 
   if (!state.program) {
-    elements.compileStatus.textContent = "Waiting";
+    elements.compileStatus.textContent = t("state.waiting");
     elements.compileStatus.className = "";
   } else {
-    elements.compileStatus.textContent = state.program.ok ? "Compile OK" : "Compile error";
+    elements.compileStatus.textContent = state.program.ok ? t("state.compileOk") : t("state.compileError");
     elements.compileStatus.className = state.program.ok ? "ok" : "error";
   }
 
   elements.arenaSummary.textContent = state.arena
-    ? `${state.arena.result}: ${state.arena.summary} Score ${state.arena.score}/${state.arena.enemyScore}.`
-    : "No arena preview yet.";
+    ? t("arena.summary", {
+        result: state.arena.result === "Victory" ? t("arena.victory") : t("arena.defeat"),
+        summary: state.arena.result === "Victory" ? t("arena.victorySummary") : t("arena.defeatSummary"),
+        score: state.arena.score,
+        enemyScore: state.arena.enemyScore,
+      })
+    : t("arena.empty");
   elements.offlineSummary.textContent = state.offline
-    ? state.offline.summary
-    : "No offline projection yet.";
+    ? t("offline.summary", {
+        ticks: state.offline.ticks,
+        scrap: state.offline.scrap,
+        cellsText: state.offline.cells > 0 ? t("offline.cellsText", { cells: state.offline.cells }) : "",
+      })
+    : t("offline.empty");
+  elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
 
   renderGrid(state);
   renderLog(state.logs);
@@ -203,12 +395,15 @@ function renderLog(logs) {
 }
 
 function renderDiff(diff) {
-  elements.diffCount.textContent = `${diff.length} ${diff.length === 1 ? "change" : "changes"}`;
+  elements.diffCount.textContent = t("diff.count", {
+    count: diff.length,
+    label: diff.length === 1 ? t("diff.change") : t("diff.changes"),
+  });
   elements.diffList.replaceChildren();
 
   if (diff.length === 0) {
     const item = document.createElement("li");
-    item.textContent = "No state changes yet.";
+    item.textContent = t("diff.empty");
     elements.diffList.append(item);
     return;
   }
@@ -225,6 +420,50 @@ function formatValue(value) {
     return "-";
   }
   return String(value);
+}
+
+function applyLanguage() {
+  document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+  for (const node of document.querySelectorAll("[data-i18n]")) {
+    node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of document.querySelectorAll("[data-i18n-attr]")) {
+    for (const pair of node.dataset.i18nAttr.split(";")) {
+      const [attr, key] = pair.split(":");
+      if (attr && key) {
+        node.setAttribute(attr, t(key));
+      }
+    }
+  }
+  for (const button of elements.languageSwitch.querySelectorAll("[data-lang]")) {
+    const active = button.dataset.lang === language;
+    button.setAttribute("aria-pressed", String(active));
+    button.dataset.active = String(active);
+  }
+}
+
+function detectLanguage() {
+  const saved = localStorage.getItem(languageKey);
+  if (saved === "zh" || saved === "en") {
+    return saved;
+  }
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
+  return languages.some((item) => item?.toLowerCase().startsWith("zh")) ? "zh" : "en";
+}
+
+function t(key, values = {}) {
+  const template = i18n[language]?.[key] ?? i18n.en[key] ?? key;
+  return Object.entries(values).reduce(
+    (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
+    template,
+  );
+}
+
+function translateVmState(state) {
+  if (!state) {
+    return t("state.idle");
+  }
+  return t(`vm.${state}`);
 }
 
 function renderFlow() {

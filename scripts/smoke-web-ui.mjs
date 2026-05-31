@@ -36,6 +36,20 @@ try {
     throw new Error(`Browser errors before smoke actions: ${pageErrors.join(" | ")}`);
   }
 
+  await page.getByTestId("lang-zh-button").click();
+  await expectText(page, "compile-status", "等待中");
+  await expectText(page, "capacity-label", "容量 8");
+  await expectText(page, "deploy-button", "部署");
+  await expectText(page, "upgrade-button", "升级纸带");
+  await expectText(page, "save-summary", "本轮尚未写入存档。");
+
+  await page.getByTestId("lang-en-button").click();
+  await expectText(page, "compile-status", "Waiting");
+  await expectText(page, "capacity-label", "Capacity 8");
+  await expectText(page, "deploy-button", "Deploy");
+  await expectText(page, "upgrade-button", "Upgrade tape");
+  await expectText(page, "save-summary", "No save written this session.");
+
   await page.getByTestId("deploy-button").click();
   await expectText(page, "compile-status", "Compile OK");
 

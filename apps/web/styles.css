@@ -64,6 +64,36 @@ textarea:focus-visible {
   border-bottom: 1px solid var(--line);
 }
 
+.topbar-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.language-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(52px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.language-switch button {
+  min-height: 30px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.language-switch button[data-active="true"] {
+  background: var(--amber);
+  color: #17130c;
+  border-color: var(--amber);
+  font-weight: 700;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--amber);
@@ -371,6 +401,10 @@ li {
   .topbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .topbar-actions {
+    justify-items: stretch;
   }
 
   .status-strip {
