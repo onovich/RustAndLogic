@@ -59,6 +59,25 @@ try {
   await expectText(page, "speed-button", "Speed x10");
   await page.getByTestId("speed-button").click();
   await expectText(page, "speed-button", "Speed x1");
+  const editorMetrics = await page.evaluate(() => {
+    const editor = document.querySelector('[data-testid="tape-editor"]');
+    const lines = [...document.querySelectorAll(".code-line")];
+    const lineHeight = Number.parseFloat(getComputedStyle(editor).lineHeight);
+    return {
+      lineHeight,
+      firstGap: lines[1].offsetTop - lines[0].offsetTop,
+      secondGap: lines[2].offsetTop - lines[1].offsetTop,
+      renderedLines: lines.length,
+      logicalLines: editor.value.split("\n").length,
+    };
+  });
+  if (
+    editorMetrics.renderedLines !== editorMetrics.logicalLines ||
+    Math.abs(editorMetrics.firstGap - editorMetrics.lineHeight) > 1 ||
+    Math.abs(editorMetrics.secondGap - editorMetrics.lineHeight) > 1
+  ) {
+    throw new Error(`Expected editor highlight rows to align with textarea rows, got: ${JSON.stringify(editorMetrics)}`);
+  }
 
   const originalTape = await page.getByTestId("tape-editor").inputValue();
   const badTape = `${originalTape}\nBogus`;

@@ -557,7 +557,7 @@ function renderTapeHighlight(errors) {
       const className = errorLines.has(index + 1) ? "code-line has-error" : "code-line";
       return `<span class="${className}">${highlightLine(line) || " "}</span>`;
     })
-    .join("\n");
+    .join("");
 }
 
 function renderDiagnostics(errors) {
