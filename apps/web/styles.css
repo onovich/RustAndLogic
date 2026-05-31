@@ -308,6 +308,52 @@ textarea[data-invalid="true"] {
   text-decoration-style: dotted;
 }
 
+.autocomplete {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  min-width: 220px;
+  max-width: min(320px, calc(100% - 16px));
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #23211d;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.autocomplete[hidden] {
+  display: none;
+}
+
+.autocomplete-item {
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item[data-active="true"] {
+  background: #3b352b;
+  color: var(--text);
+}
+
+.autocomplete-item span {
+  font-family: Consolas, "Courier New", monospace;
+  color: #d8f0c8;
+}
+
+.autocomplete-item small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .diagnostics {
   display: grid;
   gap: 6px;

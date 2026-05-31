@@ -20,6 +20,8 @@ let playbackMode = "stopped";
 let speedIndex = 0;
 let playbackTimer = 0;
 let robotNode = null;
+let activeSuggestions = [];
+let activeSuggestionIndex = 0;
 const flow = {
   deploy: false,
   collect: false,
@@ -42,12 +44,27 @@ const speedProfiles = {
 const tapeActions = new Set(["MoveForward", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
 const tapeQueries = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
 const tapeBranches = new Set(["Jump", "JumpIfTrue", "JumpIfFalse"]);
+const tapeCompletions = [
+  { value: "MoveForward", kind: "Action", hint: "Move + Forward" },
+  { value: "TurnLeft", kind: "Action", hint: "Turn + Left" },
+  { value: "TurnRight", kind: "Action", hint: "Turn + Right" },
+  { value: "PickUp", kind: "Action", hint: "Pick + Up" },
+  { value: "Drop", kind: "Action", hint: "Drop cargo" },
+  { value: "Fire", kind: "Action", hint: "Fire weapon" },
+  { value: "CheckScrap", kind: "Query", hint: "Check + Scrap" },
+  { value: "CheckEnemy", kind: "Query", hint: "Check + Enemy" },
+  { value: "CheckHP_Low", kind: "Query", hint: "Check + HP_Low" },
+  { value: "Jump", kind: "Branch", hint: "Jump + @Label" },
+  { value: "JumpIfTrue", kind: "Branch", hint: "Jump + If + True" },
+  { value: "JumpIfFalse", kind: "Branch", hint: "Jump + If + False" },
+];
 
 const elements = {
   editor: query("tape-editor"),
   highlight: query("tape-highlight"),
   lineNumbers: query("tape-line-numbers"),
   diagnostics: query("tape-diagnostics"),
+  autocomplete: query("tape-autocomplete"),
   deploy: query("deploy-button"),
   play: query("play-button"),
   pause: query("pause-button"),
@@ -270,10 +287,20 @@ elements.languageSwitch.addEventListener("click", (event) => {
   updateEditorTools();
   render(snapshot(game));
 });
-elements.editor.addEventListener("input", () => updateEditorTools());
+elements.editor.addEventListener("input", () => {
+  updateEditorTools();
+  updateAutocomplete();
+});
 elements.editor.addEventListener("scroll", syncEditorScroll);
+elements.editor.addEventListener("keyup", (event) => {
+  if (!["ArrowDown", "ArrowUp", "Enter", "Tab", "Escape"].includes(event.key)) {
+    updateAutocomplete();
+  }
+});
+elements.editor.addEventListener("keydown", handleAutocompleteKeydown);
 elements.editor.addEventListener("click", (event) => {
   if (!event.ctrlKey && !event.metaKey) {
+    updateAutocomplete();
     return;
   }
   const token = tokenAtOffset(elements.editor.value, elements.editor.selectionStart);
@@ -282,6 +309,20 @@ elements.editor.addEventListener("click", (event) => {
   }
   event.preventDefault();
   jumpToLabel(token.slice(1));
+  hideAutocomplete();
+});
+elements.autocomplete.addEventListener("mousedown", (event) => {
+  event.preventDefault();
+  const item = event.target.closest("[data-index]");
+  if (!item) {
+    return;
+  }
+  applySuggestion(Number(item.dataset.index));
+});
+document.addEventListener("mousedown", (event) => {
+  if (!event.target.closest(".editor-stack")) {
+    hideAutocomplete();
+  }
 });
 
 elements.deploy.addEventListener("click", () => {
@@ -620,14 +661,195 @@ function syncEditorScroll() {
   elements.highlight.scrollTop = elements.editor.scrollTop;
   elements.highlight.scrollLeft = elements.editor.scrollLeft;
   elements.lineNumbers.scrollTop = elements.editor.scrollTop;
+  updateAutocompletePosition();
 }
 
 function tokenAtOffset(text, offset) {
-  const left = text.slice(0, offset).search(/[@A-Za-z0-9_]*$/);
+  const range = tokenRangeAtOffset(text, offset);
+  const token = text.slice(range.start, range.end);
+  return /^@[A-Za-z][A-Za-z0-9_]*$/.test(token) ? token : "";
+}
+
+function tokenRangeAtOffset(text, offset) {
+  const before = text.slice(0, offset);
+  const left = before.search(/[@A-Za-z0-9_]*$/);
   const start = left < 0 ? offset : left;
   const right = text.slice(offset).match(/^[@A-Za-z0-9_]*/)?.[0].length ?? 0;
-  const token = text.slice(start, offset + right);
-  return /^@[A-Za-z][A-Za-z0-9_]*$/.test(token) ? token : "";
+  return {
+    start,
+    end: offset + right,
+    token: text.slice(start, offset + right),
+  };
+}
+
+function updateAutocomplete() {
+  const context = getAutocompleteContext();
+  if (!context) {
+    hideAutocomplete();
+    return;
+  }
+
+  activeSuggestions = findSuggestions(context);
+  activeSuggestionIndex = 0;
+  if (activeSuggestions.length === 0) {
+    hideAutocomplete();
+    return;
+  }
+
+  elements.autocomplete.replaceChildren();
+  activeSuggestions.forEach((suggestion, index) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "autocomplete-item";
+    item.dataset.index = String(index);
+    item.dataset.active = String(index === activeSuggestionIndex);
+    item.innerHTML = `<span>${escapeHtml(suggestion.value)}</span><small>${escapeHtml(suggestion.kind)} · ${escapeHtml(suggestion.hint)}</small>`;
+    elements.autocomplete.append(item);
+  });
+  elements.autocomplete.hidden = false;
+  updateAutocompletePosition(context);
+}
+
+function getAutocompleteContext() {
+  const editor = elements.editor;
+  if (editor.selectionStart !== editor.selectionEnd) {
+    return null;
+  }
+
+  const range = tokenRangeAtOffset(editor.value, editor.selectionStart);
+  const lineStart = editor.value.lastIndexOf("\n", range.start - 1) + 1;
+  const lineEndIndex = editor.value.indexOf("\n", range.start);
+  const lineEnd = lineEndIndex >= 0 ? lineEndIndex : editor.value.length;
+  const line = editor.value.slice(lineStart, lineEnd);
+  const beforeToken = editor.value.slice(lineStart, range.start);
+  const firstWord = line.trimStart().split(/\s+/)[0] ?? "";
+  const afterFirstWord = beforeToken.trimStart().length > firstWord.length;
+  const token = range.token;
+  const lineNumber = editor.value.slice(0, range.start).split("\n").length;
+  const column = range.start - lineStart;
+
+  if (line.trimStart().startsWith("//")) {
+    return null;
+  }
+
+  const branchOperand = tapeBranches.has(firstWord) && afterFirstWord;
+  const labelContext = token.startsWith("@") || branchOperand;
+  if (!token && !labelContext) {
+    return null;
+  }
+
+  return {
+    range,
+    prefix: token,
+    line,
+    lineNumber,
+    column,
+    mode: labelContext ? "label" : "instruction",
+  };
+}
+
+function findSuggestions(context) {
+  if (context.mode === "label") {
+    const prefix = context.prefix.startsWith("@") ? context.prefix.slice(1) : context.prefix;
+    return currentLabels()
+      .filter((label) => matchesCompletion(label, prefix))
+      .slice(0, 8)
+      .map((label) => ({ value: `@${label}`, kind: "Label", hint: "jump target" }));
+  }
+
+  return tapeCompletions
+    .filter((item) => matchesCompletion(item.value, context.prefix))
+    .slice(0, 8);
+}
+
+function matchesCompletion(value, prefix) {
+  if (!prefix) {
+    return true;
+  }
+  const normalizedValue = value.toLowerCase();
+  const normalizedPrefix = prefix.toLowerCase().replace(/^@/, "");
+  if (normalizedValue.startsWith(normalizedPrefix)) {
+    return true;
+  }
+  return splitCompletionSegments(value).some((segment) =>
+    segment.toLowerCase().startsWith(normalizedPrefix),
+  );
+}
+
+function splitCompletionSegments(value) {
+  return value
+    .replaceAll("_", " ")
+    .split(/(?=[A-Z])|\s+/)
+    .filter(Boolean);
+}
+
+function currentLabels() {
+  return elements.editor.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^@[A-Za-z][A-Za-z0-9_]*$/.test(line))
+    .map((line) => line.slice(1));
+}
+
+function handleAutocompleteKeydown(event) {
+  if (elements.autocomplete.hidden) {
+    return;
+  }
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    moveSuggestion(1);
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    moveSuggestion(-1);
+  } else if (event.key === "Enter" || event.key === "Tab") {
+    event.preventDefault();
+    applySuggestion(activeSuggestionIndex);
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    hideAutocomplete();
+  }
+}
+
+function moveSuggestion(delta) {
+  activeSuggestionIndex = (activeSuggestionIndex + delta + activeSuggestions.length) % activeSuggestions.length;
+  for (const item of elements.autocomplete.querySelectorAll("[data-index]")) {
+    item.dataset.active = String(Number(item.dataset.index) === activeSuggestionIndex);
+  }
+}
+
+function applySuggestion(index) {
+  const suggestion = activeSuggestions[index];
+  const context = getAutocompleteContext();
+  if (!suggestion || !context) {
+    return;
+  }
+  elements.editor.setRangeText(suggestion.value, context.range.start, context.range.end, "end");
+  elements.editor.focus();
+  hideAutocomplete();
+  updateEditorTools();
+}
+
+function hideAutocomplete() {
+  activeSuggestions = [];
+  activeSuggestionIndex = 0;
+  elements.autocomplete.hidden = true;
+  elements.autocomplete.replaceChildren();
+}
+
+function updateAutocompletePosition(context = getAutocompleteContext()) {
+  if (elements.autocomplete.hidden || !context) {
+    return;
+  }
+  const style = getComputedStyle(elements.editor);
+  const lineHeight = Number.parseFloat(style.lineHeight) || 20;
+  const fontSize = Number.parseFloat(style.fontSize) || 14;
+  const columnWidth = fontSize * 0.62;
+  const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+  const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+  const left = paddingLeft + context.column * columnWidth - elements.editor.scrollLeft;
+  const top = paddingTop + context.lineNumber * lineHeight - elements.editor.scrollTop + 4;
+  elements.autocomplete.style.left = `${Math.max(8, Math.min(left, elements.editor.clientWidth - 220))}px`;
+  elements.autocomplete.style.top = `${Math.max(8, top)}px`;
 }
 
 function jumpToLabel(label) {

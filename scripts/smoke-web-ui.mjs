@@ -80,6 +80,37 @@ try {
   }
 
   const originalTape = await page.getByTestId("tape-editor").inputValue();
+  await page.getByTestId("tape-editor").fill("Che");
+  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
+  const checkSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  if (!checkSuggestion.includes("CheckScrap")) {
+    throw new Error(`Expected CheckScrap suggestion for Che, got: ${checkSuggestion}`);
+  }
+  await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "tape-editor", "CheckScrap");
+
+  await page.getByTestId("tape-editor").fill("Scr");
+  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
+  const segmentSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  if (!segmentSuggestion.includes("CheckScrap")) {
+    throw new Error(`Expected segmented Scrap suggestion for Scr, got: ${segmentSuggestion}`);
+  }
+
+  await page.getByTestId("tape-editor").fill("@Loop\nJump ");
+  await page.getByTestId("tape-editor").evaluate((editor) => {
+    editor.focus();
+    editor.setSelectionRange(editor.value.length, editor.value.length);
+    editor.dispatchEvent(new Event("keyup", { bubbles: true }));
+  });
+  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
+  const labelSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  if (!labelSuggestion.includes("@Loop")) {
+    throw new Error(`Expected label suggestion after Jump, got: ${labelSuggestion}`);
+  }
+  await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "tape-editor", "@Loop\nJump @Loop");
+  await page.getByTestId("tape-editor").fill(originalTape);
+
   const badTape = `${originalTape}\nBogus`;
   await page.getByTestId("tape-editor").fill(badTape);
   await page.getByTestId("deploy-button").click();
@@ -229,5 +260,12 @@ async function expectText(page, testId, expected) {
   const text = await page.getByTestId(testId).innerText();
   if (text.trim() !== expected) {
     throw new Error(`Expected ${testId} to be ${expected}, got ${text}`);
+  }
+}
+
+async function expectValue(page, testId, expected) {
+  const value = await page.getByTestId(testId).inputValue();
+  if (value !== expected) {
+    throw new Error(`Expected ${testId} value to be ${expected}, got ${value}`);
   }
 }
