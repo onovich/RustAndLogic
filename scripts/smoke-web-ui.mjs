@@ -76,15 +76,26 @@ try {
     throw new Error(`Expected hardware diff to include robot stat changes, got: ${finalDiff}`);
   }
 
+  await page.getByTestId("save-button").click();
+  await expectText(page, "save-summary", "Saved tick 26.");
+  await page.getByTestId("reset-button").click();
+  await expectText(page, "armor-level", "1");
+  await page.getByTestId("load-button").click();
+  await expectText(page, "save-summary", "Loaded tick 26.");
+  await expectText(page, "armor-level", "2");
+  await expectText(page, "weapon-level", "2");
+  await expectText(page, "scrap-count", "5");
+
   const logText = await page.getByTestId("console-log").innerText();
   if (
     !logText.includes("Arena preview") ||
     !logText.includes("Tape upgraded") ||
     !logText.includes("Offline projection") ||
     !logText.includes("Weapon upgraded") ||
-    !logText.includes("Armor upgraded")
+    !logText.includes("Armor upgraded") ||
+    !logText.includes("Loaded save")
   ) {
-    throw new Error("Expected console log to include arena, upgrade, offline, and hardware events.");
+    throw new Error("Expected console log to include arena, upgrade, offline, hardware, and save events.");
   }
 
   console.log("Web UI smoke passed.");

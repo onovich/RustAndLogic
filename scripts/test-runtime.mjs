@@ -7,8 +7,10 @@ import {
   fastForwardOffline,
   previewArena,
   runGame,
+  serializeGame,
   snapshot,
   stepGame,
+  restoreGame,
   upgradeHardware,
   upgradeTape,
 } from "../packages/game-sim/index.js";
@@ -137,4 +139,10 @@ PickUp`;
   const frozen = snapshot(game);
   frozen.resources.cells = 99;
   assert.equal(game.resources.cells, 0);
+
+  const restored = restoreGame(serializeGame(game));
+  assert.equal(restored.tick, game.tick);
+  assert.equal(restored.robot.armor, 2);
+  assert.equal(restored.robot.weapon, 2);
+  assert.equal(restored.resources.scrap, 5);
 }

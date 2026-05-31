@@ -29,6 +29,23 @@ export function createGame() {
   };
 }
 
+export function serializeGame(game) {
+  return JSON.stringify(snapshot(game));
+}
+
+export function restoreGame(serialized) {
+  const parsed = typeof serialized === "string" ? JSON.parse(serialized) : serialized;
+  const base = createGame();
+  return {
+    ...base,
+    ...parsed,
+    resources: { ...base.resources, ...parsed.resources },
+    robot: { ...base.robot, ...parsed.robot },
+    deposits: Array.isArray(parsed.deposits) ? parsed.deposits : base.deposits,
+    logs: Array.isArray(parsed.logs) ? parsed.logs : base.logs,
+  };
+}
+
 export function deployProgram(game, source) {
   const program = compileTapeScript(source, { tapeCapacity: game.tapeCapacity });
   game.program = program;

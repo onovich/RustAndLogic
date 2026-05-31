@@ -5,8 +5,10 @@ import {
   fastForwardOffline,
   previewArena,
   runGame,
+  serializeGame,
   snapshot,
   stepGame,
+  restoreGame,
   upgradeHardware,
   upgradeTape,
 } from "../../../packages/game-sim/index.js";
@@ -25,6 +27,8 @@ const elements = {
   weaponUpgrade: query("weapon-upgrade-button"),
   arena: query("arena-button"),
   offline: query("offline-button"),
+  save: query("save-button"),
+  load: query("load-button"),
   grid: query("world-grid"),
   tick: query("tick"),
   tapeUsage: query("tape-usage"),
@@ -43,7 +47,10 @@ const elements = {
   diffList: query("diff-list"),
   arenaSummary: query("arena-summary"),
   offlineSummary: query("offline-summary"),
+  saveSummary: query("save-summary"),
 };
+
+const saveKey = "rust-and-logic.save.v1";
 
 elements.deploy.addEventListener("click", () => render(deployProgram(game, elements.editor.value)));
 elements.step.addEventListener("click", () => render(stepGame(game)));
@@ -53,8 +60,25 @@ elements.armorUpgrade.addEventListener("click", () => render(upgradeHardware(gam
 elements.weaponUpgrade.addEventListener("click", () => render(upgradeHardware(game, "weapon")));
 elements.arena.addEventListener("click", () => render(previewArena(game)));
 elements.offline.addEventListener("click", () => render(fastForwardOffline(game, 24)));
+elements.save.addEventListener("click", () => {
+  localStorage.setItem(saveKey, serializeGame(game));
+  elements.saveSummary.textContent = `Saved tick ${game.tick}.`;
+  render(snapshot(game));
+});
+elements.load.addEventListener("click", () => {
+  const serialized = localStorage.getItem(saveKey);
+  if (!serialized) {
+    elements.saveSummary.textContent = "No save found.";
+    return;
+  }
+  game = restoreGame(serialized);
+  game.logs.unshift(`Loaded save from tick ${game.tick}.`);
+  elements.saveSummary.textContent = `Loaded tick ${game.tick}.`;
+  render(snapshot(game));
+});
 elements.reset.addEventListener("click", () => {
   game = createGame();
+  elements.saveSummary.textContent = "Reset local session state.";
   render(snapshot(game));
 });
 

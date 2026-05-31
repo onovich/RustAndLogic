@@ -37,6 +37,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add progression panels for resources, tape capacity, upgrades, and robot modules.
 - [x] Add hardware module upgrade actions that spend resources and update robot stats.
 - [x] Add a local "arena preview" flow that can replay deterministic combat/scavenge results without network.
+- [x] Add save/load flow that restores the current local game state in the Web UI.
 - [x] Add a smoke test that exercises the main UI flow in a browser.
 
 ## Milestone 4: Desktop/Web Packaging Path
