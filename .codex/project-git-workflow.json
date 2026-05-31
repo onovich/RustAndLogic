@@ -1,0 +1,17 @@
+{
+    "schemaVersion":  1,
+    "initializedMarker":  "codex-project-git-workflow: initialized",
+    "initializedAt":  "2026-06-01 00:50:13 +08:00",
+    "projectName":  "RustAndLogic",
+    "repoRoot":  "D:/LabProjects/RustAndLogic",
+    "safeDirectory":  "D:/LabProjects/RustAndLogic",
+    "statusCommand":  "git -c safe.directory=D:/LabProjects/RustAndLogic status --short --branch",
+    "validationCommands":  [
+
+                           ],
+    "stagingPolicy":  "ask each time",
+    "commitCommand":  "",
+    "pushCommand":  "git -c safe.directory=D:/LabProjects/RustAndLogic push -u origin HEAD",
+    "docsRequirement":  "",
+    "forbiddenCommands":  ""
+}
