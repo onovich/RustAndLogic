@@ -35,7 +35,7 @@
                                  },
                        "test":  {
                                     "commands":  [
-
+                                                     "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-web-ui.ps1"
                                                  ]
                                 },
                        "lint":  {
@@ -73,7 +73,7 @@
 
                                               ],
                                      "commands":  [
-
+                                                     "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/smoke-web-ui.mjs"
                                                   ]
                                  },
                        "package":  {
@@ -88,9 +88,9 @@
                                          }
                    },
     "devServer":  {
-                      "startCommand":  "",
-                      "healthUrl":  "",
-                      "readyText":  "",
+                      "startCommand":  "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/serve-web-ui.mjs 4173",
+                      "healthUrl":  "http://127.0.0.1:4173/",
+                      "readyText":  "Rust & Logic Web UI:",
                       "startupTimeoutSeconds":  30,
                       "pidFile":  ".codex/project-ops-devserver.pid"
                   },

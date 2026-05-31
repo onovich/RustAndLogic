@@ -58,6 +58,23 @@ if ((Test-Path -LiteralPath "apps") -and -not (Test-Path -LiteralPath "apps/web"
   Add-Failure "If apps/ exists, apps/web/ must exist as the first UI test harness."
 }
 
+if ((Test-Path -LiteralPath "packages") -and -not (Test-Path -LiteralPath "packages/tapescript-runtime")) {
+  Add-Failure "If packages/ exists, packages/tapescript-runtime/ must define the TapeScript boundary."
+}
+
+if ((Test-Path -LiteralPath "packages/game-sim") -and -not (Test-Path -LiteralPath "packages/tapescript-runtime")) {
+  Add-Failure "The game simulation package requires an explicit TapeScript runtime package."
+}
+
+if (Test-Path -LiteralPath "packages/tapescript-runtime") {
+  $runtimeImports = Get-ChildItem -File -Recurse "packages/tapescript-runtime" |
+    Where-Object { $textExtensions -contains $_.Extension } |
+    Select-String -Pattern "apps/web|document\.|window\.|localStorage|tauri|pixi|monaco" -SimpleMatch
+  if ($runtimeImports) {
+    Add-Failure "TapeScript runtime must remain independent from UI, browser globals, Tauri, Pixi, and Monaco."
+  }
+}
+
 if ((Test-Path -LiteralPath "crates") -and -not (Test-Path -LiteralPath "crates/tapescript")) {
   Add-Failure "If crates/ exists, the TapeScript runtime must have an explicit crates/tapescript boundary."
 }

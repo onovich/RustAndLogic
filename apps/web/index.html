@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rust & Logic Web UI</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">TapeScript test harness</p>
+          <h1>Rust & Logic</h1>
+        </div>
+        <div class="status-strip" aria-label="Simulation status">
+          <span>Tick <strong data-testid="tick">0</strong></span>
+          <span>Tape <strong data-testid="tape-usage">0/8</strong></span>
+          <span>VM <strong data-testid="vm-state">Idle</strong></span>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Game UI flow">
+        <section class="editor-panel" aria-label="Tape editor">
+          <div class="panel-heading">
+            <h2>Tape</h2>
+            <span data-testid="capacity-label">Capacity 8</span>
+          </div>
+          <textarea data-testid="tape-editor" spellcheck="false">@Loop
+CheckScrap
+JumpIfTrue @Grab
+MoveForward
+TurnRight
+Jump @Loop
+@Grab
+PickUp</textarea>
+          <div class="toolbar" aria-label="Tape controls">
+            <button data-testid="deploy-button" type="button">Deploy</button>
+            <button data-testid="step-button" type="button">Step</button>
+            <button data-testid="run-button" type="button">Run 6</button>
+            <button data-testid="reset-button" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="world-panel" aria-label="World map">
+          <div class="panel-heading">
+            <h2>Scrapyard</h2>
+            <span data-testid="robot-position">1,2 E</span>
+          </div>
+          <div class="grid" data-testid="world-grid" aria-label="Robot grid"></div>
+        </section>
+
+        <aside class="side-panel" aria-label="Progression and arena">
+          <section class="resource-panel" aria-label="Resources">
+            <h2>Resources</h2>
+            <dl>
+              <div><dt>Scrap</dt><dd data-testid="scrap-count">0</dd></div>
+              <div><dt>Cells</dt><dd data-testid="cell-count">0</dd></div>
+              <div><dt>Blank tape</dt><dd data-testid="blank-tape-count">1</dd></div>
+            </dl>
+            <button data-testid="upgrade-button" type="button">Upgrade tape</button>
+          </section>
+
+          <section class="module-panel" aria-label="Robot modules">
+            <h2>Modules</h2>
+            <div class="module-row"><span>Armor</span><strong data-testid="armor-level">1</strong></div>
+            <div class="module-row"><span>Weapon</span><strong data-testid="weapon-level">1</strong></div>
+            <div class="module-row"><span>HP</span><strong data-testid="hp-value">10</strong></div>
+          </section>
+
+          <section class="arena-panel" aria-label="Arena preview">
+            <h2>Arena Preview</h2>
+            <p data-testid="arena-summary">No arena preview yet.</p>
+            <button data-testid="arena-button" type="button">Preview arena</button>
+          </section>
+        </aside>
+
+        <section class="console-panel" aria-label="Runtime console">
+          <div class="panel-heading">
+            <h2>Console</h2>
+            <span data-testid="compile-status">Waiting</span>
+          </div>
+          <ol data-testid="console-log"></ol>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
+

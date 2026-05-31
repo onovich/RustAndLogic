@@ -1,0 +1,218 @@
+import { compileTapeScript, createVm, executeUntilPhysical } from "../tapescript-runtime/index.js";
+
+const DIRECTIONS = ["N", "E", "S", "W"];
+const DELTAS = {
+  N: { x: 0, y: -1 },
+  E: { x: 1, y: 0 },
+  S: { x: 0, y: 1 },
+  W: { x: -1, y: 0 },
+};
+
+export function createGame() {
+  return {
+    width: 7,
+    height: 5,
+    tick: 0,
+    tapeCapacity: 8,
+    resources: { scrap: 0, cells: 0, blankTape: 1 },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, cargo: [] },
+    deposits: [
+      { id: "scrap-a", type: "scrap", x: 2, y: 2 },
+      { id: "cell-a", type: "cell", x: 4, y: 1 },
+      { id: "scrap-b", type: "scrap", x: 5, y: 3 },
+    ],
+    program: null,
+    vm: null,
+    logs: ["System ready. Load a tape and deploy."],
+    arena: null,
+  };
+}
+
+export function deployProgram(game, source) {
+  const program = compileTapeScript(source, { tapeCapacity: game.tapeCapacity });
+  game.program = program;
+  game.vm = createVm(program);
+  if (program.ok) {
+    game.logs.unshift(`Deploy OK: ${program.tapeUsed}/${program.tapeCapacity} tape rows used.`);
+  } else {
+    game.logs.unshift(`Deploy failed: ${program.errors.map((error) => error.message).join(" ")}`);
+  }
+  return snapshot(game);
+}
+
+export function stepGame(game) {
+  if (!game.program || !game.vm) {
+    game.logs.unshift("No tape deployed.");
+    return snapshot(game);
+  }
+
+  if (game.vm.state === "Halted" || game.vm.state === "Fault") {
+    game.logs.unshift(`VM is ${game.vm.state}. Reset or deploy again.`);
+    return snapshot(game);
+  }
+
+  game.vm.state = "Ready";
+  const result = executeUntilPhysical(game.program, game.vm, makeHardware(game), { maxLogicSteps: 20 });
+  game.tick += 1;
+  for (const event of result.events.reverse()) {
+    if (event.type === "trace") {
+      game.logs.unshift(`PC ${event.pc}: ${event.source}`);
+    } else if (event.type === "query") {
+      game.logs.unshift(`${event.op} -> ${event.value}`);
+    } else if (event.type === "branch") {
+      game.logs.unshift(`${event.op} ${event.taken ? "taken" : "skipped"}`);
+    } else if (event.type === "action") {
+      game.logs.unshift(`${event.op}: ${event.result.message}`);
+    } else if (event.type === "fault" || event.type === "halt") {
+      game.logs.unshift(event.message);
+    }
+  }
+  game.logs = game.logs.slice(0, 28);
+  return snapshot(game);
+}
+
+export function runGame(game, steps = 6) {
+  for (let index = 0; index < steps; index += 1) {
+    stepGame(game);
+    if (game.vm?.state === "Fault") {
+      break;
+    }
+  }
+  return snapshot(game);
+}
+
+export function upgradeTape(game) {
+  if (game.resources.scrap < 1) {
+    game.logs.unshift("Upgrade blocked: collect at least 1 scrap.");
+    return snapshot(game);
+  }
+  game.resources.scrap -= 1;
+  game.resources.blankTape += 1;
+  game.tapeCapacity += 2;
+  game.logs.unshift(`Tape upgraded. Capacity is now ${game.tapeCapacity}.`);
+  return snapshot(game);
+}
+
+export function previewArena(game) {
+  const tapeScore = game.program?.ok ? game.program.tapeUsed : 0;
+  const offense = game.robot.weapon * 3 + tapeScore;
+  const defense = game.robot.armor * 2 + game.robot.hp;
+  const enemy = 15;
+  const victory = offense + defense >= enemy;
+  game.arena = {
+    enemy: "Relay Bandit",
+    score: offense + defense,
+    enemyScore: enemy,
+    result: victory ? "Victory" : "Defeat",
+    summary: victory
+      ? "The robot survived the ladder ghost and recovered a data cell."
+      : "The opponent forced a logic fault before extraction.",
+  };
+  if (victory) {
+    game.resources.cells += 1;
+  }
+  game.logs.unshift(`Arena preview: ${game.arena.result}.`);
+  return snapshot(game);
+}
+
+export function snapshot(game) {
+  return JSON.parse(JSON.stringify({
+    width: game.width,
+    height: game.height,
+    tick: game.tick,
+    tapeCapacity: game.tapeCapacity,
+    resources: game.resources,
+    robot: game.robot,
+    deposits: game.deposits,
+    program: game.program
+      ? {
+          ok: game.program.ok,
+          errors: game.program.errors,
+          tapeUsed: game.program.tapeUsed,
+          tapeCapacity: game.program.tapeCapacity,
+        }
+      : null,
+    vm: game.vm,
+    logs: game.logs,
+    arena: game.arena,
+  }));
+}
+
+function makeHardware(game) {
+  return {
+    query(op) {
+      if (op === "CheckScrap") {
+        return Boolean(findDeposit(game, aheadOf(game), "scrap"));
+      }
+      if (op === "CheckEnemy") {
+        return game.tick % 7 === 6;
+      }
+      if (op === "CheckHP_Low") {
+        return game.robot.hp <= 3;
+      }
+      return false;
+    },
+    action(op) {
+      if (op === "MoveForward") {
+        return moveForward(game);
+      }
+      if (op === "TurnLeft" || op === "TurnRight") {
+        return turn(game, op === "TurnRight" ? 1 : -1);
+      }
+      if (op === "PickUp") {
+        return pickUp(game);
+      }
+      if (op === "Drop") {
+        return { ok: true, message: "Cargo clamps opened." };
+      }
+      if (op === "Fire") {
+        return { ok: true, message: "Weapon relay discharged." };
+      }
+      return { ok: false, message: `Unknown action ${op}.` };
+    },
+  };
+}
+
+function aheadOf(game) {
+  const delta = DELTAS[game.robot.dir];
+  return { x: game.robot.x + delta.x, y: game.robot.y + delta.y };
+}
+
+function moveForward(game) {
+  const next = aheadOf(game);
+  if (next.x < 0 || next.y < 0 || next.x >= game.width || next.y >= game.height) {
+    return { ok: false, message: "Blocked by boundary." };
+  }
+  game.robot.x = next.x;
+  game.robot.y = next.y;
+  return { ok: true, message: `Moved to ${next.x},${next.y}.` };
+}
+
+function turn(game, delta) {
+  const current = DIRECTIONS.indexOf(game.robot.dir);
+  game.robot.dir = DIRECTIONS[(current + delta + DIRECTIONS.length) % DIRECTIONS.length];
+  return { ok: true, message: `Facing ${game.robot.dir}.` };
+}
+
+function pickUp(game) {
+  const locations = [{ x: game.robot.x, y: game.robot.y }, aheadOf(game)];
+  for (const location of locations) {
+    const deposit = findDeposit(game, location);
+    if (!deposit) {
+      continue;
+    }
+    game.deposits = game.deposits.filter((item) => item.id !== deposit.id);
+    game.resources[deposit.type] += 1;
+    game.robot.cargo.push(deposit.type);
+    return { ok: true, message: `Collected ${deposit.type}.` };
+  }
+  return { ok: false, message: "Nothing in reach." };
+}
+
+function findDeposit(game, location, type = "") {
+  return game.deposits.find((deposit) => {
+    const typeMatches = type ? deposit.type === type : true;
+    return typeMatches && deposit.x === location.x && deposit.y === location.y;
+  });
+}
+

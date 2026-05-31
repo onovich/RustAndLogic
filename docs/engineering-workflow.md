@@ -27,6 +27,8 @@ For every small item:
 
 - `docs/`: project knowledge, synced design docs, workflow, roadmap, decisions.
 - `scripts/`: repository validation, smoke, and automation helpers.
+- `packages/tapescript-runtime/`: current JavaScript TapeScript harness. It must remain UI-independent until replaced or complemented by Rust crates.
+- `packages/game-sim/`: current JavaScript game simulation harness. It may depend on TapeScript, but must not depend on DOM/UI code.
 - `crates/`: future Rust crates. TapeScript crates should be standalone.
 - `apps/web/`: first Web UI test harness and later browser-facing app code.
 - `apps/desktop/`: future Tauri shell if introduced.
@@ -41,3 +43,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.p
 
 As soon as code appears, add stack-specific checks to `.codex/project-ops-workflow.json` instead of relying only on the architecture script.
 
+The Web UI is served through the local static server because ES modules should run over HTTP:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe scripts/serve-web-ui.mjs 4173
+```

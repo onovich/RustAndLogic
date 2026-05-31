@@ -27,14 +27,14 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 
 ## Milestone 3: Web UI Flow Slice
 
-- [ ] Create the first runnable Web UI app.
-- [ ] Provide a code editor area for TapeScript text.
-- [ ] Provide deploy/run/step/reset controls.
-- [ ] Render a grid map with robot state, scrap, cells, and logs.
-- [ ] Show compile/runtime feedback in a console panel.
-- [ ] Add progression panels for resources, tape capacity, upgrades, and robot modules.
-- [ ] Add a local "arena preview" flow that can replay deterministic combat/scavenge results without network.
-- [ ] Add a smoke test that exercises the main UI flow in a browser.
+- [x] Create the first runnable Web UI app.
+- [x] Provide a code editor area for TapeScript text.
+- [x] Provide deploy/run/step/reset controls.
+- [x] Render a grid map with robot state, scrap, cells, and logs.
+- [x] Show compile/runtime feedback in a console panel.
+- [x] Add progression panels for resources, tape capacity, upgrades, and robot modules.
+- [x] Add a local "arena preview" flow that can replay deterministic combat/scavenge results without network.
+- [x] Add a smoke test that exercises the main UI flow in a browser.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
@@ -51,4 +51,3 @@ Each small item is complete only after:
 - Architecture self-check: confirm file location, naming, dependencies, and domain boundaries match `docs/engineering-workflow.md`.
 - Documentation check: update TODO or architecture notes if the change modifies scope, workflow, or behavior.
 - Git hygiene: commit only the intended files and push to `origin/main`.
-
