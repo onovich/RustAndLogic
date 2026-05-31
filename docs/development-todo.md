@@ -7,8 +7,8 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Sync source design documents into `docs/source-docs/`.
 - [x] Establish the top-level architecture split between TapeScript and the game layer.
 - [x] Initialize git, remote, and Codex workflow configuration.
-- [ ] Keep `docs/development-todo.md` current after each implementation slice.
-- [ ] Keep validation commands in `.codex/project-ops-workflow.json` aligned with the current stack.
+- [x] Keep `docs/development-todo.md` current after each implementation slice.
+- [x] Keep validation commands in `.codex/project-ops-workflow.json` aligned with the current stack.
 
 ## Milestone 1: TapeScript Core Slice
 
@@ -43,10 +43,10 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 
 ## Milestone 4: Desktop/Web Packaging Path
 
-- [ ] Decide when to introduce Tauri versus keeping the Web UI as the first test harness.
-- [ ] Keep the Rust simulation authoritative when Tauri arrives.
-- [ ] Keep Web/WASM and desktop IPC boundaries explicit.
-- [ ] Document release and packaging commands once they exist.
+- [x] Decide when to introduce Tauri versus keeping the Web UI as the first test harness.
+- [x] Keep the simulation authoritative when Tauri arrives.
+- [x] Keep Web/WASM and desktop IPC boundaries explicit.
+- [ ] Document release and packaging commands once a desktop shell exists.
 
 ## Definition Of Done For A Small Item
 
