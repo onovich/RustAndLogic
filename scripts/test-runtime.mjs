@@ -3,6 +3,7 @@ import { compileTapeScript, createVm, executeUntilPhysical } from "../packages/t
 import {
   createGame,
   deployProgram,
+  diffSnapshots,
   fastForwardOffline,
   previewArena,
   runGame,
@@ -96,10 +97,14 @@ PickUp`;
   assert.equal(state.program.ok, true);
   assert.equal(state.resources.scrap, 0);
 
+  const beforeStep = state;
   state = stepGame(game);
   assert.equal(state.resources.scrap, 1);
   assert.equal(state.deposits.some((deposit) => deposit.id === "scrap-a"), false);
   assert.equal(state.vm.state, "Suspended");
+  const stepDiff = diffSnapshots(beforeStep, state);
+  assert.equal(stepDiff.some((change) => change.path === "resources.scrap" && change.after === 1), true);
+  assert.equal(stepDiff.some((change) => change.path === "deposits.count" && change.after === 2), true);
 
   state = upgradeTape(game);
   assert.equal(state.resources.scrap, 0);
@@ -118,6 +123,7 @@ PickUp`;
   assert.equal(state.offline.scrap, 7);
   assert.equal(state.resources.scrap, 7);
   assert.equal(state.tick, 26);
+  assert.equal(diffSnapshots(beforeStep, state).some((change) => change.path === "offline.ticks"), true);
 
   state = upgradeHardware(game, "weapon");
   assert.equal(state.robot.weapon, 2);

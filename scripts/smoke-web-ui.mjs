@@ -41,6 +41,10 @@ try {
 
   await page.getByTestId("step-button").click();
   await expectText(page, "scrap-count", "1");
+  const stepDiff = await page.getByTestId("diff-list").innerText();
+  if (!stepDiff.includes("resources.scrap") || !stepDiff.includes("deposits.count")) {
+    throw new Error(`Expected step diff to include resource and deposit changes, got: ${stepDiff}`);
+  }
 
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 10");
@@ -67,6 +71,10 @@ try {
   await expectText(page, "hp-value", "12");
   await expectText(page, "scrap-count", "5");
   await expectText(page, "cell-count", "0");
+  const finalDiff = await page.getByTestId("diff-list").innerText();
+  if (!finalDiff.includes("robot.armor") || !finalDiff.includes("robot.hp")) {
+    throw new Error(`Expected hardware diff to include robot stat changes, got: ${finalDiff}`);
+  }
 
   const logText = await page.getByTestId("console-log").innerText();
   if (

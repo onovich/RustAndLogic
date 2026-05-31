@@ -1,6 +1,7 @@
 import {
   createGame,
   deployProgram,
+  diffSnapshots,
   fastForwardOffline,
   previewArena,
   runGame,
@@ -11,6 +12,7 @@ import {
 } from "../../../packages/game-sim/index.js";
 
 let game = createGame();
+let previousState = null;
 
 const elements = {
   editor: query("tape-editor"),
@@ -37,6 +39,8 @@ const elements = {
   hp: query("hp-value"),
   compileStatus: query("compile-status"),
   consoleLog: query("console-log"),
+  diffCount: query("diff-count"),
+  diffList: query("diff-list"),
   arenaSummary: query("arena-summary"),
   offlineSummary: query("offline-summary"),
 };
@@ -57,6 +61,9 @@ elements.reset.addEventListener("click", () => {
 render(snapshot(game));
 
 function render(state) {
+  const diff = previousState ? diffSnapshots(previousState, state) : [];
+  previousState = state;
+
   elements.tick.textContent = state.tick;
   elements.tapeUsage.textContent = state.program
     ? `${state.program.tapeUsed}/${state.tapeCapacity}`
@@ -88,6 +95,7 @@ function render(state) {
 
   renderGrid(state);
   renderLog(state.logs);
+  renderDiff(diff);
 }
 
 function renderGrid(state) {
@@ -127,6 +135,31 @@ function renderLog(logs) {
     item.textContent = message;
     elements.consoleLog.append(item);
   }
+}
+
+function renderDiff(diff) {
+  elements.diffCount.textContent = `${diff.length} ${diff.length === 1 ? "change" : "changes"}`;
+  elements.diffList.replaceChildren();
+
+  if (diff.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "No state changes yet.";
+    elements.diffList.append(item);
+    return;
+  }
+
+  for (const change of diff.slice(0, 18)) {
+    const item = document.createElement("li");
+    item.textContent = `${change.path}: ${formatValue(change.before)} -> ${formatValue(change.after)}`;
+    elements.diffList.append(item);
+  }
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+  return String(value);
 }
 
 function query(testId) {

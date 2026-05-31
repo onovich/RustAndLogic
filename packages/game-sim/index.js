@@ -198,6 +198,30 @@ export function snapshot(game) {
   }));
 }
 
+export function diffSnapshots(before, after) {
+  const changes = [];
+  compare(changes, "tick", before?.tick, after?.tick);
+  compare(changes, "tapeCapacity", before?.tapeCapacity, after?.tapeCapacity);
+  compare(changes, "resources.scrap", before?.resources?.scrap, after?.resources?.scrap);
+  compare(changes, "resources.cells", before?.resources?.cells, after?.resources?.cells);
+  compare(changes, "resources.blankTape", before?.resources?.blankTape, after?.resources?.blankTape);
+  compare(changes, "robot.x", before?.robot?.x, after?.robot?.x);
+  compare(changes, "robot.y", before?.robot?.y, after?.robot?.y);
+  compare(changes, "robot.dir", before?.robot?.dir, after?.robot?.dir);
+  compare(changes, "robot.hp", before?.robot?.hp, after?.robot?.hp);
+  compare(changes, "robot.armor", before?.robot?.armor, after?.robot?.armor);
+  compare(changes, "robot.weapon", before?.robot?.weapon, after?.robot?.weapon);
+  compare(changes, "program.ok", before?.program?.ok, after?.program?.ok);
+  compare(changes, "program.tapeUsed", before?.program?.tapeUsed, after?.program?.tapeUsed);
+  compare(changes, "vm.pc", before?.vm?.pc, after?.vm?.pc);
+  compare(changes, "vm.state", before?.vm?.state, after?.vm?.state);
+  compare(changes, "arena.result", before?.arena?.result, after?.arena?.result);
+  compare(changes, "offline.ticks", before?.offline?.ticks, after?.offline?.ticks);
+  compare(changes, "deposits.count", before?.deposits?.length ?? 0, after?.deposits?.length ?? 0);
+  compare(changes, "logs.latest", before?.logs?.[0] ?? "", after?.logs?.[0] ?? "");
+  return changes;
+}
+
 function makeHardware(game) {
   return {
     query(op) {
@@ -274,4 +298,11 @@ function findDeposit(game, location, type = "") {
     const typeMatches = type ? deposit.type === type : true;
     return typeMatches && deposit.x === location.x && deposit.y === location.y;
   });
+}
+
+function compare(changes, path, before, after) {
+  if (JSON.stringify(before) === JSON.stringify(after)) {
+    return;
+  }
+  changes.push({ path, before: before ?? null, after: after ?? null });
 }
