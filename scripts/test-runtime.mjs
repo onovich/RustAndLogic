@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { compileTapeScript, createVm, executeUntilPhysical } from "../packages/tapescript-runtime/index.js";
-import { createGame, deployProgram, previewArena, runGame, snapshot, stepGame, upgradeTape } from "../packages/game-sim/index.js";
+import {
+  createGame,
+  deployProgram,
+  fastForwardOffline,
+  previewArena,
+  runGame,
+  snapshot,
+  stepGame,
+  upgradeTape,
+} from "../packages/game-sim/index.js";
 
 testCompiler();
 testVmExecution();
@@ -102,6 +111,12 @@ PickUp`;
   state = previewArena(game);
   assert.equal(state.arena.result, "Victory");
   assert.equal(state.resources.cells, 1);
+
+  state = fastForwardOffline(game, 24);
+  assert.equal(state.offline.ticks, 24);
+  assert.equal(state.offline.scrap, 7);
+  assert.equal(state.resources.scrap, 7);
+  assert.equal(state.tick, 26);
 
   const frozen = snapshot(game);
   frozen.resources.cells = 99;

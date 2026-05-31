@@ -1,6 +1,7 @@
 import {
   createGame,
   deployProgram,
+  fastForwardOffline,
   previewArena,
   runGame,
   snapshot,
@@ -18,6 +19,7 @@ const elements = {
   reset: query("reset-button"),
   upgrade: query("upgrade-button"),
   arena: query("arena-button"),
+  offline: query("offline-button"),
   grid: query("world-grid"),
   tick: query("tick"),
   tapeUsage: query("tape-usage"),
@@ -33,6 +35,7 @@ const elements = {
   compileStatus: query("compile-status"),
   consoleLog: query("console-log"),
   arenaSummary: query("arena-summary"),
+  offlineSummary: query("offline-summary"),
 };
 
 elements.deploy.addEventListener("click", () => render(deployProgram(game, elements.editor.value)));
@@ -40,6 +43,7 @@ elements.step.addEventListener("click", () => render(stepGame(game)));
 elements.run.addEventListener("click", () => render(runGame(game, 6)));
 elements.upgrade.addEventListener("click", () => render(upgradeTape(game)));
 elements.arena.addEventListener("click", () => render(previewArena(game)));
+elements.offline.addEventListener("click", () => render(fastForwardOffline(game, 24)));
 elements.reset.addEventListener("click", () => {
   game = createGame();
   render(snapshot(game));
@@ -73,6 +77,9 @@ function render(state) {
   elements.arenaSummary.textContent = state.arena
     ? `${state.arena.result}: ${state.arena.summary} Score ${state.arena.score}/${state.arena.enemyScore}.`
     : "No arena preview yet.";
+  elements.offlineSummary.textContent = state.offline
+    ? state.offline.summary
+    : "No offline projection yet.";
 
   renderGrid(state);
   renderLog(state.logs);
@@ -120,4 +127,3 @@ function renderLog(logs) {
 function query(testId) {
   return document.querySelector(`[data-testid="${testId}"]`);
 }
-

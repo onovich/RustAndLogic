@@ -25,6 +25,7 @@ export function createGame() {
     vm: null,
     logs: ["System ready. Load a tape and deploy."],
     arena: null,
+    offline: null,
   };
 }
 
@@ -115,6 +116,36 @@ export function previewArena(game) {
   return snapshot(game);
 }
 
+export function fastForwardOffline(game, ticks = 24) {
+  if (!game.program?.ok) {
+    game.logs.unshift("Offline projection blocked: deploy a valid tape first.");
+    game.offline = {
+      ticks: 0,
+      scrap: 0,
+      cells: 0,
+      summary: "No valid tape was available for offline work.",
+    };
+    return snapshot(game);
+  }
+
+  const safeTicks = Math.max(1, Math.floor(ticks));
+  const efficiency = Math.max(1, game.program.tapeUsed + game.robot.armor + game.robot.weapon);
+  const scrap = Math.max(1, Math.floor((safeTicks * efficiency) / 32));
+  const cells = Math.floor((safeTicks * game.robot.weapon) / 48);
+
+  game.tick += safeTicks;
+  game.resources.scrap += scrap;
+  game.resources.cells += cells;
+  game.offline = {
+    ticks: safeTicks,
+    scrap,
+    cells,
+    summary: `Fast-forwarded ${safeTicks} ticks and recovered ${scrap} scrap${cells > 0 ? ` plus ${cells} cells` : ""}.`,
+  };
+  game.logs.unshift(`Offline projection: +${scrap} scrap, +${cells} cells over ${safeTicks} ticks.`);
+  return snapshot(game);
+}
+
 export function snapshot(game) {
   return JSON.parse(JSON.stringify({
     width: game.width,
@@ -135,6 +166,7 @@ export function snapshot(game) {
     vm: game.vm,
     logs: game.logs,
     arena: game.arena,
+    offline: game.offline,
   }));
 }
 
@@ -215,4 +247,3 @@ function findDeposit(game, location, type = "") {
     return typeMatches && deposit.x === location.x && deposit.y === location.y;
   });
 }
-

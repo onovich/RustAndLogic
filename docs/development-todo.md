@@ -24,7 +24,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Connect TapeScript VM output to game `ActionIntent` resolution through the hardware boundary.
 - [x] Produce serializable snapshots for UI rendering.
 - [ ] Add explicit diff output for UI rendering.
-- [ ] Add offline fast-forward simulation.
+- [x] Add offline fast-forward simulation.
 - [x] Add tests for movement, pickup, resource collection, upgrades, snapshots, and arena preview.
 
 ## Milestone 3: Web UI Flow Slice

@@ -247,7 +247,8 @@ textarea {
 
 .resource-panel,
 .module-panel,
-.arena-panel {
+.arena-panel,
+.offline-panel {
   padding: 14px;
 }
 
@@ -276,7 +277,8 @@ dd {
   font-weight: 700;
 }
 
-.arena-panel p {
+.arena-panel p,
+.offline-panel p {
   min-height: 58px;
   margin: 12px 0;
   color: var(--muted);
@@ -340,4 +342,3 @@ li {
     gap: 4px;
   }
 }
-

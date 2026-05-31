@@ -47,15 +47,23 @@ try {
 
   await page.getByTestId("run-button").click();
   await page.getByTestId("arena-button").click();
+  await page.getByTestId("offline-button").click();
 
   const arenaText = await page.getByTestId("arena-summary").innerText();
   if (!arenaText.includes("Victory")) {
     throw new Error(`Expected arena preview victory, got: ${arenaText}`);
   }
 
+  const offlineText = await page.getByTestId("offline-summary").innerText();
+  if (!offlineText.includes("Fast-forwarded 24 ticks")) {
+    throw new Error(`Expected offline projection summary, got: ${offlineText}`);
+  }
+
+  await expectText(page, "scrap-count", "7");
+
   const logText = await page.getByTestId("console-log").innerText();
-  if (!logText.includes("Arena preview") || !logText.includes("Tape upgraded")) {
-    throw new Error("Expected console log to include arena and upgrade events.");
+  if (!logText.includes("Arena preview") || !logText.includes("Tape upgraded") || !logText.includes("Offline projection")) {
+    throw new Error("Expected console log to include arena, upgrade, and offline events.");
   }
 
   console.log("Web UI smoke passed.");
