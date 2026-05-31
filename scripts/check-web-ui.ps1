@@ -11,6 +11,7 @@ $files = @(
   "packages/game-sim/index.js",
   "apps/web/src/main.js",
   "scripts/serve-web-ui.mjs",
+  "scripts/test-runtime.mjs",
   "scripts/smoke-web-ui.mjs"
 )
 
@@ -21,4 +22,9 @@ foreach ($file in $files) {
   }
 }
 
-Write-Host "Web UI syntax check passed."
+& $node scripts/test-runtime.mjs
+if ($LASTEXITCODE -ne 0) {
+  throw "Runtime tests failed."
+}
+
+Write-Host "Web UI and runtime checks passed."

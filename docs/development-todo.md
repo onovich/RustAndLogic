@@ -12,18 +12,20 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 
 ## Milestone 1: TapeScript Core Slice
 
-- [ ] Define the TapeScript instruction model independent of UI and game progression.
-- [ ] Implement a two-pass compiler for labels, actions, queries, jumps, and comments.
-- [ ] Implement a deterministic VM state model with `pc`, `cf`, lifecycle state, and watchdog.
-- [ ] Define a hardware boundary for game/world actions.
-- [ ] Add tests for compile errors, label resolution, action suspension, and watchdog faults.
+- [x] Define the TapeScript instruction model independent of UI and game progression.
+- [x] Implement a two-pass compiler for labels, actions, queries, jumps, and comments.
+- [x] Implement a deterministic VM state model with `pc`, `cf`, lifecycle state, and watchdog.
+- [x] Define a hardware boundary for game/world actions.
+- [x] Add tests for compile errors, label resolution, action suspension, and watchdog faults.
 
 ## Milestone 2: Headless Game Simulation Slice
 
-- [ ] Define a small deterministic grid world with robot position, direction, resources, inventory, and tick count.
-- [ ] Connect TapeScript VM output to game `ActionIntent` resolution through the hardware boundary.
-- [ ] Produce serializable snapshots and diffs for UI rendering.
-- [ ] Add tests for movement, pickup, blocked movement, resource collection, and offline fast-forward assumptions.
+- [x] Define a small deterministic grid world with robot position, direction, resources, inventory, and tick count.
+- [x] Connect TapeScript VM output to game `ActionIntent` resolution through the hardware boundary.
+- [x] Produce serializable snapshots for UI rendering.
+- [ ] Add explicit diff output for UI rendering.
+- [ ] Add offline fast-forward simulation.
+- [x] Add tests for movement, pickup, resource collection, upgrades, snapshots, and arena preview.
 
 ## Milestone 3: Web UI Flow Slice
 
