@@ -35,6 +35,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Render a grid map with robot state, scrap, cells, and logs.
 - [x] Show compile/runtime feedback in a console panel.
 - [x] Add progression panels for resources, tape capacity, upgrades, and robot modules.
+- [x] Add hardware module upgrade actions that spend resources and update robot stats.
 - [x] Add a local "arena preview" flow that can replay deterministic combat/scavenge results without network.
 - [x] Add a smoke test that exercises the main UI flow in a browser.
 

@@ -60,10 +60,23 @@ try {
   }
 
   await expectText(page, "scrap-count", "7");
+  await page.getByTestId("weapon-upgrade-button").click();
+  await page.getByTestId("armor-upgrade-button").click();
+  await expectText(page, "weapon-level", "2");
+  await expectText(page, "armor-level", "2");
+  await expectText(page, "hp-value", "12");
+  await expectText(page, "scrap-count", "5");
+  await expectText(page, "cell-count", "0");
 
   const logText = await page.getByTestId("console-log").innerText();
-  if (!logText.includes("Arena preview") || !logText.includes("Tape upgraded") || !logText.includes("Offline projection")) {
-    throw new Error("Expected console log to include arena, upgrade, and offline events.");
+  if (
+    !logText.includes("Arena preview") ||
+    !logText.includes("Tape upgraded") ||
+    !logText.includes("Offline projection") ||
+    !logText.includes("Weapon upgraded") ||
+    !logText.includes("Armor upgraded")
+  ) {
+    throw new Error("Expected console log to include arena, upgrade, offline, and hardware events.");
   }
 
   console.log("Web UI smoke passed.");

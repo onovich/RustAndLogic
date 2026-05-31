@@ -94,6 +94,34 @@ export function upgradeTape(game) {
   return snapshot(game);
 }
 
+export function upgradeHardware(game, module) {
+  if (module === "armor") {
+    if (game.resources.scrap < 2) {
+      game.logs.unshift("Armor upgrade blocked: requires 2 scrap.");
+      return snapshot(game);
+    }
+    game.resources.scrap -= 2;
+    game.robot.armor += 1;
+    game.robot.hp += 2;
+    game.logs.unshift(`Armor upgraded to ${game.robot.armor}.`);
+    return snapshot(game);
+  }
+
+  if (module === "weapon") {
+    if (game.resources.cells < 1) {
+      game.logs.unshift("Weapon upgrade blocked: requires 1 cell.");
+      return snapshot(game);
+    }
+    game.resources.cells -= 1;
+    game.robot.weapon += 1;
+    game.logs.unshift(`Weapon upgraded to ${game.robot.weapon}.`);
+    return snapshot(game);
+  }
+
+  game.logs.unshift(`Unknown hardware module: ${module}.`);
+  return snapshot(game);
+}
+
 export function previewArena(game) {
   const tapeScore = game.program?.ok ? game.program.tapeUsed : 0;
   const offense = game.robot.weapon * 3 + tapeScore;

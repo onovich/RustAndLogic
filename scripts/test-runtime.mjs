@@ -8,6 +8,7 @@ import {
   runGame,
   snapshot,
   stepGame,
+  upgradeHardware,
   upgradeTape,
 } from "../packages/game-sim/index.js";
 
@@ -118,7 +119,16 @@ PickUp`;
   assert.equal(state.resources.scrap, 7);
   assert.equal(state.tick, 26);
 
+  state = upgradeHardware(game, "weapon");
+  assert.equal(state.robot.weapon, 2);
+  assert.equal(state.resources.cells, 0);
+
+  state = upgradeHardware(game, "armor");
+  assert.equal(state.robot.armor, 2);
+  assert.equal(state.robot.hp, 12);
+  assert.equal(state.resources.scrap, 5);
+
   const frozen = snapshot(game);
   frozen.resources.cells = 99;
-  assert.equal(game.resources.cells, 1);
+  assert.equal(game.resources.cells, 0);
 }

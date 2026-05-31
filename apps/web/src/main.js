@@ -6,6 +6,7 @@ import {
   runGame,
   snapshot,
   stepGame,
+  upgradeHardware,
   upgradeTape,
 } from "../../../packages/game-sim/index.js";
 
@@ -18,6 +19,8 @@ const elements = {
   run: query("run-button"),
   reset: query("reset-button"),
   upgrade: query("upgrade-button"),
+  armorUpgrade: query("armor-upgrade-button"),
+  weaponUpgrade: query("weapon-upgrade-button"),
   arena: query("arena-button"),
   offline: query("offline-button"),
   grid: query("world-grid"),
@@ -42,6 +45,8 @@ elements.deploy.addEventListener("click", () => render(deployProgram(game, eleme
 elements.step.addEventListener("click", () => render(stepGame(game)));
 elements.run.addEventListener("click", () => render(runGame(game, 6)));
 elements.upgrade.addEventListener("click", () => render(upgradeTape(game)));
+elements.armorUpgrade.addEventListener("click", () => render(upgradeHardware(game, "armor")));
+elements.weaponUpgrade.addEventListener("click", () => render(upgradeHardware(game, "weapon")));
 elements.arena.addEventListener("click", () => render(previewArena(game)));
 elements.offline.addEventListener("click", () => render(fastForwardOffline(game, 24)));
 elements.reset.addEventListener("click", () => {
