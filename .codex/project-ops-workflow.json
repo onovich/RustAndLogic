@@ -55,7 +55,7 @@
                                      },
                        "structureCheck":  {
                                               "commands":  [
-
+                                                              "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1"
                                                            ]
                                           },
                        "codegen":  {

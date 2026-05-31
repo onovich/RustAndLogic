@@ -11,6 +11,17 @@ Keep TapeScript independent from the game shell. It should not depend on Tauri, 
 
 Use `docs/project-brief.md` and `docs/source-docs/` as local project truth before making architecture decisions.
 
+## Mandatory Small-Slice Workflow
+
+Every implementation or documentation slice must follow this loop:
+
+1. Run a bug self-check that directly covers the changed behavior.
+2. Run an architecture self-check against `docs/engineering-workflow.md`.
+3. Update `docs/development-todo.md` when scope or status changes.
+4. Commit only the intended files and push to `origin/main`.
+
+Use `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1` as the current architecture gate.
+
 <!-- codex-init-flow: initialized -->
 
 ## Codex Project Workflow
