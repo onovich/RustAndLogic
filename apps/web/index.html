@@ -33,13 +33,12 @@
             <span data-testid="capacity-label">Capacity 8</span>
           </div>
           <textarea data-testid="tape-editor" spellcheck="false">@Loop
+PickUp
 CheckScrap
-JumpIfTrue @Grab
+JumpIfTrue @Loop
 MoveForward
 TurnRight
-Jump @Loop
-@Grab
-PickUp</textarea>
+Jump @Loop</textarea>
           <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
             <button data-testid="deploy-button" data-i18n="action.deploy" type="button">Deploy</button>
             <button data-testid="step-button" data-i18n="action.step" type="button">Step</button>

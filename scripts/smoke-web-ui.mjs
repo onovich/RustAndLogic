@@ -60,6 +60,13 @@ try {
     throw new Error(`Expected step diff to include resource and deposit changes, got: ${stepDiff}`);
   }
 
+  await page.getByTestId("step-button").click();
+  await expectText(page, "robot-position", "2,2 E");
+  const moveDiff = await page.getByTestId("diff-list").innerText();
+  if (!moveDiff.includes("robot.x")) {
+    throw new Error(`Expected second step to move the robot, got diff: ${moveDiff}`);
+  }
+
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 10");
 
@@ -77,13 +84,13 @@ try {
     throw new Error(`Expected offline projection summary, got: ${offlineText}`);
   }
 
-  await expectText(page, "scrap-count", "7");
+  await expectText(page, "scrap-count", "6");
   await page.getByTestId("weapon-upgrade-button").click();
   await page.getByTestId("armor-upgrade-button").click();
   await expectText(page, "weapon-level", "2");
   await expectText(page, "armor-level", "2");
   await expectText(page, "hp-value", "12");
-  await expectText(page, "scrap-count", "5");
+  await expectText(page, "scrap-count", "4");
   await expectText(page, "cell-count", "0");
   const finalDiff = await page.getByTestId("diff-list").innerText();
   if (!finalDiff.includes("robot.armor") || !finalDiff.includes("robot.hp")) {
@@ -91,14 +98,14 @@ try {
   }
 
   await page.getByTestId("save-button").click();
-  await expectText(page, "save-summary", "Saved tick 26.");
+  await expectText(page, "save-summary", "Saved tick 32.");
   await page.getByTestId("reset-button").click();
   await expectText(page, "armor-level", "1");
   await page.getByTestId("load-button").click();
-  await expectText(page, "save-summary", "Loaded tick 26.");
+  await expectText(page, "save-summary", "Loaded tick 32.");
   await expectText(page, "armor-level", "2");
   await expectText(page, "weapon-level", "2");
-  await expectText(page, "scrap-count", "5");
+  await expectText(page, "scrap-count", "4");
 
   const checklist = await page.getByTestId("flow-checklist").innerText();
   for (const label of [

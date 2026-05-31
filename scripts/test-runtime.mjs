@@ -87,13 +87,12 @@ PickUp
 function testGameSimulation() {
   const game = createGame();
   const source = `@Loop
+PickUp
 CheckScrap
-JumpIfTrue @Grab
+JumpIfTrue @Loop
 MoveForward
 TurnRight
-Jump @Loop
-@Grab
-PickUp`;
+Jump @Loop`;
 
   let state = deployProgram(game, source);
   assert.equal(state.program.ok, true);
@@ -108,13 +107,18 @@ PickUp`;
   assert.equal(stepDiff.some((change) => change.path === "resources.scrap" && change.after === 1), true);
   assert.equal(stepDiff.some((change) => change.path === "deposits.count" && change.after === 2), true);
 
+  state = stepGame(game);
+  assert.equal(state.robot.x, 2);
+  assert.equal(state.robot.y, 2);
+  assert.equal(state.vm.state, "Suspended");
+
   state = upgradeTape(game);
   assert.equal(state.resources.scrap, 0);
   assert.equal(state.tapeCapacity, 10);
 
-  state = runGame(game, 2);
-  assert.equal(state.tick, 2);
-  assert.equal(state.vm.state, "Halted");
+  state = runGame(game, 6);
+  assert.equal(state.tick, 8);
+  assert.equal(state.vm.state, "Suspended");
 
   state = previewArena(game);
   assert.equal(state.arena.result, "Victory");
@@ -122,9 +126,9 @@ PickUp`;
 
   state = fastForwardOffline(game, 24);
   assert.equal(state.offline.ticks, 24);
-  assert.equal(state.offline.scrap, 7);
-  assert.equal(state.resources.scrap, 7);
-  assert.equal(state.tick, 26);
+  assert.equal(state.offline.scrap, 6);
+  assert.equal(state.resources.scrap, 6);
+  assert.equal(state.tick, 32);
   assert.equal(diffSnapshots(beforeStep, state).some((change) => change.path === "offline.ticks"), true);
 
   state = upgradeHardware(game, "weapon");
@@ -134,7 +138,7 @@ PickUp`;
   state = upgradeHardware(game, "armor");
   assert.equal(state.robot.armor, 2);
   assert.equal(state.robot.hp, 12);
-  assert.equal(state.resources.scrap, 5);
+  assert.equal(state.resources.scrap, 4);
 
   const frozen = snapshot(game);
   frozen.resources.cells = 99;
@@ -144,5 +148,5 @@ PickUp`;
   assert.equal(restored.tick, game.tick);
   assert.equal(restored.robot.armor, 2);
   assert.equal(restored.robot.weapon, 2);
-  assert.equal(restored.resources.scrap, 5);
+  assert.equal(restored.resources.scrap, 4);
 }
