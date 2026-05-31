@@ -86,6 +86,25 @@ try {
   await expectText(page, "weapon-level", "2");
   await expectText(page, "scrap-count", "5");
 
+  const checklist = await page.getByTestId("flow-checklist").innerText();
+  for (const label of [
+    "Deploy a valid tape",
+    "Collect scrap",
+    "Upgrade tape",
+    "Preview arena",
+    "Resolve offline",
+    "Upgrade robot hardware",
+    "Save and reload",
+  ]) {
+    if (!checklist.includes(label)) {
+      throw new Error(`Expected flow checklist to include ${label}.`);
+    }
+  }
+  const unfinished = await page.locator('[data-testid="flow-checklist"] [data-done="false"]').count();
+  if (unfinished !== 0) {
+    throw new Error(`Expected full flow checklist to be complete, ${unfinished} items remain.`);
+  }
+
   const logText = await page.getByTestId("console-log").innerText();
   if (
     !logText.includes("Arena preview") ||

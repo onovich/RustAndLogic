@@ -15,6 +15,15 @@ import {
 
 let game = createGame();
 let previousState = null;
+const flow = {
+  deploy: false,
+  collect: false,
+  tape: false,
+  arena: false,
+  offline: false,
+  hardware: false,
+  save: false,
+};
 
 const elements = {
   editor: query("tape-editor"),
@@ -48,20 +57,50 @@ const elements = {
   arenaSummary: query("arena-summary"),
   offlineSummary: query("offline-summary"),
   saveSummary: query("save-summary"),
+  flowChecklist: query("flow-checklist"),
 };
 
 const saveKey = "rust-and-logic.save.v1";
 
-elements.deploy.addEventListener("click", () => render(deployProgram(game, elements.editor.value)));
-elements.step.addEventListener("click", () => render(stepGame(game)));
+elements.deploy.addEventListener("click", () => {
+  const state = deployProgram(game, elements.editor.value);
+  flow.deploy = Boolean(state.program?.ok);
+  render(state);
+});
+elements.step.addEventListener("click", () => {
+  const state = stepGame(game);
+  flow.collect = state.resources.scrap > 0 || state.deposits.length < 3;
+  render(state);
+});
 elements.run.addEventListener("click", () => render(runGame(game, 6)));
-elements.upgrade.addEventListener("click", () => render(upgradeTape(game)));
-elements.armorUpgrade.addEventListener("click", () => render(upgradeHardware(game, "armor")));
-elements.weaponUpgrade.addEventListener("click", () => render(upgradeHardware(game, "weapon")));
-elements.arena.addEventListener("click", () => render(previewArena(game)));
-elements.offline.addEventListener("click", () => render(fastForwardOffline(game, 24)));
+elements.upgrade.addEventListener("click", () => {
+  const state = upgradeTape(game);
+  flow.tape = state.tapeCapacity > 8;
+  render(state);
+});
+elements.armorUpgrade.addEventListener("click", () => {
+  const state = upgradeHardware(game, "armor");
+  flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
+  render(state);
+});
+elements.weaponUpgrade.addEventListener("click", () => {
+  const state = upgradeHardware(game, "weapon");
+  flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
+  render(state);
+});
+elements.arena.addEventListener("click", () => {
+  const state = previewArena(game);
+  flow.arena = Boolean(state.arena);
+  render(state);
+});
+elements.offline.addEventListener("click", () => {
+  const state = fastForwardOffline(game, 24);
+  flow.offline = Boolean(state.offline?.ticks);
+  render(state);
+});
 elements.save.addEventListener("click", () => {
   localStorage.setItem(saveKey, serializeGame(game));
+  flow.save = true;
   elements.saveSummary.textContent = `Saved tick ${game.tick}.`;
   render(snapshot(game));
 });
@@ -73,6 +112,7 @@ elements.load.addEventListener("click", () => {
   }
   game = restoreGame(serialized);
   game.logs.unshift(`Loaded save from tick ${game.tick}.`);
+  flow.save = true;
   elements.saveSummary.textContent = `Loaded tick ${game.tick}.`;
   render(snapshot(game));
 });
@@ -120,6 +160,7 @@ function render(state) {
   renderGrid(state);
   renderLog(state.logs);
   renderDiff(diff);
+  renderFlow();
 }
 
 function renderGrid(state) {
@@ -184,6 +225,14 @@ function formatValue(value) {
     return "-";
   }
   return String(value);
+}
+
+function renderFlow() {
+  const items = elements.flowChecklist.querySelectorAll("[data-flow]");
+  for (const item of items) {
+    const key = item.dataset.flow;
+    item.dataset.done = flow[key] ? "true" : "false";
+  }
 }
 
 function query(testId) {

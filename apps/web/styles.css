@@ -256,7 +256,8 @@ textarea {
 .module-panel,
 .arena-panel,
 .offline-panel,
-.save-panel {
+.save-panel,
+.flow-panel {
   padding: 14px;
 }
 
@@ -304,6 +305,35 @@ dd {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.flow-panel ol {
+  padding-left: 0;
+  list-style: none;
+}
+
+.flow-panel li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-panel li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #1d1b18;
+}
+
+.flow-panel li[data-done="true"] {
+  color: var(--green);
+}
+
+.flow-panel li[data-done="true"]::before {
+  background: var(--green);
+  border-color: var(--green);
 }
 
 ol {
