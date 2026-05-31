@@ -204,6 +204,8 @@ export function snapshot(game) {
       ? {
           ok: game.program.ok,
           errors: game.program.errors,
+          instructions: game.program.instructions,
+          labels: game.program.labels,
           tapeUsed: game.program.tapeUsed,
           tapeCapacity: game.program.tapeCapacity,
         }

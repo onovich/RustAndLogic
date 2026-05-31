@@ -149,4 +149,7 @@ Jump @Loop`;
   assert.equal(restored.robot.armor, 2);
   assert.equal(restored.robot.weapon, 2);
   assert.equal(restored.resources.scrap, 4);
+  const resumed = stepGame(restored);
+  assert.equal(resumed.tick, game.tick + 1);
+  assert.equal(resumed.program.ok, true);
 }

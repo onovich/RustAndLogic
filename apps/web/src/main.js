@@ -4,7 +4,6 @@ import {
   diffSnapshots,
   fastForwardOffline,
   previewArena,
-  runGame,
   serializeGame,
   snapshot,
   stepGame,
@@ -16,6 +15,10 @@ import {
 let game = createGame();
 let previousState = null;
 let saveStatus = { key: "save.empty", values: {} };
+let playbackMode = "stopped";
+let speedIndex = 0;
+let playbackTimer = 0;
+let robotNode = null;
 const flow = {
   deploy: false,
   collect: false,
@@ -29,12 +32,20 @@ const flow = {
 const saveKey = "rust-and-logic.save.v1";
 const languageKey = "rust-and-logic.language";
 let language = detectLanguage();
+const speeds = [1, 5, 10];
+const speedProfiles = {
+  1: { interval: 720, duration: 420 },
+  5: { interval: 170, duration: 130 },
+  10: { interval: 90, duration: 70 },
+};
 
 const elements = {
   editor: query("tape-editor"),
   deploy: query("deploy-button"),
+  play: query("play-button"),
+  pause: query("pause-button"),
   step: query("step-button"),
-  run: query("run-button"),
+  speed: query("speed-button"),
   reset: query("reset-button"),
   upgrade: query("upgrade-button"),
   armorUpgrade: query("armor-upgrade-button"),
@@ -110,9 +121,12 @@ const i18n = {
     "diff.aria": "State diff",
     "diff.title": "Diff",
     "action.deploy": "Deploy",
-    "action.step": "Step",
-    "action.run": "Run 6",
-    "action.reset": "Reset",
+    "action.play": "Play",
+    "action.pause": "Pause",
+    "action.resume": "Resume",
+    "action.frame": "Frame",
+    "action.speed": "Speed {speed}",
+    "action.stop": "Stop",
     "action.upgradeTape": "Upgrade tape",
     "action.armorPlus": "Armor +",
     "action.weaponPlus": "Weapon +",
@@ -191,9 +205,12 @@ const i18n = {
     "diff.aria": "状态差异",
     "diff.title": "差异",
     "action.deploy": "部署",
-    "action.step": "步进",
-    "action.run": "运行 6 步",
-    "action.reset": "重置",
+    "action.play": "播放",
+    "action.pause": "暂停",
+    "action.resume": "恢复",
+    "action.frame": "快进一帧",
+    "action.speed": "速度 {speed}",
+    "action.stop": "停止",
     "action.upgradeTape": "升级纸带",
     "action.armorPlus": "装甲 +",
     "action.weaponPlus": "武器 +",
@@ -243,71 +260,86 @@ elements.languageSwitch.addEventListener("click", (event) => {
 });
 
 elements.deploy.addEventListener("click", () => {
+  stopPlayback(false);
   const state = deployProgram(game, elements.editor.value);
   flow.deploy = Boolean(state.program?.ok);
-  render(state);
+  render(state, { animate: false });
 });
-elements.step.addEventListener("click", () => {
-  const state = stepGame(game);
-  flow.collect = state.resources.scrap > 0 || state.deposits.length < 3;
-  render(state);
+elements.play.addEventListener("click", () => startPlayback());
+elements.pause.addEventListener("click", () => togglePause());
+elements.step.addEventListener("click", () => advanceFrame({ manual: true }));
+elements.speed.addEventListener("click", () => {
+  speedIndex = (speedIndex + 1) % speeds.length;
+  updateControls();
+  if (playbackMode === "playing") {
+    schedulePlayback();
+  }
 });
-elements.run.addEventListener("click", () => render(runGame(game, 6)));
 elements.upgrade.addEventListener("click", () => {
+  stopPlayback(false);
   const state = upgradeTape(game);
   flow.tape = state.tapeCapacity > 8;
-  render(state);
+  render(state, { animate: false });
 });
 elements.armorUpgrade.addEventListener("click", () => {
+  stopPlayback(false);
   const state = upgradeHardware(game, "armor");
   flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
-  render(state);
+  render(state, { animate: false });
 });
 elements.weaponUpgrade.addEventListener("click", () => {
+  stopPlayback(false);
   const state = upgradeHardware(game, "weapon");
   flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
-  render(state);
+  render(state, { animate: false });
 });
 elements.arena.addEventListener("click", () => {
+  stopPlayback(false);
   const state = previewArena(game);
   flow.arena = Boolean(state.arena);
-  render(state);
+  render(state, { animate: false });
 });
 elements.offline.addEventListener("click", () => {
+  stopPlayback(false);
   const state = fastForwardOffline(game, 24);
   flow.offline = Boolean(state.offline?.ticks);
-  render(state);
+  render(state, { animate: false });
 });
 elements.save.addEventListener("click", () => {
+  stopPlayback(false);
   localStorage.setItem(saveKey, serializeGame(game));
   flow.save = true;
   saveStatus = { key: "save.saved", values: { tick: game.tick } };
-  render(snapshot(game));
+  render(snapshot(game), { animate: false });
 });
 elements.load.addEventListener("click", () => {
+  stopPlayback(false);
   const serialized = localStorage.getItem(saveKey);
   if (!serialized) {
     saveStatus = { key: "save.missing", values: {} };
-    render(snapshot(game));
+    render(snapshot(game), { animate: false });
     return;
   }
   game = restoreGame(serialized);
   game.logs.unshift(`Loaded save from tick ${game.tick}.`);
   flow.save = true;
   saveStatus = { key: "save.loaded", values: { tick: game.tick } };
-  render(snapshot(game));
+  render(snapshot(game), { animate: false });
 });
 elements.reset.addEventListener("click", () => {
+  stopPlayback(false);
   game = createGame();
   saveStatus = { key: "save.reset", values: {} };
-  render(snapshot(game));
+  resetFlow();
+  render(snapshot(game), { animate: false });
 });
 
 applyLanguage();
-render(snapshot(game));
+render(snapshot(game), { animate: false });
 
-function render(state) {
-  const diff = previousState ? diffSnapshots(previousState, state) : [];
+function render(state, options = {}) {
+  const beforeState = previousState;
+  const diff = beforeState ? diffSnapshots(beforeState, state) : [];
   previousState = state;
 
   elements.tick.textContent = state.tick;
@@ -349,14 +381,147 @@ function render(state) {
     : t("offline.empty");
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
 
-  renderGrid(state);
+  renderGrid(state, beforeState, options);
   renderLog(state.logs);
   renderDiff(diff);
   renderFlow();
+  updateControls();
 }
 
-function renderGrid(state) {
+function startPlayback() {
+  if (!game.program?.ok) {
+    const state = deployProgram(game, elements.editor.value);
+    flow.deploy = Boolean(state.program?.ok);
+    render(state, { animate: false });
+    if (!state.program?.ok) {
+      stopPlayback(false);
+      return;
+    }
+  }
+  playbackMode = "playing";
+  updateControls();
+  schedulePlayback();
+}
+
+function togglePause() {
+  if (playbackMode === "playing") {
+    playbackMode = "paused";
+    clearPlaybackTimer();
+  } else if (playbackMode === "paused") {
+    playbackMode = "playing";
+    schedulePlayback();
+  }
+  updateControls();
+}
+
+function advanceFrame(options = {}) {
+  if (options.manual) {
+    clearPlaybackTimer();
+    if (playbackMode === "playing") {
+      playbackMode = "paused";
+    }
+  }
+  const before = snapshot(game);
+  const state = stepGame(game);
+  flow.collect = state.resources.scrap > 0 || state.deposits.length < 3;
+  render(state, {
+    animate: true,
+    animationDuration: currentSpeedProfile().duration,
+  });
+  if (!options.manual && shouldAutoPause(before, state)) {
+    pauseForBlock(state);
+  }
+  return state;
+}
+
+function schedulePlayback() {
+  clearPlaybackTimer();
+  if (playbackMode !== "playing") {
+    return;
+  }
+  const profile = currentSpeedProfile();
+  playbackTimer = window.setTimeout(() => {
+    advanceFrame();
+    schedulePlayback();
+  }, Math.max(profile.interval, profile.duration + 20));
+}
+
+function pauseForBlock(state) {
+  playbackMode = "paused";
+  clearPlaybackTimer();
+  if (!state.logs[0]?.startsWith("Auto-paused:")) {
+    game.logs.unshift("Auto-paused: robot could not continue safely.");
+    render(snapshot(game), { animate: false });
+  }
+  updateControls();
+}
+
+function shouldAutoPause(before, state) {
+  if (!state.program?.ok || state.vm?.state === "Fault" || state.vm?.state === "Halted") {
+    return true;
+  }
+  const latestLog = state.logs[0] ?? "";
+  if (
+    latestLog.includes("Blocked by boundary") ||
+    latestLog.includes("No tape deployed") ||
+    latestLog.includes("Unknown action") ||
+    latestLog.includes("Logic Overload") ||
+    latestLog.includes("Program counter left the tape")
+  ) {
+    return true;
+  }
+  return before.tick === state.tick && before.vm?.pc === state.vm?.pc;
+}
+
+function stopPlayback(resetMode = true) {
+  playbackMode = "stopped";
+  clearPlaybackTimer();
+  if (resetMode) {
+    game = createGame();
+    previousState = null;
+    resetFlow();
+    saveStatus = { key: "save.reset", values: {} };
+    render(snapshot(game), { animate: false });
+  } else {
+    updateControls();
+  }
+}
+
+function clearPlaybackTimer() {
+  if (playbackTimer) {
+    window.clearTimeout(playbackTimer);
+    playbackTimer = 0;
+  }
+}
+
+function currentSpeedProfile() {
+  return speedProfiles[speeds[speedIndex]];
+}
+
+function updateControls() {
+  elements.pause.textContent = playbackMode === "paused" ? t("action.resume") : t("action.pause");
+  elements.pause.disabled = playbackMode === "stopped";
+  elements.play.disabled = playbackMode === "playing";
+  elements.speed.textContent = t("action.speed", { speed: `x${speeds[speedIndex]}` });
+  elements.play.dataset.active = String(playbackMode === "playing");
+  elements.pause.dataset.active = String(playbackMode === "paused");
+}
+
+function resetFlow() {
+  for (const key of Object.keys(flow)) {
+    flow[key] = false;
+  }
+}
+
+function renderGrid(state, beforeState, options = {}) {
+  const previousDeposits = beforeState?.deposits ?? [];
+  const removedDeposits = previousDeposits.filter(
+    (deposit) => !state.deposits.some((item) => item.id === deposit.id),
+  );
+
   elements.grid.replaceChildren();
+  elements.grid.style.setProperty("--cols", state.width);
+  elements.grid.style.setProperty("--rows", state.height);
   for (let y = 0; y < state.height; y += 1) {
     for (let x = 0; x < state.width; x += 1) {
       const cell = document.createElement("div");
@@ -372,17 +537,84 @@ function renderGrid(state) {
         cell.append(marker);
       }
 
-      if (state.robot.x === x && state.robot.y === y) {
-        const robot = document.createElement("div");
-        robot.className = "robot";
-        robot.dataset.dir = state.robot.dir;
-        robot.title = `Robot facing ${state.robot.dir}`;
-        cell.append(robot);
-      }
-
       elements.grid.append(cell);
     }
   }
+  renderRobot(state, options);
+  if (options.animate !== false) {
+    for (const deposit of removedDeposits) {
+      animatePickup(deposit, state.robot, options.animationDuration);
+    }
+  }
+}
+
+function renderRobot(state, options = {}) {
+  if (!robotNode) {
+    robotNode = document.createElement("div");
+    robotNode.className = "robot robot-avatar";
+  }
+  robotNode.title = `Robot facing ${state.robot.dir}`;
+  robotNode.dataset.dir = state.robot.dir;
+  robotNode.style.transitionDuration = `${options.animationDuration ?? currentSpeedProfile().duration}ms`;
+  elements.grid.append(robotNode);
+
+  const position = gridPositionFor(state.robot.x, state.robot.y);
+  if (!position) {
+    return;
+  }
+
+  const size = Math.min(position.width * 0.64, 42);
+  robotNode.style.width = `${size}px`;
+  robotNode.style.height = `${size}px`;
+  robotNode.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
+  if (options.animate === false) {
+    robotNode.style.transitionDuration = "0ms";
+    requestAnimationFrame(() => {
+      if (robotNode) {
+        robotNode.style.transitionDuration = `${currentSpeedProfile().duration}ms`;
+      }
+    });
+  }
+}
+
+function animatePickup(deposit, robot, duration = currentSpeedProfile().duration) {
+  const from = gridPositionFor(deposit.x, deposit.y);
+  const to = gridPositionFor(robot.x, robot.y);
+  if (!from || !to) {
+    return;
+  }
+
+  const size = Math.min(from.width * 0.5, 34);
+  const ghost = document.createElement("div");
+  ghost.className = `deposit pickup-ghost ${deposit.type}`;
+  ghost.style.width = `${size}px`;
+  ghost.style.height = `${size}px`;
+  ghost.style.transitionDuration = `${duration}ms`;
+  ghost.style.transform = `translate(${from.left + (from.width - size) / 2}px, ${from.top + (from.height - size) / 2}px) scale(1)`;
+  elements.grid.append(ghost);
+
+  requestAnimationFrame(() => {
+    ghost.style.opacity = "0";
+    ghost.style.transform = `translate(${to.left + (to.width - size) / 2}px, ${to.top + (to.height - size) / 2}px) scale(0.25)`;
+  });
+  window.setTimeout(() => ghost.remove(), duration + 80);
+}
+
+function gridPositionFor(x, y) {
+  const cell = elements.grid.querySelector(`[data-coord="${x},${y}"]`);
+  if (!cell) {
+    return null;
+  }
+  return {
+    left: cell.offsetLeft,
+    top: cell.offsetTop,
+    width: cell.offsetWidth,
+    height: cell.offsetHeight,
+  };
+}
+
+function directionDegrees(direction) {
+  return { N: 0, E: 90, S: 180, W: 270 }[direction] ?? 0;
 }
 
 function renderLog(logs) {
@@ -440,6 +672,7 @@ function applyLanguage() {
     button.setAttribute("aria-pressed", String(active));
     button.dataset.active = String(active);
   }
+  updateControls();
 }
 
 function detectLanguage() {

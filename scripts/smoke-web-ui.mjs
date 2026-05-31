@@ -40,6 +40,7 @@ try {
   await expectText(page, "compile-status", "等待中");
   await expectText(page, "capacity-label", "容量 8");
   await expectText(page, "deploy-button", "部署");
+  await expectText(page, "step-button", "快进一帧");
   await expectText(page, "upgrade-button", "升级纸带");
   await expectText(page, "save-summary", "本轮尚未写入存档。");
 
@@ -47,14 +48,27 @@ try {
   await expectText(page, "compile-status", "Waiting");
   await expectText(page, "capacity-label", "Capacity 8");
   await expectText(page, "deploy-button", "Deploy");
+  await expectText(page, "step-button", "Frame");
   await expectText(page, "upgrade-button", "Upgrade tape");
   await expectText(page, "save-summary", "No save written this session.");
+
+  await expectText(page, "speed-button", "Speed x1");
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "Speed x5");
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "Speed x10");
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "Speed x1");
 
   await page.getByTestId("deploy-button").click();
   await expectText(page, "compile-status", "Compile OK");
 
   await page.getByTestId("step-button").click();
   await expectText(page, "scrap-count", "1");
+  const pickupGhosts = await page.locator(".pickup-ghost").count();
+  if (pickupGhosts === 0) {
+    throw new Error("Expected pickup to create a recovery animation ghost.");
+  }
   const stepDiff = await page.getByTestId("diff-list").innerText();
   if (!stepDiff.includes("resources.scrap") || !stepDiff.includes("deposits.count")) {
     throw new Error(`Expected step diff to include resource and deposit changes, got: ${stepDiff}`);
@@ -70,7 +84,9 @@ try {
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 10");
 
-  await page.getByTestId("run-button").click();
+  for (let index = 0; index < 6; index += 1) {
+    await page.getByTestId("step-button").click();
+  }
   await page.getByTestId("arena-button").click();
   await page.getByTestId("offline-button").click();
 
@@ -99,14 +115,6 @@ try {
 
   await page.getByTestId("save-button").click();
   await expectText(page, "save-summary", "Saved tick 32.");
-  await page.getByTestId("reset-button").click();
-  await expectText(page, "armor-level", "1");
-  await page.getByTestId("load-button").click();
-  await expectText(page, "save-summary", "Loaded tick 32.");
-  await expectText(page, "armor-level", "2");
-  await expectText(page, "weapon-level", "2");
-  await expectText(page, "scrap-count", "4");
-
   const checklist = await page.getByTestId("flow-checklist").innerText();
   for (const label of [
     "Deploy a valid tape",
@@ -126,6 +134,14 @@ try {
     throw new Error(`Expected full flow checklist to be complete, ${unfinished} items remain.`);
   }
 
+  await page.getByTestId("reset-button").click();
+  await expectText(page, "armor-level", "1");
+  await page.getByTestId("load-button").click();
+  await expectText(page, "save-summary", "Loaded tick 32.");
+  await expectText(page, "armor-level", "2");
+  await expectText(page, "weapon-level", "2");
+  await expectText(page, "scrap-count", "4");
+
   const logText = await page.getByTestId("console-log").innerText();
   if (
     !logText.includes("Arena preview") ||
@@ -137,6 +153,18 @@ try {
   ) {
     throw new Error("Expected console log to include arena, upgrade, offline, hardware, and save events.");
   }
+
+  await page.getByTestId("play-button").click();
+  await page.waitForFunction(() => Number(document.querySelector('[data-testid="tick"]').innerText) > 32);
+  await page.getByTestId("pause-button").click();
+  await expectText(page, "pause-button", "Resume");
+  const pausedTick = await page.getByTestId("tick").innerText();
+  await page.waitForTimeout(850);
+  await expectText(page, "tick", pausedTick);
+  await page.getByTestId("pause-button").click();
+  await expectText(page, "pause-button", "Pause");
+  await page.getByTestId("reset-button").click();
+  await expectText(page, "tick", "0");
 
   console.log("Web UI smoke passed.");
 } finally {
