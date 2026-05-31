@@ -11,6 +11,7 @@ import {
   upgradeHardware,
   upgradeTape,
 } from "../../../packages/game-sim/index.js";
+import { compileTapeScript } from "../../../packages/tapescript-runtime/index.js";
 
 let game = createGame();
 let previousState = null;
@@ -38,9 +39,15 @@ const speedProfiles = {
   5: { interval: 170, duration: 130 },
   10: { interval: 90, duration: 70 },
 };
+const tapeActions = new Set(["MoveForward", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
+const tapeQueries = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
+const tapeBranches = new Set(["Jump", "JumpIfTrue", "JumpIfFalse"]);
 
 const elements = {
   editor: query("tape-editor"),
+  highlight: query("tape-highlight"),
+  lineNumbers: query("tape-line-numbers"),
+  diagnostics: query("tape-diagnostics"),
   deploy: query("deploy-button"),
   play: query("play-button"),
   pause: query("pause-button"),
@@ -134,6 +141,8 @@ const i18n = {
     "action.offline": "Fast-forward 24",
     "action.save": "Save",
     "action.load": "Load",
+    "diagnostic.line": "Line {line}",
+    "diagnostic.general": "Tape",
     "state.idle": "Idle",
     "state.waiting": "Waiting",
     "state.compileOk": "Compile OK",
@@ -218,6 +227,8 @@ const i18n = {
     "action.offline": "快进 24",
     "action.save": "保存",
     "action.load": "读取",
+    "diagnostic.line": "第 {line} 行",
+    "diagnostic.general": "纸带",
     "state.idle": "空闲",
     "state.waiting": "等待中",
     "state.compileOk": "编译通过",
@@ -256,13 +267,28 @@ elements.languageSwitch.addEventListener("click", (event) => {
   language = button.dataset.lang === "zh" ? "zh" : "en";
   localStorage.setItem(languageKey, language);
   applyLanguage();
+  updateEditorTools();
   render(snapshot(game));
+});
+elements.editor.addEventListener("input", () => updateEditorTools());
+elements.editor.addEventListener("scroll", syncEditorScroll);
+elements.editor.addEventListener("click", (event) => {
+  if (!event.ctrlKey && !event.metaKey) {
+    return;
+  }
+  const token = tokenAtOffset(elements.editor.value, elements.editor.selectionStart);
+  if (!token?.startsWith("@")) {
+    return;
+  }
+  event.preventDefault();
+  jumpToLabel(token.slice(1));
 });
 
 elements.deploy.addEventListener("click", () => {
   stopPlayback(false);
   const state = deployProgram(game, elements.editor.value);
   flow.deploy = Boolean(state.program?.ok);
+  updateEditorTools(state.program?.errors ?? []);
   render(state, { animate: false });
 });
 elements.play.addEventListener("click", () => startPlayback());
@@ -335,6 +361,7 @@ elements.reset.addEventListener("click", () => {
 });
 
 applyLanguage();
+updateEditorTools();
 render(snapshot(game), { animate: false });
 
 function render(state, options = {}) {
@@ -511,6 +538,124 @@ function resetFlow() {
   for (const key of Object.keys(flow)) {
     flow[key] = false;
   }
+}
+
+function updateEditorTools(errors = null) {
+  const program = errors ? null : compileTapeScript(elements.editor.value, { tapeCapacity: game.tapeCapacity });
+  const activeErrors = errors ?? program.errors;
+  renderTapeHighlight(activeErrors);
+  renderDiagnostics(activeErrors);
+  syncEditorScroll();
+}
+
+function renderTapeHighlight(errors) {
+  const errorLines = new Set(errors.filter((error) => error.line > 0).map((error) => error.line));
+  const lines = elements.editor.value.split("\n");
+  elements.lineNumbers.textContent = lines.map((_, index) => String(index + 1)).join("\n");
+  elements.highlight.innerHTML = lines
+    .map((line, index) => {
+      const className = errorLines.has(index + 1) ? "code-line has-error" : "code-line";
+      return `<span class="${className}">${highlightLine(line) || " "}</span>`;
+    })
+    .join("\n");
+}
+
+function renderDiagnostics(errors) {
+  elements.diagnostics.replaceChildren();
+  elements.editor.dataset.invalid = String(errors.length > 0);
+  if (errors.length === 0) {
+    return;
+  }
+  for (const error of errors) {
+    const item = document.createElement("li");
+    item.dataset.line = String(error.line);
+    const location = error.line > 0 ? t("diagnostic.line", { line: error.line }) : t("diagnostic.general");
+    item.textContent = `${location}: ${error.message}`;
+    if (error.line > 0) {
+      item.tabIndex = 0;
+      item.addEventListener("click", () => jumpToLine(error.line));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          jumpToLine(error.line);
+        }
+      });
+    }
+    elements.diagnostics.append(item);
+  }
+}
+
+function highlightLine(line) {
+  const commentStart = line.indexOf("//");
+  const code = commentStart >= 0 ? line.slice(0, commentStart) : line;
+  const comment = commentStart >= 0 ? line.slice(commentStart) : "";
+  const pieces = [];
+  const pattern = /(@[A-Za-z][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9_]*|\s+|.)/g;
+  let match;
+  while ((match = pattern.exec(code)) !== null) {
+    const token = match[0];
+    if (/^\s+$/.test(token)) {
+      pieces.push(escapeHtml(token));
+    } else if (token.startsWith("@")) {
+      pieces.push(`<span class="tok-label">${escapeHtml(token)}</span>`);
+    } else if (tapeActions.has(token)) {
+      pieces.push(`<span class="tok-action">${escapeHtml(token)}</span>`);
+    } else if (tapeQueries.has(token)) {
+      pieces.push(`<span class="tok-query">${escapeHtml(token)}</span>`);
+    } else if (tapeBranches.has(token)) {
+      pieces.push(`<span class="tok-branch">${escapeHtml(token)}</span>`);
+    } else if (/^[A-Za-z]/.test(token)) {
+      pieces.push(`<span class="tok-unknown">${escapeHtml(token)}</span>`);
+    } else {
+      pieces.push(escapeHtml(token));
+    }
+  }
+  if (comment) {
+    pieces.push(`<span class="tok-comment">${escapeHtml(comment)}</span>`);
+  }
+  return pieces.join("");
+}
+
+function syncEditorScroll() {
+  elements.highlight.scrollTop = elements.editor.scrollTop;
+  elements.highlight.scrollLeft = elements.editor.scrollLeft;
+  elements.lineNumbers.scrollTop = elements.editor.scrollTop;
+}
+
+function tokenAtOffset(text, offset) {
+  const left = text.slice(0, offset).search(/[@A-Za-z0-9_]*$/);
+  const start = left < 0 ? offset : left;
+  const right = text.slice(offset).match(/^[@A-Za-z0-9_]*/)?.[0].length ?? 0;
+  const token = text.slice(start, offset + right);
+  return /^@[A-Za-z][A-Za-z0-9_]*$/.test(token) ? token : "";
+}
+
+function jumpToLabel(label) {
+  const lines = elements.editor.value.split("\n");
+  const lineIndex = lines.findIndex((line) => line.trim() === `@${label}`);
+  if (lineIndex >= 0) {
+    jumpToLine(lineIndex + 1);
+  }
+}
+
+function jumpToLine(lineNumber) {
+  const lines = elements.editor.value.split("\n");
+  const safeLine = Math.min(Math.max(lineNumber, 1), lines.length);
+  const start = lines.slice(0, safeLine - 1).reduce((total, line) => total + line.length + 1, 0);
+  const end = start + lines[safeLine - 1].length;
+  elements.editor.focus();
+  elements.editor.setSelectionRange(start, end);
+  const lineHeight = Number.parseFloat(getComputedStyle(elements.editor).lineHeight) || 20;
+  elements.editor.scrollTop = Math.max(0, (safeLine - 2) * lineHeight);
+  syncEditorScroll();
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 function renderGrid(state, beforeState, options = {}) {

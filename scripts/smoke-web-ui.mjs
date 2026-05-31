@@ -60,6 +60,40 @@ try {
   await page.getByTestId("speed-button").click();
   await expectText(page, "speed-button", "Speed x1");
 
+  const originalTape = await page.getByTestId("tape-editor").inputValue();
+  const badTape = `${originalTape}\nBogus`;
+  await page.getByTestId("tape-editor").fill(badTape);
+  await page.getByTestId("deploy-button").click();
+  await expectText(page, "compile-status", "Compile error");
+  const diagnosticText = await page.getByTestId("tape-diagnostics").innerText();
+  if (!diagnosticText.includes("Line 8") || !diagnosticText.includes("Unknown instruction: Bogus")) {
+    throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
+  }
+  const unknownTokenCount = await page.locator(".tok-unknown").count();
+  if (unknownTokenCount === 0) {
+    throw new Error("Expected syntax highlighter to mark an unknown token.");
+  }
+  await page.locator('[data-testid="tape-diagnostics"] li').first().click();
+  const selectedLine = await page.getByTestId("tape-editor").evaluate((editor) =>
+    editor.value.slice(editor.selectionStart, editor.selectionEnd),
+  );
+  if (selectedLine.trim() !== "Bogus") {
+    throw new Error(`Expected diagnostic click to select the bad line, got: ${selectedLine}`);
+  }
+  await page.getByTestId("tape-editor").fill(originalTape);
+  await page.getByTestId("tape-editor").evaluate((editor) => {
+    const offset = editor.value.indexOf("@Loop", editor.value.indexOf("JumpIfTrue"));
+    editor.focus();
+    editor.setSelectionRange(offset + 2, offset + 2);
+  });
+  await page.getByTestId("tape-editor").dispatchEvent("click", { ctrlKey: true });
+  const jumpedLine = await page.getByTestId("tape-editor").evaluate((editor) =>
+    editor.value.slice(editor.selectionStart, editor.selectionEnd),
+  );
+  if (jumpedLine.trim() !== "@Loop") {
+    throw new Error(`Expected Ctrl-click label reference to select @Loop definition, got: ${jumpedLine}`);
+  }
+
   await page.getByTestId("deploy-button").click();
   await expectText(page, "compile-status", "Compile OK");
 

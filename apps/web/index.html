@@ -32,13 +32,20 @@
             <h2 data-i18n="tape.title">Tape</h2>
             <span data-testid="capacity-label">Capacity 8</span>
           </div>
-          <textarea data-testid="tape-editor" spellcheck="false">@Loop
+          <div class="editor-frame">
+            <pre class="line-numbers" data-testid="tape-line-numbers" aria-hidden="true"></pre>
+            <div class="editor-stack">
+              <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
+              <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
 PickUp
 CheckScrap
 JumpIfTrue @Loop
 MoveForward
 TurnRight
 Jump @Loop</textarea>
+            </div>
+          </div>
+          <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
           <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
             <button data-testid="deploy-button" data-i18n="action.deploy" type="button">Deploy</button>
             <button data-testid="play-button" data-i18n="action.play" type="button">Play</button>

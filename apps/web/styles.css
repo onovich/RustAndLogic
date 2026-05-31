@@ -26,7 +26,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+pre {
   font: inherit;
 }
 
@@ -206,17 +207,133 @@ h2 {
   color: var(--muted);
 }
 
-textarea {
-  width: 100%;
-  min-height: 260px;
-  resize: vertical;
+.editor-frame {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 12px;
   background: #171a16;
-  color: #d8f0c8;
+  overflow: hidden;
+}
+
+.line-numbers,
+.tape-highlight,
+textarea {
+  min-height: 260px;
+  margin: 0;
+  padding: 12px;
+  border: 0;
   line-height: 1.45;
   font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95rem;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.line-numbers {
+  overflow: hidden;
+  border-right: 1px solid #3f3a32;
+  background: #141611;
+  color: #696153;
+  text-align: right;
+  user-select: none;
+}
+
+.editor-stack {
+  position: relative;
+  min-width: 0;
+}
+
+.tape-highlight {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: #d8f0c8;
+}
+
+textarea {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  resize: vertical;
+  background: transparent;
+  color: transparent;
+  caret-color: #d8f0c8;
+  overflow: auto;
+}
+
+textarea::selection {
+  background: rgba(216, 180, 95, 0.32);
+}
+
+textarea[data-invalid="true"] {
+  box-shadow: inset 0 0 0 1px rgba(224, 107, 98, 0.7);
+}
+
+.code-line {
+  display: block;
+  min-height: 1.45em;
+}
+
+.code-line.has-error {
+  margin: 0 -12px;
+  padding: 0 12px;
+  background: rgba(224, 107, 98, 0.16);
+}
+
+.tok-label {
+  color: var(--amber);
+}
+
+.tok-action {
+  color: #e7a06f;
+}
+
+.tok-query {
+  color: #91c8d8;
+}
+
+.tok-branch {
+  color: #bfa7ff;
+}
+
+.tok-comment {
+  color: #6f7d63;
+}
+
+.tok-unknown {
+  color: var(--danger);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.diagnostics {
+  display: grid;
+  gap: 6px;
+  max-height: 108px;
+  margin: 8px 0 0;
+  padding-left: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.diagnostics:empty {
+  display: none;
+}
+
+.diagnostics li {
+  padding: 7px 9px;
+  border: 1px solid rgba(224, 107, 98, 0.55);
+  border-radius: 5px;
+  background: rgba(224, 107, 98, 0.12);
+  color: #f1b2ac;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.86rem;
+}
+
+.diagnostics li[data-line]:not([data-line="0"]) {
+  cursor: pointer;
 }
 
 .toolbar {
