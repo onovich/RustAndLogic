@@ -35,7 +35,7 @@ export function createStaticServer() {
   });
 }
 
-if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, "/")}`) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const server = createStaticServer();
   server.listen(port, "127.0.0.1", () => {
     console.log(`Rust & Logic Web UI: http://127.0.0.1:${port}/`);
