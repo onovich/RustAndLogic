@@ -103,6 +103,13 @@ try {
     throw new Error(`Expected segmented Back suggestion for MoveBack, got: ${backSuggestion}`);
   }
 
+  await page.getByTestId("tape-editor").fill("Empty");
+  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
+  const emptySuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  if (!emptySuggestion.includes("CheckEmpty")) {
+    throw new Error(`Expected segmented Empty suggestion for CheckEmpty, got: ${emptySuggestion}`);
+  }
+
   await page.getByTestId("tape-editor").fill("@Loop\nJump ");
   await page.getByTestId("tape-editor").evaluate((editor) => {
     editor.focus();

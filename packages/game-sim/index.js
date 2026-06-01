@@ -16,6 +16,10 @@ export function createGame() {
     tapeCapacity: 8,
     resources: { scrap: 0, cells: 0, blankTape: 1 },
     robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, cargo: [] },
+    cargoCapacity: 3,
+    base: { x: 0, y: 0 },
+    lastDamageTick: null,
+    obstacles: [{ id: "wall-a", x: 3, y: 1 }],
     deposits: [
       { id: "scrap-a", type: "scrap", x: 2, y: 2 },
       { id: "cell-a", type: "cell", x: 4, y: 1 },
@@ -42,6 +46,8 @@ export function restoreGame(serialized) {
     resources: { ...base.resources, ...parsed.resources },
     robot: { ...base.robot, ...parsed.robot },
     deposits: Array.isArray(parsed.deposits) ? parsed.deposits : base.deposits,
+    obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles : base.obstacles,
+    base: { ...base.base, ...parsed.base },
     logs: Array.isArray(parsed.logs) ? parsed.logs : base.logs,
   };
 }
@@ -104,7 +110,7 @@ export function upgradeTape(game) {
     game.logs.unshift("Upgrade blocked: collect at least 1 scrap.");
     return snapshot(game);
   }
-  game.resources.scrap -= 1;
+  spendResource(game, "scrap", 1);
   game.resources.blankTape += 1;
   game.tapeCapacity += 2;
   game.logs.unshift(`Tape upgraded. Capacity is now ${game.tapeCapacity}.`);
@@ -117,7 +123,7 @@ export function upgradeHardware(game, module) {
       game.logs.unshift("Armor upgrade blocked: requires 2 scrap.");
       return snapshot(game);
     }
-    game.resources.scrap -= 2;
+    spendResource(game, "scrap", 2);
     game.robot.armor += 1;
     game.robot.hp += 2;
     game.logs.unshift(`Armor upgraded to ${game.robot.armor}.`);
@@ -129,7 +135,7 @@ export function upgradeHardware(game, module) {
       game.logs.unshift("Weapon upgrade blocked: requires 1 cell.");
       return snapshot(game);
     }
-    game.resources.cells -= 1;
+    spendResource(game, "cells", 1);
     game.robot.weapon += 1;
     game.logs.unshift(`Weapon upgraded to ${game.robot.weapon}.`);
     return snapshot(game);
@@ -199,6 +205,10 @@ export function snapshot(game) {
     tapeCapacity: game.tapeCapacity,
     resources: game.resources,
     robot: game.robot,
+    cargoCapacity: game.cargoCapacity,
+    base: game.base,
+    lastDamageTick: game.lastDamageTick,
+    obstacles: game.obstacles,
     deposits: game.deposits,
     program: game.program
       ? {
@@ -224,6 +234,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "resources.scrap", before?.resources?.scrap, after?.resources?.scrap);
   compare(changes, "resources.cells", before?.resources?.cells, after?.resources?.cells);
   compare(changes, "resources.blankTape", before?.resources?.blankTape, after?.resources?.blankTape);
+  compare(changes, "robot.cargo.count", before?.robot?.cargo?.length ?? 0, after?.robot?.cargo?.length ?? 0);
   compare(changes, "robot.x", before?.robot?.x, after?.robot?.x);
   compare(changes, "robot.y", before?.robot?.y, after?.robot?.y);
   compare(changes, "robot.dir", before?.robot?.dir, after?.robot?.dir);
@@ -237,6 +248,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "arena.result", before?.arena?.result, after?.arena?.result);
   compare(changes, "offline.ticks", before?.offline?.ticks, after?.offline?.ticks);
   compare(changes, "deposits.count", before?.deposits?.length ?? 0, after?.deposits?.length ?? 0);
+  compare(changes, "obstacles.count", before?.obstacles?.length ?? 0, after?.obstacles?.length ?? 0);
   compare(changes, "logs.latest", before?.logs?.[0] ?? "", after?.logs?.[0] ?? "");
   return changes;
 }
@@ -247,11 +259,38 @@ function makeHardware(game) {
       if (op === "CheckScrap") {
         return Boolean(findDeposit(game, aheadOf(game), "scrap"));
       }
+      if (op === "CheckCell") {
+        return Boolean(findDeposit(game, aheadOf(game), "cell"));
+      }
+      if (op === "CheckWall") {
+        return isBlocked(game, aheadOf(game), { includeDeposits: false });
+      }
+      if (op === "CheckEmpty") {
+        return isEmpty(game, aheadOf(game));
+      }
       if (op === "CheckEnemy") {
         return hasEnemySignal(game);
       }
       if (op === "CheckHP_Low") {
         return game.robot.hp <= 3;
+      }
+      if (op === "CheckCargo") {
+        return game.robot.cargo.length > 0;
+      }
+      if (op === "CheckCargoFull") {
+        return game.robot.cargo.length >= game.cargoCapacity;
+      }
+      if (op === "CheckCargoScrap") {
+        return game.robot.cargo.includes("scrap");
+      }
+      if (op === "CheckCargoCell") {
+        return game.robot.cargo.includes("cell");
+      }
+      if (op === "CheckHome") {
+        return isHome(game, game.robot);
+      }
+      if (op === "CheckDamage") {
+        return game.lastDamageTick === game.tick;
       }
       return false;
     },
@@ -262,8 +301,14 @@ function makeHardware(game) {
       if (op === "MoveBack") {
         return move(game, -1);
       }
+      if (op === "MoveTowardHome") {
+        return moveTowardHome(game);
+      }
       if (op === "TurnLeft" || op === "TurnRight") {
         return turn(game, op === "TurnRight" ? 1 : -1);
+      }
+      if (op === "TurnAround") {
+        return turn(game, 2);
       }
       if (op === "PickUp") {
         return pickUp(game);
@@ -271,8 +316,17 @@ function makeHardware(game) {
       if (op === "Drop") {
         return dropCargo(game);
       }
+      if (op === "Unload") {
+        return unloadCargo(game);
+      }
       if (op === "Fire") {
         return fireWeapon(game);
+      }
+      if (op === "Wait") {
+        return { ok: true, message: "Waited." };
+      }
+      if (op === "Repair") {
+        return repairRobot(game);
       }
       return { ok: false, message: `Unknown action ${op}.` };
     },
@@ -286,12 +340,31 @@ function aheadOf(game, distance = 1) {
 
 function move(game, distance) {
   const next = aheadOf(game, distance);
-  if (next.x < 0 || next.y < 0 || next.x >= game.width || next.y >= game.height) {
-    return { ok: false, message: "Blocked by boundary." };
+  if (isBlocked(game, next)) {
+    return { ok: false, message: blockMessage(game, next) };
   }
   game.robot.x = next.x;
   game.robot.y = next.y;
   return { ok: true, message: `Moved to ${next.x},${next.y}.` };
+}
+
+function moveTowardHome(game) {
+  if (isHome(game, game.robot)) {
+    return { ok: false, message: "Already at home." };
+  }
+  const dx = game.base.x - game.robot.x;
+  const dy = game.base.y - game.robot.y;
+  const horizontal = Math.abs(dx) >= Math.abs(dy);
+  const nextDir = horizontal
+    ? (dx > 0 ? "E" : "W")
+    : (dy > 0 ? "S" : "N");
+  const previousDir = game.robot.dir;
+  game.robot.dir = nextDir;
+  const result = move(game, 1);
+  if (!result.ok) {
+    game.robot.dir = previousDir;
+  }
+  return result.ok ? { ok: true, message: `Moved toward home to ${game.robot.x},${game.robot.y}.` } : result;
 }
 
 function turn(game, delta) {
@@ -306,6 +379,9 @@ function pickUp(game) {
   if (!deposit) {
     return { ok: false, message: "Nothing ahead to pick up." };
   }
+  if (game.robot.cargo.length >= game.cargoCapacity) {
+    return { ok: false, message: "Cargo hold is full." };
+  }
   game.deposits = game.deposits.filter((item) => item.id !== deposit.id);
   game.resources[deposit.type] += 1;
   game.robot.cargo.push(deposit.type);
@@ -318,11 +394,11 @@ function dropCargo(game) {
     return { ok: false, message: "No cargo to drop." };
   }
   const target = aheadOf(game);
-  if (target.x < 0 || target.y < 0 || target.x >= game.width || target.y >= game.height) {
+  if (!isInside(game, target)) {
     game.robot.cargo.push(cargo);
     return { ok: false, message: "Drop blocked by boundary." };
   }
-  if (findDeposit(game, target)) {
+  if (!isEmpty(game, target)) {
     game.robot.cargo.push(cargo);
     return { ok: false, message: "Drop blocked by occupied cell." };
   }
@@ -336,6 +412,18 @@ function dropCargo(game) {
   return { ok: true, message: `Dropped ${cargo}.` };
 }
 
+function unloadCargo(game) {
+  if (!isHome(game, game.robot)) {
+    return { ok: false, message: "Unload requires home base." };
+  }
+  if (game.robot.cargo.length === 0) {
+    return { ok: false, message: "No cargo to unload." };
+  }
+  const count = game.robot.cargo.length;
+  game.robot.cargo = [];
+  return { ok: true, message: `Unloaded ${count} cargo.` };
+}
+
 function fireWeapon(game) {
   if (!hasEnemySignal(game)) {
     return { ok: false, message: "No target lock." };
@@ -345,6 +433,74 @@ function fireWeapon(game) {
 
 function hasEnemySignal(game) {
   return game.tick % 7 === 6;
+}
+
+function repairRobot(game) {
+  const maxHp = maxRobotHp(game);
+  if (game.robot.hp >= maxHp) {
+    return { ok: false, message: "Repair blocked: HP is already full." };
+  }
+  if (game.resources.scrap < 1) {
+    return { ok: false, message: "Repair blocked: requires 1 scrap." };
+  }
+  spendResource(game, "scrap", 1);
+  game.robot.hp = Math.min(maxHp, game.robot.hp + 2);
+  game.lastDamageTick = null;
+  return { ok: true, message: `Repaired to ${game.robot.hp} HP.` };
+}
+
+function maxRobotHp(game) {
+  return 8 + game.robot.armor * 2;
+}
+
+function spendResource(game, type, amount) {
+  game.resources[type] = Math.max(0, (game.resources[type] ?? 0) - amount);
+  const cargoType = type === "cells" ? "cell" : type;
+  let remaining = amount;
+  game.robot.cargo = game.robot.cargo.filter((item) => {
+    if (item === cargoType && remaining > 0) {
+      remaining -= 1;
+      return false;
+    }
+    return true;
+  });
+}
+
+function isHome(game, location) {
+  return location.x === game.base.x && location.y === game.base.y;
+}
+
+function isInside(game, location) {
+  return location.x >= 0 && location.y >= 0 && location.x < game.width && location.y < game.height;
+}
+
+function isBlocked(game, location, options = {}) {
+  const includeDeposits = options.includeDeposits ?? true;
+  return (
+    !isInside(game, location) ||
+    game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) ||
+    (includeDeposits && Boolean(findDeposit(game, location)))
+  );
+}
+
+function isEmpty(game, location) {
+  return isInside(game, location) &&
+    !game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) &&
+    !findDeposit(game, location) &&
+    !(game.robot.x === location.x && game.robot.y === location.y);
+}
+
+function blockMessage(game, location) {
+  if (!isInside(game, location)) {
+    return "Blocked by boundary.";
+  }
+  if (game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y)) {
+    return "Blocked by wall.";
+  }
+  if (findDeposit(game, location)) {
+    return "Blocked by occupied cell.";
+  }
+  return "Blocked.";
 }
 
 function findDeposit(game, location, type = "") {

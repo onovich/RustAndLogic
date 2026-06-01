@@ -41,20 +41,60 @@ const speedProfiles = {
   5: { interval: 170, duration: 130 },
   10: { interval: 90, duration: 70 },
 };
-const tapeActions = new Set(["MoveForward", "MoveBack", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
-const tapeQueries = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
+const tapeActions = new Set([
+  "MoveForward",
+  "MoveBack",
+  "MoveTowardHome",
+  "TurnLeft",
+  "TurnRight",
+  "TurnAround",
+  "PickUp",
+  "Drop",
+  "Unload",
+  "Fire",
+  "Wait",
+  "Repair",
+]);
+const tapeQueries = new Set([
+  "CheckScrap",
+  "CheckCell",
+  "CheckWall",
+  "CheckEmpty",
+  "CheckEnemy",
+  "CheckHP_Low",
+  "CheckCargo",
+  "CheckCargoFull",
+  "CheckCargoScrap",
+  "CheckCargoCell",
+  "CheckHome",
+  "CheckDamage",
+]);
 const tapeBranches = new Set(["Jump", "JumpIfTrue", "JumpIfFalse"]);
 const tapeCompletions = [
   { value: "MoveForward", kind: "Action", hint: "Move + Forward" },
   { value: "MoveBack", kind: "Action", hint: "Move + Back" },
+  { value: "MoveTowardHome", kind: "Action", hint: "Move + Toward + Home" },
   { value: "TurnLeft", kind: "Action", hint: "Turn + Left" },
   { value: "TurnRight", kind: "Action", hint: "Turn + Right" },
+  { value: "TurnAround", kind: "Action", hint: "Turn + Around" },
   { value: "PickUp", kind: "Action", hint: "Pick + Up" },
   { value: "Drop", kind: "Action", hint: "Drop cargo" },
+  { value: "Unload", kind: "Action", hint: "Unload cargo at home" },
   { value: "Fire", kind: "Action", hint: "Fire weapon" },
+  { value: "Wait", kind: "Action", hint: "Spend one tick" },
+  { value: "Repair", kind: "Action", hint: "Repair HP with scrap" },
   { value: "CheckScrap", kind: "Query", hint: "Check + Scrap" },
+  { value: "CheckCell", kind: "Query", hint: "Check + Cell" },
+  { value: "CheckWall", kind: "Query", hint: "Check + Wall" },
+  { value: "CheckEmpty", kind: "Query", hint: "Check + Empty" },
   { value: "CheckEnemy", kind: "Query", hint: "Check + Enemy" },
   { value: "CheckHP_Low", kind: "Query", hint: "Check + HP_Low" },
+  { value: "CheckCargo", kind: "Query", hint: "Check + Cargo" },
+  { value: "CheckCargoFull", kind: "Query", hint: "Check + Cargo + Full" },
+  { value: "CheckCargoScrap", kind: "Query", hint: "Check + Cargo + Scrap" },
+  { value: "CheckCargoCell", kind: "Query", hint: "Check + Cargo + Cell" },
+  { value: "CheckHome", kind: "Query", hint: "Check + Home" },
+  { value: "CheckDamage", kind: "Query", hint: "Check + Damage" },
   { value: "Jump", kind: "Branch", hint: "Jump + @Label" },
   { value: "JumpIfTrue", kind: "Branch", hint: "Jump + If + True" },
   { value: "JumpIfFalse", kind: "Branch", hint: "Jump + If + False" },
@@ -532,10 +572,17 @@ function shouldAutoPause(before, state) {
   const latestLog = state.logs[0] ?? "";
   if (
     latestLog.includes("Blocked by boundary") ||
+    latestLog.includes("Blocked by wall") ||
+    latestLog.includes("Blocked by occupied") ||
     latestLog.includes("Nothing ahead") ||
+    latestLog.includes("Cargo hold is full") ||
     latestLog.includes("No cargo to drop") ||
     latestLog.includes("Drop blocked") ||
+    latestLog.includes("Unload requires") ||
+    latestLog.includes("No cargo to unload") ||
     latestLog.includes("No target lock") ||
+    latestLog.includes("Repair blocked") ||
+    latestLog.includes("Already at home") ||
     latestLog.includes("No tape deployed") ||
     latestLog.includes("Unknown action") ||
     latestLog.includes("Logic Overload") ||
@@ -900,6 +947,21 @@ function renderGrid(state, beforeState, options = {}) {
       cell.className = "cell";
       cell.dataset.coord = `${x},${y}`;
       cell.dataset.testid = `cell-${x}-${y}`;
+
+      const obstacle = state.obstacles?.find((item) => item.x === x && item.y === y);
+      if (obstacle) {
+        const wall = document.createElement("div");
+        wall.className = "obstacle";
+        wall.title = "wall";
+        cell.append(wall);
+      }
+
+      if (state.base?.x === x && state.base?.y === y) {
+        const base = document.createElement("div");
+        base.className = "base-marker";
+        base.title = "home base";
+        cell.append(base);
+      }
 
       const deposit = state.deposits.find((item) => item.x === x && item.y === y);
       if (deposit) {

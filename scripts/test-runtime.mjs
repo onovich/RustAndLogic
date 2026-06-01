@@ -200,4 +200,84 @@ Jump @Loop`;
   state = deployProgram(missGame, "Fire");
   state = stepGame(missGame);
   assert.equal(state.logs.includes("Fire: No target lock."), true);
+
+  const queryGame = createGame();
+  queryGame.deposits = [{ id: "front-cell", type: "cell", x: 2, y: 2 }];
+  state = deployProgram(queryGame, "CheckCell");
+  state = stepGame(queryGame);
+  assert.equal(state.vm.cf, true);
+
+  const wallGame = createGame();
+  wallGame.robot.x = 0;
+  wallGame.robot.dir = "W";
+  state = deployProgram(wallGame, "CheckWall");
+  state = stepGame(wallGame);
+  assert.equal(state.vm.cf, true);
+
+  const emptyGame = createGame();
+  emptyGame.deposits = [];
+  state = deployProgram(emptyGame, "CheckEmpty");
+  state = stepGame(emptyGame);
+  assert.equal(state.vm.cf, true);
+
+  for (const query of ["CheckCargo", "CheckCargoFull", "CheckCargoScrap", "CheckCargoCell"]) {
+    const cargoQueryGame = createGame();
+    cargoQueryGame.robot.cargo = ["scrap", "cell", "scrap"];
+    state = deployProgram(cargoQueryGame, query);
+    state = stepGame(cargoQueryGame);
+    assert.equal(state.vm.cf, true);
+  }
+
+  const homeGame = createGame();
+  homeGame.robot.x = 0;
+  homeGame.robot.y = 0;
+  state = deployProgram(homeGame, "CheckHome");
+  state = stepGame(homeGame);
+  assert.equal(state.vm.cf, true);
+
+  const damageGame = createGame();
+  damageGame.lastDamageTick = 0;
+  state = deployProgram(damageGame, "CheckDamage");
+  state = stepGame(damageGame);
+  assert.equal(state.vm.cf, true);
+
+  const turnAroundGame = createGame();
+  state = deployProgram(turnAroundGame, "TurnAround");
+  state = stepGame(turnAroundGame);
+  assert.equal(state.robot.dir, "W");
+
+  const homeMoveGame = createGame();
+  homeMoveGame.deposits = [];
+  homeMoveGame.robot.x = 1;
+  homeMoveGame.robot.y = 0;
+  homeMoveGame.robot.dir = "E";
+  state = deployProgram(homeMoveGame, "MoveTowardHome");
+  state = stepGame(homeMoveGame);
+  assert.equal(state.robot.x, 0);
+  assert.equal(state.robot.y, 0);
+  assert.equal(state.robot.dir, "W");
+
+  const waitGame = createGame();
+  state = deployProgram(waitGame, "Wait");
+  state = stepGame(waitGame);
+  assert.equal(state.logs.includes("Wait: Waited."), true);
+
+  const repairGame = createGame();
+  repairGame.robot.hp = 5;
+  repairGame.resources.scrap = 1;
+  repairGame.robot.cargo = ["scrap"];
+  state = deployProgram(repairGame, "Repair");
+  state = stepGame(repairGame);
+  assert.equal(state.robot.hp, 7);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.robot.cargo.length, 0);
+
+  const unloadGame = createGame();
+  unloadGame.robot.x = 0;
+  unloadGame.robot.y = 0;
+  unloadGame.robot.cargo = ["scrap", "cell"];
+  state = deployProgram(unloadGame, "Unload");
+  state = stepGame(unloadGame);
+  assert.equal(state.robot.cargo.length, 0);
+  assert.equal(state.logs.includes("Unload: Unloaded 2 cargo."), true);
 }

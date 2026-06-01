@@ -1,5 +1,31 @@
-const ACTIONS = new Set(["MoveForward", "MoveBack", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
-const QUERIES = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
+const ACTIONS = new Set([
+  "MoveForward",
+  "MoveBack",
+  "MoveTowardHome",
+  "TurnLeft",
+  "TurnRight",
+  "TurnAround",
+  "PickUp",
+  "Drop",
+  "Unload",
+  "Fire",
+  "Wait",
+  "Repair",
+]);
+const QUERIES = new Set([
+  "CheckScrap",
+  "CheckCell",
+  "CheckWall",
+  "CheckEmpty",
+  "CheckEnemy",
+  "CheckHP_Low",
+  "CheckCargo",
+  "CheckCargoFull",
+  "CheckCargoScrap",
+  "CheckCargoCell",
+  "CheckHome",
+  "CheckDamage",
+]);
 
 export function compileTapeScript(source, options = {}) {
   const tapeCapacity = options.tapeCapacity ?? 8;
