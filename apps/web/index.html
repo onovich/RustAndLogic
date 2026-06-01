@@ -8,89 +8,120 @@
   </head>
   <body>
     <main class="app-shell">
-      <header class="topbar">
-        <div class="brand-lockup">
-          <p class="eyebrow" data-i18n="app.eyebrow">TapeScript test harness</p>
-          <h1>Wasteland OS</h1>
+      <aside class="objective-sidebar" aria-label="Primary objectives">
+        <header class="sidebar-heading">
+          <h2>Primary Objectives</h2>
+          <button class="sidebar-toggle" data-testid="objectives-toggle" type="button" aria-label="Toggle objectives">[+]</button>
+        </header>
+        <section class="flow-panel" aria-label="Flow checklist" data-i18n-attr="aria-label:flow.aria">
+          <ol data-testid="flow-checklist">
+            <li data-flow="deploy" data-i18n="flow.deploy">Deploy a valid tape</li>
+            <li data-flow="collect" data-i18n="flow.collect">Collect scrap from the map</li>
+            <li data-flow="tape" data-i18n="flow.tape">Upgrade tape capacity</li>
+            <li data-flow="arena" data-i18n="flow.arena">Preview arena result</li>
+            <li data-flow="hardware" data-i18n="flow.hardware">Upgrade robot hardware</li>
+            <li data-flow="save" data-i18n="flow.save">Save and reload progress</li>
+          </ol>
+        </section>
+        <section class="commander-feed" aria-label="Commander dialogue">
+          <h2>K-6 Commander</h2>
+          <p>"Rain is interfering with uplinks. Keep the logic path tight and the scavenger moving."</p>
+        </section>
+      </aside>
+
+      <section class="editor-panel" aria-label="Tape editor" data-i18n-attr="aria-label:tape.aria">
+        <header class="code-header">
+          <div>
+            <p class="eyebrow" data-i18n="app.eyebrow">TapeScript test harness</p>
+            <h1>Logic_Engine.sh</h1>
+          </div>
+          <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
+            <button data-testid="play-button" data-i18n-attr="aria-label:action.play" type="button" title="Play">▶</button>
+            <button data-testid="step-button" data-i18n-attr="aria-label:action.frame" type="button" title="Frame">▸|</button>
+            <button data-testid="speed-button" type="button" title="Speed">x1</button>
+            <button data-testid="pause-button" data-i18n-attr="aria-label:action.pause" type="button" title="Pause">Ⅱ</button>
+            <button data-testid="reset-button" data-i18n-attr="aria-label:action.stop" type="button" title="Stop">■</button>
+          </div>
+        </header>
+        <div class="editor-frame">
+          <pre class="line-numbers" data-testid="tape-line-numbers" aria-hidden="true"></pre>
+          <div class="editor-stack">
+            <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
+            <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
+PickUp()
+Check().Has(Scrap)
+IfTrue Goto @Loop
+Move()
+Turn(Right)
+Goto @Loop</textarea>
+            <div class="autocomplete" data-testid="tape-autocomplete" hidden></div>
+          </div>
         </div>
-        <div class="topbar-actions">
+        <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
+      </section>
+
+      <section class="stage-panel" aria-label="Stage view">
+        <header class="stage-heading">
+          <h2 data-i18n="world.title">Scrapyard</h2>
+          <span data-testid="robot-position">1,2 E</span>
+        </header>
+        <div class="stage-mode" aria-hidden="true">
+          <strong>Satellite_Link: Sector_07</strong>
+          <span>Live_Feed</span>
+        </div>
+        <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
+        <div class="story-dialogue" aria-live="polite">
+          <strong>Coord: 34.981N / 118.220W</strong>
+          <span>Units: active</span>
+          <span>Signal: 88%</span>
+        </div>
+      </section>
+
+      <aside class="right-sidebar" aria-label="Resources and modules" data-i18n-attr="aria-label:side.aria">
+        <section class="status-panel" aria-label="Simulation status" data-i18n-attr="aria-label:status.aria">
+          <h2>Run State</h2>
+          <div class="status-strip">
+            <span><span data-i18n="status.tick">Tick</span> <strong data-testid="tick">0</strong></span>
+            <span><span data-i18n="status.vm">VM</span> <strong data-testid="vm-state">Idle</strong></span>
+          </div>
+          <p><span data-testid="compile-status">Waiting</span></p>
+        </section>
+
+        <section class="resource-panel" aria-label="Resources" data-i18n-attr="aria-label:resources.title">
+          <h2 data-i18n="resources.title">Resources</h2>
+          <dl>
+            <div><dt data-i18n="resources.scrap">Scrap</dt><dd data-testid="scrap-count">0</dd></div>
+            <div><dt data-i18n="resources.cells">Cells</dt><dd data-testid="cell-count">0</dd></div>
+            <div><dt data-i18n="resources.blankTape">Blank tape</dt><dd data-testid="blank-tape-count">1</dd></div>
+            <div><dt data-i18n="status.tape">Tape</dt><dd><span data-testid="tape-usage">0/8</span></dd></div>
+            <div><dt data-i18n="capacity.short">Tape capacity</dt><dd data-testid="capacity-label">Capacity 8</dd></div>
+          </dl>
+          <button data-testid="upgrade-button" data-i18n="action.upgradeTape" type="button">Upgrade tape</button>
+        </section>
+
+        <section class="module-panel" aria-label="Robot modules" data-i18n-attr="aria-label:modules.aria">
+          <h2 data-i18n="modules.title">Modules</h2>
+          <div class="module-row"><span data-i18n="modules.armor">Armor</span><strong data-testid="armor-level">1</strong></div>
+          <div class="module-row"><span data-i18n="modules.weapon">Weapon</span><strong data-testid="weapon-level">1</strong></div>
+          <div class="module-row"><span>HP</span><strong data-testid="hp-value">10</strong></div>
+          <div class="module-actions">
+            <button data-testid="armor-upgrade-button" data-i18n="action.armorPlus" type="button">Armor +</button>
+            <button data-testid="weapon-upgrade-button" data-i18n="action.weaponPlus" type="button">Weapon +</button>
+          </div>
+        </section>
+
+        <section class="arena-panel" aria-label="Arena preview" data-i18n-attr="aria-label:arena.aria">
+          <h2 data-i18n="arena.title">Arena Preview</h2>
+          <p data-testid="arena-summary">No arena preview yet.</p>
+          <button data-testid="arena-button" data-i18n="action.previewArena" type="button">Preview arena</button>
+        </section>
+
+        <details class="settings-panel">
+          <summary>Settings</summary>
           <div class="language-switch" aria-label="Language switch" data-i18n-attr="aria-label:language.aria" data-testid="language-switch">
             <button data-lang="en" data-testid="lang-en-button" type="button">EN</button>
             <button data-lang="zh" data-testid="lang-zh-button" type="button">中文</button>
           </div>
-          <div class="status-strip" aria-label="Simulation status" data-i18n-attr="aria-label:status.aria">
-            <span><span data-i18n="status.tick">Tick</span> <strong data-testid="tick">0</strong></span>
-            <span><span data-i18n="status.tape">Tape</span> <strong data-testid="tape-usage">0/8</strong></span>
-            <span><span data-i18n="status.vm">VM</span> <strong data-testid="vm-state">Idle</strong></span>
-          </div>
-        </div>
-      </header>
-
-      <section class="workspace" aria-label="Game UI flow" data-i18n-attr="aria-label:workspace.aria">
-        <aside class="left-rail" aria-label="Event feed">
-          <section class="console-panel" aria-label="Runtime console" data-i18n-attr="aria-label:console.aria">
-            <div class="panel-heading">
-              <h2 data-i18n="console.title">Console</h2>
-              <span data-testid="compile-status">Waiting</span>
-            </div>
-            <ol data-testid="console-log"></ol>
-          </section>
-
-          <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
-            <div class="panel-heading">
-              <h2 data-i18n="diff.title">Diff</h2>
-              <span data-testid="diff-count">0 changes</span>
-            </div>
-            <ol data-testid="diff-list"></ol>
-          </section>
-        </aside>
-
-        <section class="world-panel" aria-label="World map" data-i18n-attr="aria-label:world.aria">
-          <div class="panel-heading">
-            <h2 data-i18n="world.title">Scrapyard</h2>
-            <span data-testid="robot-position">1,2 E</span>
-          </div>
-          <div class="zone-overlay" aria-hidden="true">
-            <span>Radiation Zone</span>
-            <small>Connection secure</small>
-          </div>
-          <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
-        </section>
-
-        <aside class="side-panel" aria-label="Progression and arena" data-i18n-attr="aria-label:side.aria">
-          <section class="resource-panel" aria-label="Resources" data-i18n-attr="aria-label:resources.title">
-            <h2 data-i18n="resources.title">Resources</h2>
-            <dl>
-              <div><dt data-i18n="resources.scrap">Scrap</dt><dd data-testid="scrap-count">0</dd></div>
-              <div><dt data-i18n="resources.cells">Cells</dt><dd data-testid="cell-count">0</dd></div>
-              <div><dt data-i18n="resources.blankTape">Blank tape</dt><dd data-testid="blank-tape-count">1</dd></div>
-            </dl>
-            <button data-testid="upgrade-button" data-i18n="action.upgradeTape" type="button">Upgrade tape</button>
-          </section>
-
-          <section class="module-panel" aria-label="Robot modules" data-i18n-attr="aria-label:modules.aria">
-            <h2 data-i18n="modules.title">Modules</h2>
-            <div class="module-row"><span data-i18n="modules.armor">Armor</span><strong data-testid="armor-level">1</strong></div>
-            <div class="module-row"><span data-i18n="modules.weapon">Weapon</span><strong data-testid="weapon-level">1</strong></div>
-            <div class="module-row"><span>HP</span><strong data-testid="hp-value">10</strong></div>
-            <div class="module-actions">
-              <button data-testid="armor-upgrade-button" data-i18n="action.armorPlus" type="button">Armor +</button>
-              <button data-testid="weapon-upgrade-button" data-i18n="action.weaponPlus" type="button">Weapon +</button>
-            </div>
-          </section>
-
-          <section class="arena-panel" aria-label="Arena preview" data-i18n-attr="aria-label:arena.aria">
-            <h2 data-i18n="arena.title">Arena Preview</h2>
-            <p data-testid="arena-summary">No arena preview yet.</p>
-            <button data-testid="arena-button" data-i18n="action.previewArena" type="button">Preview arena</button>
-          </section>
-
-          <section class="offline-panel" aria-label="Offline projection" data-i18n-attr="aria-label:offline.aria">
-            <h2 data-i18n="offline.title">Offline Projection</h2>
-            <p data-testid="offline-summary">No offline projection yet.</p>
-            <button data-testid="offline-button" data-i18n="action.offline" type="button">Fast-forward 24</button>
-          </section>
-
           <section class="save-panel" aria-label="Save slot" data-i18n-attr="aria-label:save.aria">
             <h2 data-i18n="save.title">Save Slot</h2>
             <p data-testid="save-summary">No save written this session.</p>
@@ -99,50 +130,30 @@
               <button data-testid="load-button" data-i18n="action.load" type="button">Load</button>
             </div>
           </section>
+        </details>
 
-          <section class="flow-panel" aria-label="Flow checklist" data-i18n-attr="aria-label:flow.aria">
-            <h2 data-i18n="flow.title">Flow Checklist</h2>
-            <ol data-testid="flow-checklist">
-              <li data-flow="deploy" data-i18n="flow.deploy">Deploy a valid tape</li>
-              <li data-flow="collect" data-i18n="flow.collect">Collect scrap from the map</li>
-              <li data-flow="tape" data-i18n="flow.tape">Upgrade tape capacity</li>
-              <li data-flow="arena" data-i18n="flow.arena">Preview arena result</li>
-              <li data-flow="offline" data-i18n="flow.offline">Resolve offline projection</li>
-              <li data-flow="hardware" data-i18n="flow.hardware">Upgrade robot hardware</li>
-              <li data-flow="save" data-i18n="flow.save">Save and reload progress</li>
-            </ol>
-          </section>
-        </aside>
-
-        <section class="editor-panel" aria-label="Tape editor" data-i18n-attr="aria-label:tape.aria">
-          <div class="panel-heading">
-            <h2 data-i18n="tape.title">Tape</h2>
-            <span data-testid="capacity-label">Capacity 8</span>
-          </div>
-          <div class="editor-frame">
-            <pre class="line-numbers" data-testid="tape-line-numbers" aria-hidden="true"></pre>
-            <div class="editor-stack">
-              <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
-              <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
-PickUp()
-Check().Has(Scrap)
-IfTrue Goto @Loop
-Move()
-Turn(Right)
-Goto @Loop</textarea>
-              <div class="autocomplete" data-testid="tape-autocomplete" hidden></div>
+        <details class="dev-panel">
+          <summary>Developer Debug</summary>
+          <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
+            <div class="panel-heading">
+              <h2 data-i18n="diff.title">Diff</h2>
+              <span data-testid="diff-count">0 changes</span>
             </div>
-          </div>
-          <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
-          <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
-            <button data-testid="deploy-button" data-i18n="action.deploy" type="button">Deploy</button>
-            <button data-testid="play-button" data-i18n="action.play" type="button">Play</button>
-            <button data-testid="pause-button" type="button">Pause</button>
-            <button data-testid="step-button" data-i18n="action.frame" type="button">Frame</button>
-            <button data-testid="speed-button" type="button">Speed x1</button>
-            <button data-testid="reset-button" data-i18n="action.stop" type="button">Stop</button>
-          </div>
-        </section>
+            <ol data-testid="diff-list"></ol>
+          </section>
+          <section class="offline-panel" hidden aria-label="Offline projection" data-i18n-attr="aria-label:offline.aria">
+            <h2 data-i18n="offline.title">Offline Projection</h2>
+            <p data-testid="offline-summary">No offline projection yet.</p>
+            <button data-testid="offline-button" data-i18n="action.offline" type="button">Fast-forward 24</button>
+          </section>
+        </details>
+      </aside>
+
+      <section class="console-panel" hidden aria-label="Runtime console" data-i18n-attr="aria-label:console.aria">
+        <div class="panel-heading">
+          <h2 data-i18n="console.title">Console</h2>
+        </div>
+        <ol data-testid="console-log"></ol>
       </section>
     </main>
 

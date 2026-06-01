@@ -22,6 +22,7 @@ let playbackTimer = 0;
 let robotNode = null;
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
+let deployedSource = "";
 const flow = {
   deploy: false,
   collect: false,
@@ -151,6 +152,7 @@ const elements = {
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
   languageSwitch: query("language-switch"),
+  objectivesToggle: query("objectives-toggle"),
 };
 
 const i18n = {
@@ -217,6 +219,7 @@ const i18n = {
     "state.compileOk": "Compile OK",
     "state.compileError": "Compile error",
     "capacity": "Capacity {value}",
+    "capacity.short": "Tape capacity",
     "diff.count": "{count} {label}",
     "diff.change": "change",
     "diff.changes": "changes",
@@ -303,6 +306,7 @@ const i18n = {
     "state.compileOk": "编译通过",
     "state.compileError": "编译错误",
     "capacity": "容量 {value}",
+    "capacity.short": "纸带容量",
     "diff.count": "{count} 项变化",
     "diff.change": "项变化",
     "diff.changes": "项变化",
@@ -340,6 +344,7 @@ elements.languageSwitch.addEventListener("click", (event) => {
   render(snapshot(game));
 });
 elements.editor.addEventListener("input", () => {
+  deployedSource = "";
   updateEditorTools();
   updateAutocomplete();
 });
@@ -377,13 +382,19 @@ document.addEventListener("mousedown", (event) => {
   }
 });
 
-elements.deploy.addEventListener("click", () => {
-  stopPlayback(false);
-  const state = deployProgram(game, elements.editor.value);
-  flow.deploy = Boolean(state.program?.ok);
-  updateEditorTools(state.program?.errors ?? []);
-  render(state, { animate: false });
-});
+if (elements.objectivesToggle) {
+  elements.objectivesToggle.addEventListener("click", () => {
+    document.body.dataset.objectivesCollapsed =
+      document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
+  });
+}
+if (elements.deploy) {
+  elements.deploy.addEventListener("click", () => {
+    stopPlayback(false);
+    const state = deployCurrentTape();
+    render(state, { animate: false });
+  });
+}
 elements.play.addEventListener("click", () => startPlayback());
 elements.pause.addEventListener("click", () => togglePause());
 elements.step.addEventListener("click", () => advanceFrame({ manual: true }));
@@ -418,12 +429,14 @@ elements.arena.addEventListener("click", () => {
   flow.arena = Boolean(state.arena);
   render(state, { animate: false });
 });
-elements.offline.addEventListener("click", () => {
-  stopPlayback(false);
-  const state = fastForwardOffline(game, 24);
-  flow.offline = Boolean(state.offline?.ticks);
-  render(state, { animate: false });
-});
+if (elements.offline) {
+  elements.offline.addEventListener("click", () => {
+    stopPlayback(false);
+    const state = fastForwardOffline(game, 24);
+    flow.offline = Boolean(state.offline?.ticks);
+    render(state, { animate: false });
+  });
+}
 elements.save.addEventListener("click", () => {
   stopPlayback(false);
   localStorage.setItem(saveKey, serializeGame(game));
@@ -448,6 +461,7 @@ elements.load.addEventListener("click", () => {
 elements.reset.addEventListener("click", () => {
   stopPlayback(false);
   game = createGame();
+  deployedSource = "";
   saveStatus = { key: "save.reset", values: {} };
   resetFlow();
   render(snapshot(game), { animate: false });
@@ -509,14 +523,11 @@ function render(state, options = {}) {
 }
 
 function startPlayback() {
-  if (!game.program?.ok) {
-    const state = deployProgram(game, elements.editor.value);
-    flow.deploy = Boolean(state.program?.ok);
-    render(state, { animate: false });
-    if (!state.program?.ok) {
-      stopPlayback(false);
-      return;
-    }
+  const deployed = ensureProgramDeployed();
+  if (!deployed.program?.ok) {
+    render(deployed, { animate: false });
+    stopPlayback(false);
+    return;
   }
   playbackMode = "playing";
   updateControls();
@@ -541,6 +552,11 @@ function advanceFrame(options = {}) {
       playbackMode = "paused";
     }
   }
+  const deployed = ensureProgramDeployed();
+  if (!deployed.program?.ok) {
+    render(deployed, { animate: false });
+    return deployed;
+  }
   const before = snapshot(game);
   const state = stepGame(game);
   flow.collect = state.resources.scrap > 0 || state.deposits.length < 3;
@@ -551,6 +567,21 @@ function advanceFrame(options = {}) {
   if (!options.manual && shouldAutoPause(before, state)) {
     pauseForBlock(state);
   }
+  return state;
+}
+
+function ensureProgramDeployed() {
+  if (game.program?.ok && deployedSource === elements.editor.value) {
+    return snapshot(game);
+  }
+  return deployCurrentTape();
+}
+
+function deployCurrentTape() {
+  const state = deployProgram(game, elements.editor.value);
+  deployedSource = elements.editor.value;
+  flow.deploy = Boolean(state.program?.ok);
+  updateEditorTools(state.program?.errors ?? []);
   return state;
 }
 
@@ -630,10 +661,18 @@ function currentSpeedProfile() {
 }
 
 function updateControls() {
-  elements.pause.textContent = playbackMode === "paused" ? t("action.resume") : t("action.pause");
+  elements.play.textContent = "▶";
+  elements.step.textContent = "▸|";
+  elements.reset.textContent = "■";
+  elements.pause.textContent = playbackMode === "paused" ? "▶" : "Ⅱ";
   elements.pause.disabled = playbackMode === "stopped";
   elements.play.disabled = playbackMode === "playing";
-  elements.speed.textContent = t("action.speed", { speed: `x${speeds[speedIndex]}` });
+  elements.speed.textContent = `x${speeds[speedIndex]}`;
+  elements.play.title = t("action.play");
+  elements.step.title = t("action.frame");
+  elements.pause.title = playbackMode === "paused" ? t("action.resume") : t("action.pause");
+  elements.reset.title = t("action.stop");
+  elements.speed.title = t("action.speed", { speed: `x${speeds[speedIndex]}` });
   elements.play.dataset.active = String(playbackMode === "playing");
   elements.pause.dataset.active = String(playbackMode === "paused");
 }
