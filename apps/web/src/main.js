@@ -252,6 +252,7 @@ if (elements.objectivesToggle) {
   elements.objectivesToggle.addEventListener("click", () => {
     document.body.dataset.objectivesCollapsed =
       document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
+    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "[+]" : "[-]";
   });
 }
 if (elements.rightSidebarToggle) {

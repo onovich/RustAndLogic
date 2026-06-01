@@ -90,11 +90,20 @@ try {
     const right = document.querySelector(".right-sidebar").getBoundingClientRect();
     return { editorLeft: editor.left, editorWidth: editor.width, rightWidth: right.width };
   });
+  await expectText(page, "objectives-toggle", "[-]");
   await page.getByTestId("objectives-toggle").click();
   await page.waitForTimeout(240);
+  await expectText(page, "objectives-toggle", "[+]");
   const layoutAfterLeftCollapse = await page.evaluate(() => {
     const editor = document.querySelector(".editor-panel").getBoundingClientRect();
-    return { editorLeft: editor.left, editorWidth: editor.width };
+    const button = document.querySelector('[data-testid="objectives-toggle"]').getBoundingClientRect();
+    const sidebar = document.querySelector(".location-sidebar").getBoundingClientRect();
+    return {
+      editorLeft: editor.left,
+      editorWidth: editor.width,
+      buttonCenter: button.left + button.width / 2,
+      sidebarCenter: sidebar.left + sidebar.width / 2,
+    };
   });
   if (
     layoutAfterLeftCollapse.editorLeft >= layoutBeforeCollapse.editorLeft ||
@@ -106,6 +115,9 @@ try {
         after: layoutAfterLeftCollapse,
       })}`,
     );
+  }
+  if (Math.abs(layoutAfterLeftCollapse.buttonCenter - layoutAfterLeftCollapse.sidebarCenter) > 1) {
+    throw new Error(`Expected collapsed left toggle to be centered, got ${JSON.stringify(layoutAfterLeftCollapse)}`);
   }
   await page.getByTestId("right-sidebar-toggle").click();
   await page.waitForTimeout(240);
