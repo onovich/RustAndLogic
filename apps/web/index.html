@@ -9,9 +9,9 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="brand-lockup">
           <p class="eyebrow" data-i18n="app.eyebrow">TapeScript test harness</p>
-          <h1>Rust & Logic</h1>
+          <h1>Wasteland OS</h1>
         </div>
         <div class="topbar-actions">
           <div class="language-switch" aria-label="Language switch" data-i18n-attr="aria-label:language.aria" data-testid="language-switch">
@@ -27,40 +27,32 @@
       </header>
 
       <section class="workspace" aria-label="Game UI flow" data-i18n-attr="aria-label:workspace.aria">
-        <section class="editor-panel" aria-label="Tape editor" data-i18n-attr="aria-label:tape.aria">
-          <div class="panel-heading">
-            <h2 data-i18n="tape.title">Tape</h2>
-            <span data-testid="capacity-label">Capacity 8</span>
-          </div>
-          <div class="editor-frame">
-            <pre class="line-numbers" data-testid="tape-line-numbers" aria-hidden="true"></pre>
-            <div class="editor-stack">
-              <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
-              <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
-PickUp()
-Check().Has(Scrap)
-IfTrue Goto @Loop
-Move()
-Turn(Right)
-Goto @Loop</textarea>
-              <div class="autocomplete" data-testid="tape-autocomplete" hidden></div>
+        <aside class="left-rail" aria-label="Event feed">
+          <section class="console-panel" aria-label="Runtime console" data-i18n-attr="aria-label:console.aria">
+            <div class="panel-heading">
+              <h2 data-i18n="console.title">Console</h2>
+              <span data-testid="compile-status">Waiting</span>
             </div>
-          </div>
-          <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
-          <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
-            <button data-testid="deploy-button" data-i18n="action.deploy" type="button">Deploy</button>
-            <button data-testid="play-button" data-i18n="action.play" type="button">Play</button>
-            <button data-testid="pause-button" type="button">Pause</button>
-            <button data-testid="step-button" data-i18n="action.frame" type="button">Frame</button>
-            <button data-testid="speed-button" type="button">Speed x1</button>
-            <button data-testid="reset-button" data-i18n="action.stop" type="button">Stop</button>
-          </div>
-        </section>
+            <ol data-testid="console-log"></ol>
+          </section>
+
+          <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
+            <div class="panel-heading">
+              <h2 data-i18n="diff.title">Diff</h2>
+              <span data-testid="diff-count">0 changes</span>
+            </div>
+            <ol data-testid="diff-list"></ol>
+          </section>
+        </aside>
 
         <section class="world-panel" aria-label="World map" data-i18n-attr="aria-label:world.aria">
           <div class="panel-heading">
             <h2 data-i18n="world.title">Scrapyard</h2>
             <span data-testid="robot-position">1,2 E</span>
+          </div>
+          <div class="zone-overlay" aria-hidden="true">
+            <span>Radiation Zone</span>
+            <small>Connection secure</small>
           </div>
           <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
         </section>
@@ -122,20 +114,34 @@ Goto @Loop</textarea>
           </section>
         </aside>
 
-        <section class="console-panel" aria-label="Runtime console" data-i18n-attr="aria-label:console.aria">
+        <section class="editor-panel" aria-label="Tape editor" data-i18n-attr="aria-label:tape.aria">
           <div class="panel-heading">
-            <h2 data-i18n="console.title">Console</h2>
-            <span data-testid="compile-status">Waiting</span>
+            <h2 data-i18n="tape.title">Tape</h2>
+            <span data-testid="capacity-label">Capacity 8</span>
           </div>
-          <ol data-testid="console-log"></ol>
-        </section>
-
-        <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
-          <div class="panel-heading">
-            <h2 data-i18n="diff.title">Diff</h2>
-            <span data-testid="diff-count">0 changes</span>
+          <div class="editor-frame">
+            <pre class="line-numbers" data-testid="tape-line-numbers" aria-hidden="true"></pre>
+            <div class="editor-stack">
+              <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
+              <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
+PickUp()
+Check().Has(Scrap)
+IfTrue Goto @Loop
+Move()
+Turn(Right)
+Goto @Loop</textarea>
+              <div class="autocomplete" data-testid="tape-autocomplete" hidden></div>
+            </div>
           </div>
-          <ol data-testid="diff-list"></ol>
+          <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
+          <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
+            <button data-testid="deploy-button" data-i18n="action.deploy" type="button">Deploy</button>
+            <button data-testid="play-button" data-i18n="action.play" type="button">Play</button>
+            <button data-testid="pause-button" type="button">Pause</button>
+            <button data-testid="step-button" data-i18n="action.frame" type="button">Frame</button>
+            <button data-testid="speed-button" type="button">Speed x1</button>
+            <button data-testid="reset-button" data-i18n="action.stop" type="button">Stop</button>
+          </div>
         </section>
       </section>
     </main>
