@@ -23,10 +23,6 @@
             <li data-flow="save" data-i18n="flow.save">Save and reload progress</li>
           </ol>
         </section>
-        <section class="commander-feed" aria-label="Commander dialogue">
-          <h2>K-6 Commander</h2>
-          <p>"Rain is interfering with uplinks. Keep the logic path tight and the scavenger moving."</p>
-        </section>
       </aside>
 
       <section class="editor-panel" aria-label="Tape editor" data-i18n-attr="aria-label:tape.aria">
@@ -59,7 +55,7 @@ Goto @Loop</textarea>
         <ol class="diagnostics" data-testid="tape-diagnostics"></ol>
       </section>
 
-      <section class="stage-panel" aria-label="Stage view">
+      <section class="stage-panel" aria-label="Stage view" data-mode="story">
         <header class="stage-heading">
           <h2 data-i18n="world.title">Scrapyard</h2>
           <span data-testid="robot-position">1,2 E</span>
@@ -69,11 +65,11 @@ Goto @Loop</textarea>
           <span>Live_Feed</span>
         </div>
         <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
-        <div class="story-dialogue" aria-live="polite">
-          <strong>Coord: 34.981N / 118.220W</strong>
-          <span>Units: active</span>
-          <span>Signal: 88%</span>
-        </div>
+        <button class="story-dialogue" data-testid="story-dialogue" type="button" aria-live="polite">
+          <span class="story-speaker" data-testid="story-speaker">K-6 Commander</span>
+          <span class="story-text" data-testid="story-text"></span>
+          <span class="story-prompt" data-testid="story-prompt"></span>
+        </button>
       </section>
 
       <aside class="right-sidebar" aria-label="Resources and modules" data-i18n-attr="aria-label:side.aria">

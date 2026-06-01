@@ -37,6 +37,16 @@ try {
     throw new Error(`Browser errors before smoke actions: ${pageErrors.join(" | ")}`);
   }
 
+  await page.getByTestId("story-dialogue").waitFor({ state: "visible" });
+  const openingText = await page.getByTestId("story-text").innerText();
+  if (!openingText.includes("satellite uplink")) {
+    throw new Error(`Expected opening story dialogue, got: ${openingText}`);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
+
   await page.locator(".settings-panel").evaluate((details) => {
     details.open = true;
   });

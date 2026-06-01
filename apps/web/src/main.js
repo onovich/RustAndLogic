@@ -23,6 +23,22 @@ let robotNode = null;
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
 let deployedSource = "";
+let storyIndex = 0;
+let storyActive = true;
+const storyPages = [
+  {
+    speaker: "K-6 Commander",
+    text: "Rain is breaking the satellite uplink. Keep the scavenger on a short loop until we recover enough scrap.",
+  },
+  {
+    speaker: "K-6 Commander",
+    text: "The script on the left is your tape. Press play or single-frame after this briefing; the system will compile it on demand.",
+  },
+  {
+    speaker: "K-6 Commander",
+    text: "Recover the nearby scrap, upgrade tape capacity, then we can route you toward the next unlocked site.",
+  },
+];
 const flow = {
   deploy: false,
   collect: false,
@@ -153,6 +169,11 @@ const elements = {
   flowChecklist: query("flow-checklist"),
   languageSwitch: query("language-switch"),
   objectivesToggle: query("objectives-toggle"),
+  stage: document.querySelector(".stage-panel"),
+  storyDialogue: query("story-dialogue"),
+  storySpeaker: query("story-speaker"),
+  storyText: query("story-text"),
+  storyPrompt: query("story-prompt"),
 };
 
 const i18n = {
@@ -388,6 +409,9 @@ if (elements.objectivesToggle) {
       document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
   });
 }
+if (elements.storyDialogue) {
+  elements.storyDialogue.addEventListener("click", advanceStory);
+}
 if (elements.deploy) {
   elements.deploy.addEventListener("click", () => {
     stopPlayback(false);
@@ -469,6 +493,7 @@ elements.reset.addEventListener("click", () => {
 
 applyLanguage();
 updateEditorTools();
+renderStoryDialogue();
 render(snapshot(game), { animate: false });
 
 function render(state, options = {}) {
@@ -519,10 +544,14 @@ function render(state, options = {}) {
   renderLog(state.logs);
   renderDiff(diff);
   renderFlow();
+  renderStoryDialogue();
   updateControls();
 }
 
 function startPlayback() {
+  if (storyActive) {
+    return;
+  }
   const deployed = ensureProgramDeployed();
   if (!deployed.program?.ok) {
     render(deployed, { animate: false });
@@ -546,6 +575,9 @@ function togglePause() {
 }
 
 function advanceFrame(options = {}) {
+  if (storyActive) {
+    return snapshot(game);
+  }
   if (options.manual) {
     clearPlaybackTimer();
     if (playbackMode === "playing") {
@@ -607,6 +639,42 @@ function pauseForBlock(state) {
   updateControls();
 }
 
+function advanceStory() {
+  if (!storyActive) {
+    return;
+  }
+  storyIndex += 1;
+  if (storyIndex >= storyPages.length) {
+    storyActive = false;
+    if (elements.stage) {
+      elements.stage.dataset.mode = "idle";
+    }
+    if (elements.storyDialogue) {
+      elements.storyDialogue.hidden = true;
+    }
+    updateControls();
+    return;
+  }
+  renderStoryDialogue();
+}
+
+function renderStoryDialogue() {
+  if (!elements.storyDialogue || !elements.storyText || !elements.storySpeaker || !elements.storyPrompt || !elements.stage) {
+    return;
+  }
+  if (!storyActive) {
+    elements.stage.dataset.mode = "idle";
+    elements.storyDialogue.hidden = true;
+    return;
+  }
+  const page = storyPages[storyIndex];
+  elements.stage.dataset.mode = "story";
+  elements.storyDialogue.hidden = false;
+  elements.storySpeaker.textContent = page.speaker;
+  elements.storyText.textContent = page.text;
+  elements.storyPrompt.textContent = storyIndex === storyPages.length - 1 ? "Click to begin idle mode" : "Click to continue";
+}
+
 function shouldAutoPause(before, state) {
   if (!state.program?.ok || state.vm?.state === "Fault" || state.vm?.state === "Halted") {
     return true;
@@ -665,8 +733,10 @@ function updateControls() {
   elements.step.textContent = "▸|";
   elements.reset.textContent = "■";
   elements.pause.textContent = playbackMode === "paused" ? "▶" : "Ⅱ";
-  elements.pause.disabled = playbackMode === "stopped";
-  elements.play.disabled = playbackMode === "playing";
+  elements.pause.disabled = playbackMode === "stopped" || storyActive;
+  elements.play.disabled = playbackMode === "playing" || storyActive;
+  elements.step.disabled = storyActive;
+  elements.speed.disabled = storyActive;
   elements.speed.textContent = `x${speeds[speedIndex]}`;
   elements.play.title = t("action.play");
   elements.step.title = t("action.frame");
