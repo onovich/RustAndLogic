@@ -44,6 +44,9 @@ PickUp
   assert.equal(overCapacity.ok, false);
   assert.match(overCapacity.errors[0].message, /Tape capacity exceeded/);
 
+  const moveBack = compileTapeScript("MoveBack", { tapeCapacity: 1 });
+  assert.equal(moveBack.ok, true);
+
   const missingLabel = compileTapeScript("Jump @Missing", { tapeCapacity: 3 });
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
@@ -152,4 +155,32 @@ Jump @Loop`;
   const resumed = stepGame(restored);
   assert.equal(resumed.tick, game.tick + 1);
   assert.equal(resumed.program.ok, true);
+
+  const movementGame = createGame();
+  state = deployProgram(movementGame, "MoveBack");
+  state = stepGame(movementGame);
+  assert.equal(state.robot.x, 0);
+  assert.equal(state.robot.y, 2);
+  assert.equal(state.robot.dir, "E");
+
+  const cargoGame = createGame();
+  state = deployProgram(cargoGame, "PickUp\nDrop");
+  state = stepGame(cargoGame);
+  assert.equal(state.resources.scrap, 1);
+  assert.equal(state.robot.cargo.length, 1);
+  state = stepGame(cargoGame);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.robot.cargo.length, 0);
+  assert.equal(state.deposits.some((deposit) => deposit.type === "scrap" && deposit.x === 1 && deposit.y === 2), true);
+
+  const fireGame = createGame();
+  fireGame.tick = 6;
+  state = deployProgram(fireGame, "Fire");
+  state = stepGame(fireGame);
+  assert.equal(state.logs.includes("Fire: Weapon relay discharged."), true);
+
+  const missGame = createGame();
+  state = deployProgram(missGame, "Fire");
+  state = stepGame(missGame);
+  assert.equal(state.logs.includes("Fire: No target lock."), true);
 }

@@ -41,11 +41,12 @@ const speedProfiles = {
   5: { interval: 170, duration: 130 },
   10: { interval: 90, duration: 70 },
 };
-const tapeActions = new Set(["MoveForward", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
+const tapeActions = new Set(["MoveForward", "MoveBack", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
 const tapeQueries = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
 const tapeBranches = new Set(["Jump", "JumpIfTrue", "JumpIfFalse"]);
 const tapeCompletions = [
   { value: "MoveForward", kind: "Action", hint: "Move + Forward" },
+  { value: "MoveBack", kind: "Action", hint: "Move + Back" },
   { value: "TurnLeft", kind: "Action", hint: "Turn + Left" },
   { value: "TurnRight", kind: "Action", hint: "Turn + Right" },
   { value: "PickUp", kind: "Action", hint: "Pick + Up" },
@@ -531,6 +532,10 @@ function shouldAutoPause(before, state) {
   const latestLog = state.logs[0] ?? "";
   if (
     latestLog.includes("Blocked by boundary") ||
+    latestLog.includes("Nothing in reach") ||
+    latestLog.includes("No cargo to drop") ||
+    latestLog.includes("Drop blocked") ||
+    latestLog.includes("No target lock") ||
     latestLog.includes("No tape deployed") ||
     latestLog.includes("Unknown action") ||
     latestLog.includes("Logic Overload") ||

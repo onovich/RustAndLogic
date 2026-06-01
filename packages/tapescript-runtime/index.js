@@ -1,4 +1,4 @@
-const ACTIONS = new Set(["MoveForward", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
+const ACTIONS = new Set(["MoveForward", "MoveBack", "TurnLeft", "TurnRight", "PickUp", "Drop", "Fire"]);
 const QUERIES = new Set(["CheckScrap", "CheckEnemy", "CheckHP_Low"]);
 
 export function compileTapeScript(source, options = {}) {
@@ -167,4 +167,3 @@ export function executeUntilPhysical(program, vm, hardware, options = {}) {
   events.push({ type: "fault", message: vm.fault });
   return { status: "fault", events };
 }
-

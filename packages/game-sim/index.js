@@ -248,7 +248,7 @@ function makeHardware(game) {
         return Boolean(findDeposit(game, aheadOf(game), "scrap"));
       }
       if (op === "CheckEnemy") {
-        return game.tick % 7 === 6;
+        return hasEnemySignal(game);
       }
       if (op === "CheckHP_Low") {
         return game.robot.hp <= 3;
@@ -257,7 +257,10 @@ function makeHardware(game) {
     },
     action(op) {
       if (op === "MoveForward") {
-        return moveForward(game);
+        return move(game, 1);
+      }
+      if (op === "MoveBack") {
+        return move(game, -1);
       }
       if (op === "TurnLeft" || op === "TurnRight") {
         return turn(game, op === "TurnRight" ? 1 : -1);
@@ -266,23 +269,23 @@ function makeHardware(game) {
         return pickUp(game);
       }
       if (op === "Drop") {
-        return { ok: true, message: "Cargo clamps opened." };
+        return dropCargo(game);
       }
       if (op === "Fire") {
-        return { ok: true, message: "Weapon relay discharged." };
+        return fireWeapon(game);
       }
       return { ok: false, message: `Unknown action ${op}.` };
     },
   };
 }
 
-function aheadOf(game) {
+function aheadOf(game, distance = 1) {
   const delta = DELTAS[game.robot.dir];
-  return { x: game.robot.x + delta.x, y: game.robot.y + delta.y };
+  return { x: game.robot.x + delta.x * distance, y: game.robot.y + delta.y * distance };
 }
 
-function moveForward(game) {
-  const next = aheadOf(game);
+function move(game, distance) {
+  const next = aheadOf(game, distance);
   if (next.x < 0 || next.y < 0 || next.x >= game.width || next.y >= game.height) {
     return { ok: false, message: "Blocked by boundary." };
   }
@@ -310,6 +313,36 @@ function pickUp(game) {
     return { ok: true, message: `Collected ${deposit.type}.` };
   }
   return { ok: false, message: "Nothing in reach." };
+}
+
+function dropCargo(game) {
+  const cargo = game.robot.cargo.pop();
+  if (!cargo) {
+    return { ok: false, message: "No cargo to drop." };
+  }
+  if (findDeposit(game, game.robot)) {
+    game.robot.cargo.push(cargo);
+    return { ok: false, message: "Drop blocked by occupied cell." };
+  }
+  game.resources[cargo] = Math.max(0, (game.resources[cargo] ?? 0) - 1);
+  game.deposits.push({
+    id: `dropped-${cargo}-${game.tick}-${game.deposits.length}`,
+    type: cargo,
+    x: game.robot.x,
+    y: game.robot.y,
+  });
+  return { ok: true, message: `Dropped ${cargo}.` };
+}
+
+function fireWeapon(game) {
+  if (!hasEnemySignal(game)) {
+    return { ok: false, message: "No target lock." };
+  }
+  return { ok: true, message: "Weapon relay discharged." };
+}
+
+function hasEnemySignal(game) {
+  return game.tick % 7 === 6;
 }
 
 function findDeposit(game, location, type = "") {

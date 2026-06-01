@@ -96,6 +96,13 @@ try {
     throw new Error(`Expected segmented Scrap suggestion for Scr, got: ${segmentSuggestion}`);
   }
 
+  await page.getByTestId("tape-editor").fill("Back");
+  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
+  const backSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  if (!backSuggestion.includes("MoveBack")) {
+    throw new Error(`Expected segmented Back suggestion for MoveBack, got: ${backSuggestion}`);
+  }
+
   await page.getByTestId("tape-editor").fill("@Loop\nJump ");
   await page.getByTestId("tape-editor").evaluate((editor) => {
     editor.focus();
