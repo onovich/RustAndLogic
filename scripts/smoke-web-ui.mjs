@@ -120,7 +120,12 @@ try {
   await page.getByTestId("right-sidebar-toggle").click();
   await page.waitForTimeout(240);
 
+  await page.waitForFunction(() => document.querySelector('[data-testid="world-canvas"]')?.dataset.camera === "ready");
   const transformBeforeCanvasMove = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
+  const defaultScale = parseScale(transformBeforeCanvasMove);
+  if (defaultScale < 0.6 || defaultScale > 2.1) {
+    throw new Error(`Expected default camera scale to fit the map with margins, got: ${transformBeforeCanvasMove}`);
+  }
   const canvasBox = await page.getByTestId("world-canvas").boundingBox();
   await page.mouse.move(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2);
   await page.mouse.down();
@@ -130,6 +135,15 @@ try {
   const transformAfterCanvasMove = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
   if (transformAfterCanvasMove === transformBeforeCanvasMove || !transformAfterCanvasMove.includes("scale(")) {
     throw new Error(`Expected infinite canvas pan/zoom transform, got: ${transformAfterCanvasMove}`);
+  }
+  await page.mouse.move(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + canvasBox.width / 2 + 5000, canvasBox.y + canvasBox.height / 2 + 5000);
+  await page.mouse.up();
+  await page.mouse.wheel(0, -8000);
+  const clampedTransform = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
+  if (parseTranslateMagnitude(clampedTransform) > 520 || parseScale(clampedTransform) > 2.1) {
+    throw new Error(`Expected canvas pan/zoom to be clamped, got: ${clampedTransform}`);
   }
 
   const editorMetrics = await page.evaluate(() => {
@@ -294,4 +308,13 @@ async function expectValue(page, testId, expected) {
   if (value !== expected) {
     throw new Error(`Expected ${testId} value to be ${expected}, got ${value}`);
   }
+}
+
+function parseScale(transform) {
+  return Number(transform.match(/scale\(([-\d.]+)\)/)?.[1] ?? 0);
+}
+
+function parseTranslateMagnitude(transform) {
+  const matches = [...transform.matchAll(/([-]?\d+(?:\.\d+)?)px/g)].map((match) => Math.abs(Number(match[1])));
+  return Math.max(0, ...matches);
 }

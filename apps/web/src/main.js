@@ -30,6 +30,11 @@ const canvasState = {
   x: 0,
   y: 0,
   scale: 1,
+  targetScale: 1,
+  minScale: 0.75,
+  maxScale: 1.8,
+  introPlayed: false,
+  introActive: false,
   pointerId: null,
   dragStartX: 0,
   dragStartY: 0,
@@ -68,6 +73,7 @@ const elements = {
   grid: query("world-grid"),
   canvasViewport: query("world-canvas"),
   canvasWorld: query("world-canvas-world"),
+  playfieldBarrier: document.querySelector(".playfield-barrier"),
   tick: query("tick"),
   tapeUsage: query("tape-usage"),
   vmState: query("vm-state"),
@@ -261,6 +267,7 @@ if (elements.canvasViewport) {
   elements.canvasViewport.addEventListener("pointerup", endCanvasDrag);
   elements.canvasViewport.addEventListener("pointercancel", endCanvasDrag);
   elements.canvasViewport.addEventListener("wheel", zoomCanvas, { passive: false });
+  window.addEventListener("resize", refreshCanvasCameraBounds);
 }
 if (elements.storyDialogue) {
   elements.storyDialogue.addEventListener("click", advanceStory);
@@ -899,7 +906,7 @@ function escapeHtml(value) {
 }
 
 function beginCanvasDrag(event) {
-  if (!elements.canvasViewport || event.button !== 0) {
+  if (!elements.canvasViewport || canvasState.introActive || event.button !== 0) {
     return;
   }
   canvasState.pointerId = event.pointerId;
@@ -917,6 +924,7 @@ function dragCanvas(event) {
   }
   canvasState.x = canvasState.originX + event.clientX - canvasState.dragStartX;
   canvasState.y = canvasState.originY + event.clientY - canvasState.dragStartY;
+  clampCanvasOffset();
   applyCanvasTransform();
 }
 
@@ -936,14 +944,18 @@ function zoomCanvas(event) {
     return;
   }
   event.preventDefault();
+  if (canvasState.introActive) {
+    return;
+  }
   const rect = elements.canvasViewport.getBoundingClientRect();
   const beforeScale = canvasState.scale;
-  const nextScale = clamp(beforeScale * (event.deltaY < 0 ? 1.12 : 0.88), 0.55, 2.4);
+  const nextScale = clamp(beforeScale * (event.deltaY < 0 ? 1.12 : 0.88), canvasState.minScale, canvasState.maxScale);
   const anchorX = event.clientX - rect.left - rect.width / 2;
   const anchorY = event.clientY - rect.top - rect.height / 2;
   canvasState.x = anchorX - ((anchorX - canvasState.x) / beforeScale) * nextScale;
   canvasState.y = anchorY - ((anchorY - canvasState.y) / beforeScale) * nextScale;
   canvasState.scale = nextScale;
+  clampCanvasOffset();
   applyCanvasTransform();
 }
 
@@ -953,6 +965,100 @@ function applyCanvasTransform() {
   }
   elements.canvasWorld.style.transform =
     `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y}px)) scale(${canvasState.scale})`;
+}
+
+function setupCanvasCamera() {
+  const target = getRecommendedCamera();
+  if (!target) {
+    return;
+  }
+  canvasState.targetScale = target.scale;
+  canvasState.minScale = target.minScale;
+  canvasState.maxScale = target.maxScale;
+  if (canvasState.introPlayed) {
+    clampCanvasOffset();
+    applyCanvasTransform();
+    return;
+  }
+
+  canvasState.introPlayed = true;
+  canvasState.introActive = true;
+  elements.canvasViewport.dataset.camera = "intro";
+  canvasState.scale = target.scale * 0.94;
+  canvasState.x = -22;
+  canvasState.y = 16;
+  clampCanvasOffset();
+  elements.canvasWorld.style.transition = "transform 680ms cubic-bezier(0.22, 1, 0.36, 1)";
+  applyCanvasTransform();
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      canvasState.scale = target.scale;
+      canvasState.x = 0;
+      canvasState.y = 0;
+      applyCanvasTransform();
+    });
+  });
+
+  window.setTimeout(() => {
+    canvasState.introActive = false;
+    elements.canvasViewport.dataset.camera = "ready";
+    elements.canvasWorld.style.transition = "";
+    clampCanvasOffset();
+    applyCanvasTransform();
+  }, 760);
+}
+
+function refreshCanvasCameraBounds() {
+  const target = getRecommendedCamera();
+  if (!target) {
+    return;
+  }
+  canvasState.targetScale = target.scale;
+  canvasState.minScale = target.minScale;
+  canvasState.maxScale = target.maxScale;
+  canvasState.scale = clamp(canvasState.scale, canvasState.minScale, canvasState.maxScale);
+  clampCanvasOffset();
+  applyCanvasTransform();
+}
+
+function getRecommendedCamera() {
+  if (!elements.canvasViewport || !elements.playfieldBarrier) {
+    return null;
+  }
+  const viewportWidth = elements.canvasViewport.clientWidth;
+  const viewportHeight = elements.canvasViewport.clientHeight;
+  const playfieldWidth = elements.playfieldBarrier.offsetWidth + 96;
+  const playfieldHeight = elements.playfieldBarrier.offsetHeight + 96;
+  if (!viewportWidth || !viewportHeight || !playfieldWidth || !playfieldHeight) {
+    return null;
+  }
+  const marginX = clamp(viewportWidth * 0.18, 96, 180);
+  const marginY = clamp(viewportHeight * 0.18, 76, 150);
+  const fitScale = Math.min(
+    (viewportWidth - marginX * 2) / playfieldWidth,
+    (viewportHeight - marginY * 2) / playfieldHeight,
+  );
+  const scale = clamp(fitScale, 0.88, 1.48);
+  return {
+    scale,
+    minScale: clamp(scale * 0.72, 0.62, 1.12),
+    maxScale: clamp(scale * 1.42, 1.25, 2.1),
+  };
+}
+
+function clampCanvasOffset() {
+  if (!elements.canvasViewport || !elements.playfieldBarrier) {
+    return;
+  }
+  const viewportWidth = elements.canvasViewport.clientWidth;
+  const viewportHeight = elements.canvasViewport.clientHeight;
+  const playfieldWidth = (elements.playfieldBarrier.offsetWidth + 96) * canvasState.scale;
+  const playfieldHeight = (elements.playfieldBarrier.offsetHeight + 96) * canvasState.scale;
+  const maxX = Math.max(72, (playfieldWidth - viewportWidth) / 2 + 148);
+  const maxY = Math.max(72, (playfieldHeight - viewportHeight) / 2 + 128);
+  canvasState.x = clamp(canvasState.x, -maxX, maxX);
+  canvasState.y = clamp(canvasState.y, -maxY, maxY);
 }
 
 function clamp(value, min, max) {
@@ -1002,6 +1108,7 @@ function renderGrid(state, beforeState, options = {}) {
     }
   }
   renderRobot(state, options);
+  setupCanvasCamera();
   if (options.animate !== false) {
     for (const deposit of removedDeposits) {
       animatePickup(deposit, state.robot, options.animationDuration);

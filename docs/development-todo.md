@@ -48,6 +48,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add a root `RunWebUI.cmd` command for manual browser testing.
 - [x] Make Web UI data loading tolerate both current and previously running static server asset paths.
 - [x] Redesign map symbols and barrier styling toward a quieter minimalist wabi-sabi visual language.
+- [x] Add a constrained intro camera for the map canvas with brighter stage rendering.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
