@@ -37,12 +37,12 @@
             <div class="editor-stack">
               <pre class="tape-highlight" data-testid="tape-highlight" aria-hidden="true"></pre>
               <textarea data-testid="tape-editor" spellcheck="false" title="Ctrl-click @Label to jump">@Loop
-PickUp
-CheckScrap
-JumpIfTrue @Loop
-MoveForward
-TurnRight
-Jump @Loop</textarea>
+PickUp()
+Check().Has(Scrap)
+IfTrue Goto @Loop
+Move()
+Turn(Right)
+Goto @Loop</textarea>
               <div class="autocomplete" data-testid="tape-autocomplete" hidden></div>
             </div>
           </div>

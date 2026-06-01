@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { compileTapeScript, createVm, executeUntilPhysical } from "../packages/tapescript-runtime/index.js";
+import { compileTapeScript, createVm, describeInstruction, executeUntilPhysical } from "../packages/tapescript-runtime/index.js";
 import {
   createGame,
   deployProgram,
@@ -25,62 +25,66 @@ function testCompiler() {
   const program = compileTapeScript(`
 // comments do not consume tape
 @Loop
-CheckScrap
-JumpIfTrue @Grab
-MoveForward
-Jump @Loop
+Check().Has(Scrap)
+IfTrue Goto @Grab
+Move()
+Goto @Loop
 @Grab
-PickUp
+PickUp()
 `, { tapeCapacity: 7 });
 
   assert.equal(program.ok, true);
   assert.equal(program.tapeUsed, 7);
   assert.equal(program.labels.Loop, 0);
   assert.equal(program.labels.Grab, 5);
-  assert.equal(program.instructions[2].target, 5);
+  assert.equal(program.instructions[2].inner.target, 5);
   assert.equal(program.instructions[4].target, 0);
 
-  const overCapacity = compileTapeScript("MoveForward\nTurnLeft", { tapeCapacity: 1 });
+  const overCapacity = compileTapeScript("Move()\nTurn(Left)", { tapeCapacity: 1 });
   assert.equal(overCapacity.ok, false);
   assert.match(overCapacity.errors[0].message, /Tape capacity exceeded/);
 
-  const moveBack = compileTapeScript("MoveBack", { tapeCapacity: 1 });
+  const moveBack = compileTapeScript("Move(Back)", { tapeCapacity: 1 });
   assert.equal(moveBack.ok, true);
 
-  const missingLabel = compileTapeScript("Jump @Missing", { tapeCapacity: 3 });
+  const missingLabel = compileTapeScript("Goto @Missing", { tapeCapacity: 3 });
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
+
+  const oldSyntax = compileTapeScript("MoveForward\nCheckScrap\nJumpIfTrue @Loop", { tapeCapacity: 8 });
+  assert.equal(oldSyntax.ok, false);
+  assert.equal(oldSyntax.errors.some((error) => error.message.includes("Unknown instruction: MoveForward")), true);
 }
 
 function testVmExecution() {
   const program = compileTapeScript(`
 @Loop
-CheckScrap
-JumpIfTrue @Grab
-MoveForward
+Check().Has(Scrap)
+IfTrue Goto @Grab
+Move()
 @Grab
-PickUp
+PickUp()
 `, { tapeCapacity: 8 });
   const vm = createVm(program);
   const calls = [];
   const hardware = {
     query(op) {
-      calls.push(op);
+      calls.push(describeInstruction(op));
       return true;
     },
     action(op) {
-      calls.push(op);
+      calls.push(describeInstruction(op));
       return { ok: true, message: "picked" };
     },
   };
 
   const result = executeUntilPhysical(program, vm, hardware, { maxLogicSteps: 8 });
   assert.equal(result.status, "suspended");
-  assert.deepEqual(calls, ["CheckScrap", "PickUp"]);
+  assert.deepEqual(calls, ["Check().Has(Scrap)", "PickUp()"]);
   assert.equal(vm.pc, 6);
   assert.equal(vm.state, "Suspended");
 
-  const infinite = compileTapeScript("@Loop\nJump @Loop", { tapeCapacity: 2 });
+  const infinite = compileTapeScript("@Loop\nGoto @Loop", { tapeCapacity: 2 });
   const infiniteVm = createVm(infinite);
   const overload = executeUntilPhysical(infinite, infiniteVm, hardware, { maxLogicSteps: 3 });
   assert.equal(overload.status, "fault");
@@ -90,12 +94,12 @@ PickUp
 function testGameSimulation() {
   const game = createGame();
   const source = `@Loop
-PickUp
-CheckScrap
-JumpIfTrue @Loop
-MoveForward
-TurnRight
-Jump @Loop`;
+PickUp()
+Check().Has(Scrap)
+IfTrue Goto @Loop
+Move()
+Turn(Right)
+Goto @Loop`;
 
   let state = deployProgram(game, source);
   assert.equal(state.program.ok, true);
@@ -157,14 +161,14 @@ Jump @Loop`;
   assert.equal(resumed.program.ok, true);
 
   const movementGame = createGame();
-  state = deployProgram(movementGame, "MoveBack");
+  state = deployProgram(movementGame, "Move(Back)");
   state = stepGame(movementGame);
   assert.equal(state.robot.x, 0);
   assert.equal(state.robot.y, 2);
   assert.equal(state.robot.dir, "E");
 
   const cargoGame = createGame();
-  state = deployProgram(cargoGame, "PickUp\nDrop");
+  state = deployProgram(cargoGame, "PickUp()\nDrop()");
   state = stepGame(cargoGame);
   assert.equal(state.resources.scrap, 1);
   assert.equal(state.robot.cargo.length, 1);
@@ -175,52 +179,52 @@ Jump @Loop`;
 
   const footPickupGame = createGame();
   footPickupGame.deposits = [{ id: "underfoot", type: "scrap", x: 1, y: 2 }];
-  state = deployProgram(footPickupGame, "PickUp");
+  state = deployProgram(footPickupGame, "PickUp()");
   state = stepGame(footPickupGame);
   assert.equal(state.resources.scrap, 0);
-  assert.equal(state.logs.includes("PickUp: Nothing ahead to pick up."), true);
+  assert.equal(state.logs.includes("PickUp(): Nothing ahead to pick up."), true);
 
   const occupiedDropGame = createGame();
   occupiedDropGame.robot.cargo.push("scrap");
   occupiedDropGame.resources.scrap = 1;
   occupiedDropGame.deposits = [{ id: "front", type: "cell", x: 2, y: 2 }];
-  state = deployProgram(occupiedDropGame, "Drop");
+  state = deployProgram(occupiedDropGame, "Drop()");
   state = stepGame(occupiedDropGame);
   assert.equal(state.robot.cargo.length, 1);
   assert.equal(state.resources.scrap, 1);
-  assert.equal(state.logs.includes("Drop: Drop blocked by occupied cell."), true);
+  assert.equal(state.logs.includes("Drop(): Drop blocked by occupied cell."), true);
 
   const fireGame = createGame();
   fireGame.tick = 6;
-  state = deployProgram(fireGame, "Fire");
+  state = deployProgram(fireGame, "Fire()");
   state = stepGame(fireGame);
-  assert.equal(state.logs.includes("Fire: Weapon relay discharged."), true);
+  assert.equal(state.logs.includes("Fire(): Weapon relay discharged."), true);
 
   const missGame = createGame();
-  state = deployProgram(missGame, "Fire");
+  state = deployProgram(missGame, "Fire()");
   state = stepGame(missGame);
-  assert.equal(state.logs.includes("Fire: No target lock."), true);
+  assert.equal(state.logs.includes("Fire(): No target lock."), true);
 
   const queryGame = createGame();
   queryGame.deposits = [{ id: "front-cell", type: "cell", x: 2, y: 2 }];
-  state = deployProgram(queryGame, "CheckCell");
+  state = deployProgram(queryGame, "Check().Has(Battery)");
   state = stepGame(queryGame);
   assert.equal(state.vm.cf, true);
 
   const wallGame = createGame();
   wallGame.robot.x = 0;
   wallGame.robot.dir = "W";
-  state = deployProgram(wallGame, "CheckWall");
+  state = deployProgram(wallGame, "Check().Is(Wall)");
   state = stepGame(wallGame);
   assert.equal(state.vm.cf, true);
 
   const emptyGame = createGame();
   emptyGame.deposits = [];
-  state = deployProgram(emptyGame, "CheckEmpty");
+  state = deployProgram(emptyGame, "Check().IsEmpty()");
   state = stepGame(emptyGame);
   assert.equal(state.vm.cf, true);
 
-  for (const query of ["CheckCargo", "CheckCargoFull", "CheckCargoScrap", "CheckCargoCell"]) {
+  for (const query of ["Check(Cargo).Any()", "Check(Cargo).IsFull()", "Check(Cargo).Has(Scrap)", "Check(Cargo).Has(Battery)"]) {
     const cargoQueryGame = createGame();
     cargoQueryGame.robot.cargo = ["scrap", "cell", "scrap"];
     state = deployProgram(cargoQueryGame, query);
@@ -231,18 +235,18 @@ Jump @Loop`;
   const homeGame = createGame();
   homeGame.robot.x = 0;
   homeGame.robot.y = 0;
-  state = deployProgram(homeGame, "CheckHome");
+  state = deployProgram(homeGame, "Check(Here).Is(Home)");
   state = stepGame(homeGame);
   assert.equal(state.vm.cf, true);
 
   const damageGame = createGame();
   damageGame.lastDamageTick = 0;
-  state = deployProgram(damageGame, "CheckDamage");
+  state = deployProgram(damageGame, "Check(Damage).Above(0)");
   state = stepGame(damageGame);
   assert.equal(state.vm.cf, true);
 
   const turnAroundGame = createGame();
-  state = deployProgram(turnAroundGame, "TurnAround");
+  state = deployProgram(turnAroundGame, "Turn(Around)");
   state = stepGame(turnAroundGame);
   assert.equal(state.robot.dir, "W");
 
@@ -251,22 +255,22 @@ Jump @Loop`;
   homeMoveGame.robot.x = 1;
   homeMoveGame.robot.y = 0;
   homeMoveGame.robot.dir = "E";
-  state = deployProgram(homeMoveGame, "MoveTowardHome");
+  state = deployProgram(homeMoveGame, "MoveToward(Home)");
   state = stepGame(homeMoveGame);
   assert.equal(state.robot.x, 0);
   assert.equal(state.robot.y, 0);
   assert.equal(state.robot.dir, "W");
 
   const waitGame = createGame();
-  state = deployProgram(waitGame, "Wait");
+  state = deployProgram(waitGame, "Wait()");
   state = stepGame(waitGame);
-  assert.equal(state.logs.includes("Wait: Waited."), true);
+  assert.equal(state.logs.includes("Wait(): Waited."), true);
 
   const repairGame = createGame();
   repairGame.robot.hp = 5;
   repairGame.resources.scrap = 1;
   repairGame.robot.cargo = ["scrap"];
-  state = deployProgram(repairGame, "Repair");
+  state = deployProgram(repairGame, "Repair()");
   state = stepGame(repairGame);
   assert.equal(state.robot.hp, 7);
   assert.equal(state.resources.scrap, 0);
@@ -276,8 +280,8 @@ Jump @Loop`;
   unloadGame.robot.x = 0;
   unloadGame.robot.y = 0;
   unloadGame.robot.cargo = ["scrap", "cell"];
-  state = deployProgram(unloadGame, "Unload");
+  state = deployProgram(unloadGame, "Unload(Home)");
   state = stepGame(unloadGame);
   assert.equal(state.robot.cargo.length, 0);
-  assert.equal(state.logs.includes("Unload: Unloaded 2 cargo."), true);
+  assert.equal(state.logs.includes("Unload(Home): Unloaded 2 cargo."), true);
 }

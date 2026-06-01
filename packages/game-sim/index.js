@@ -132,7 +132,7 @@ export function upgradeHardware(game, module) {
 
   if (module === "weapon") {
     if (game.resources.cells < 1) {
-      game.logs.unshift("Weapon upgrade blocked: requires 1 cell.");
+      game.logs.unshift("Weapon upgrade blocked: requires 1 battery.");
       return snapshot(game);
     }
     spendResource(game, "cells", 1);
@@ -157,7 +157,7 @@ export function previewArena(game) {
     enemyScore: enemy,
     result: victory ? "Victory" : "Defeat",
     summary: victory
-      ? "The robot survived the ladder ghost and recovered a data cell."
+      ? "The robot survived the ladder ghost and recovered a battery."
       : "The opponent forced a logic fault before extraction.",
   };
   if (victory) {
@@ -191,9 +191,9 @@ export function fastForwardOffline(game, ticks = 24) {
     ticks: safeTicks,
     scrap,
     cells,
-    summary: `Fast-forwarded ${safeTicks} ticks and recovered ${scrap} scrap${cells > 0 ? ` plus ${cells} cells` : ""}.`,
+    summary: `Fast-forwarded ${safeTicks} ticks and recovered ${scrap} scrap${cells > 0 ? ` plus ${cells} batteries` : ""}.`,
   };
-  game.logs.unshift(`Offline projection: +${scrap} scrap, +${cells} cells over ${safeTicks} ticks.`);
+  game.logs.unshift(`Offline projection: +${scrap} scrap, +${cells} batteries over ${safeTicks} ticks.`);
   return snapshot(game);
 }
 
@@ -255,82 +255,102 @@ export function diffSnapshots(before, after) {
 
 function makeHardware(game) {
   return {
-    query(op) {
-      if (op === "CheckScrap") {
-        return Boolean(findDeposit(game, aheadOf(game), "scrap"));
+    query(instruction) {
+      if (instruction.target === "Cargo") {
+        if (instruction.predicate === "Any") {
+          return game.robot.cargo.length > 0;
+        }
+        if (instruction.predicate === "IsFull") {
+          return game.robot.cargo.length >= game.cargoCapacity;
+        }
+        if (instruction.predicate === "Has") {
+          return game.robot.cargo.includes(itemType(instruction.value));
+        }
       }
-      if (op === "CheckCell") {
-        return Boolean(findDeposit(game, aheadOf(game), "cell"));
+      if (instruction.target === "HP") {
+        return compareNumber(game.robot.hp, instruction.predicate, instruction.value);
       }
-      if (op === "CheckWall") {
-        return isBlocked(game, aheadOf(game), { includeDeposits: false });
+      if (instruction.target === "Damage") {
+        const damage = game.lastDamageTick === game.tick ? 1 : 0;
+        return compareNumber(damage, instruction.predicate, instruction.value);
       }
-      if (op === "CheckEmpty") {
-        return isEmpty(game, aheadOf(game));
+
+      const location = targetLocation(game, instruction.target);
+      if (instruction.predicate === "Has") {
+        if (instruction.value === "Enemy") {
+          return hasEnemySignal(game);
+        }
+        return Boolean(findDeposit(game, location, itemType(instruction.value)));
       }
-      if (op === "CheckEnemy") {
-        return hasEnemySignal(game);
+      if (instruction.predicate === "Is") {
+        if (instruction.value === "Wall") {
+          return isBlocked(game, location, { includeDeposits: false });
+        }
+        if (instruction.value === "Home") {
+          return isHome(game, location);
+        }
       }
-      if (op === "CheckHP_Low") {
-        return game.robot.hp <= 3;
-      }
-      if (op === "CheckCargo") {
-        return game.robot.cargo.length > 0;
-      }
-      if (op === "CheckCargoFull") {
-        return game.robot.cargo.length >= game.cargoCapacity;
-      }
-      if (op === "CheckCargoScrap") {
-        return game.robot.cargo.includes("scrap");
-      }
-      if (op === "CheckCargoCell") {
-        return game.robot.cargo.includes("cell");
-      }
-      if (op === "CheckHome") {
-        return isHome(game, game.robot);
-      }
-      if (op === "CheckDamage") {
-        return game.lastDamageTick === game.tick;
+      if (instruction.predicate === "IsEmpty") {
+        return isEmpty(game, location);
       }
       return false;
     },
-    action(op) {
-      if (op === "MoveForward") {
-        return move(game, 1);
+    action(instruction) {
+      if (instruction.op === "Move") {
+        return move(game, instruction.arg === "Back" ? -1 : 1);
       }
-      if (op === "MoveBack") {
-        return move(game, -1);
-      }
-      if (op === "MoveTowardHome") {
+      if (instruction.op === "MoveToward") {
         return moveTowardHome(game);
       }
-      if (op === "TurnLeft" || op === "TurnRight") {
-        return turn(game, op === "TurnRight" ? 1 : -1);
+      if (instruction.op === "Turn") {
+        const delta = { Left: -1, Right: 1, Around: 2 }[instruction.arg];
+        return turn(game, delta);
       }
-      if (op === "TurnAround") {
-        return turn(game, 2);
-      }
-      if (op === "PickUp") {
+      if (instruction.op === "PickUp") {
         return pickUp(game);
       }
-      if (op === "Drop") {
+      if (instruction.op === "Drop") {
         return dropCargo(game);
       }
-      if (op === "Unload") {
+      if (instruction.op === "Unload") {
         return unloadCargo(game);
       }
-      if (op === "Fire") {
+      if (instruction.op === "Fire") {
         return fireWeapon(game);
       }
-      if (op === "Wait") {
+      if (instruction.op === "Wait") {
         return { ok: true, message: "Waited." };
       }
-      if (op === "Repair") {
+      if (instruction.op === "Repair") {
         return repairRobot(game);
       }
-      return { ok: false, message: `Unknown action ${op}.` };
+      return { ok: false, message: `Unknown action ${instruction.op}.` };
     },
   };
+}
+
+function targetLocation(game, target) {
+  if (target === "Here") {
+    return { x: game.robot.x, y: game.robot.y };
+  }
+  if (target === "Home") {
+    return { ...game.base };
+  }
+  return aheadOf(game);
+}
+
+function itemType(value) {
+  return value === "Battery" ? "cell" : value.toLowerCase();
+}
+
+function compareNumber(actual, predicate, expected) {
+  if (predicate === "Below") {
+    return actual < expected;
+  }
+  if (predicate === "Above") {
+    return actual > expected;
+  }
+  return false;
 }
 
 function aheadOf(game, distance = 1) {

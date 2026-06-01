@@ -42,12 +42,9 @@ const speedProfiles = {
   10: { interval: 90, duration: 70 },
 };
 const tapeActions = new Set([
-  "MoveForward",
-  "MoveBack",
-  "MoveTowardHome",
-  "TurnLeft",
-  "TurnRight",
-  "TurnAround",
+  "Move",
+  "MoveToward",
+  "Turn",
   "PickUp",
   "Drop",
   "Unload",
@@ -56,48 +53,62 @@ const tapeActions = new Set([
   "Repair",
 ]);
 const tapeQueries = new Set([
-  "CheckScrap",
-  "CheckCell",
-  "CheckWall",
-  "CheckEmpty",
-  "CheckEnemy",
-  "CheckHP_Low",
-  "CheckCargo",
-  "CheckCargoFull",
-  "CheckCargoScrap",
-  "CheckCargoCell",
-  "CheckHome",
-  "CheckDamage",
+  "Check",
+  "Has",
+  "Is",
+  "IsEmpty",
+  "Any",
+  "IsFull",
+  "Below",
+  "Above",
 ]);
-const tapeBranches = new Set(["Jump", "JumpIfTrue", "JumpIfFalse"]);
+const tapeBranches = new Set(["Goto", "IfTrue", "IfFalse"]);
+const tapeValues = new Set([
+  "Forward",
+  "Back",
+  "Here",
+  "Home",
+  "Left",
+  "Right",
+  "Around",
+  "Scrap",
+  "Battery",
+  "Enemy",
+  "Wall",
+  "Cargo",
+  "HP",
+  "Damage",
+]);
 const tapeCompletions = [
-  { value: "MoveForward", kind: "Action", hint: "Move + Forward" },
-  { value: "MoveBack", kind: "Action", hint: "Move + Back" },
-  { value: "MoveTowardHome", kind: "Action", hint: "Move + Toward + Home" },
-  { value: "TurnLeft", kind: "Action", hint: "Turn + Left" },
-  { value: "TurnRight", kind: "Action", hint: "Turn + Right" },
-  { value: "TurnAround", kind: "Action", hint: "Turn + Around" },
-  { value: "PickUp", kind: "Action", hint: "Pick + Up" },
-  { value: "Drop", kind: "Action", hint: "Drop cargo" },
-  { value: "Unload", kind: "Action", hint: "Unload cargo at home" },
-  { value: "Fire", kind: "Action", hint: "Fire weapon" },
-  { value: "Wait", kind: "Action", hint: "Spend one tick" },
-  { value: "Repair", kind: "Action", hint: "Repair HP with scrap" },
-  { value: "CheckScrap", kind: "Query", hint: "Check + Scrap" },
-  { value: "CheckCell", kind: "Query", hint: "Check + Cell" },
-  { value: "CheckWall", kind: "Query", hint: "Check + Wall" },
-  { value: "CheckEmpty", kind: "Query", hint: "Check + Empty" },
-  { value: "CheckEnemy", kind: "Query", hint: "Check + Enemy" },
-  { value: "CheckHP_Low", kind: "Query", hint: "Check + HP_Low" },
-  { value: "CheckCargo", kind: "Query", hint: "Check + Cargo" },
-  { value: "CheckCargoFull", kind: "Query", hint: "Check + Cargo + Full" },
-  { value: "CheckCargoScrap", kind: "Query", hint: "Check + Cargo + Scrap" },
-  { value: "CheckCargoCell", kind: "Query", hint: "Check + Cargo + Cell" },
-  { value: "CheckHome", kind: "Query", hint: "Check + Home" },
-  { value: "CheckDamage", kind: "Query", hint: "Check + Damage" },
-  { value: "Jump", kind: "Branch", hint: "Jump + @Label" },
-  { value: "JumpIfTrue", kind: "Branch", hint: "Jump + If + True" },
-  { value: "JumpIfFalse", kind: "Branch", hint: "Jump + If + False" },
+  { value: "Move()", kind: "Action", hint: "Move forward" },
+  { value: "Move(Back)", kind: "Action", hint: "Move backward" },
+  { value: "MoveToward(Home)", kind: "Action", hint: "Move toward home" },
+  { value: "Turn(Left)", kind: "Action", hint: "Turn left" },
+  { value: "Turn(Right)", kind: "Action", hint: "Turn right" },
+  { value: "Turn(Around)", kind: "Action", hint: "Turn around" },
+  { value: "PickUp()", kind: "Action", hint: "Pick up from forward cell" },
+  { value: "Drop()", kind: "Action", hint: "Drop cargo to forward cell" },
+  { value: "Unload(Home)", kind: "Action", hint: "Unload cargo at home" },
+  { value: "Fire()", kind: "Action", hint: "Fire forward" },
+  { value: "Wait()", kind: "Action", hint: "Spend one tick" },
+  { value: "Repair()", kind: "Action", hint: "Repair HP with scrap" },
+  { value: "Check().Has(Scrap)", kind: "Query", hint: "Forward has scrap" },
+  { value: "Check().Has(Battery)", kind: "Query", hint: "Forward has battery" },
+  { value: "Check().Has(Enemy)", kind: "Query", hint: "Enemy signal" },
+  { value: "Check().Is(Wall)", kind: "Query", hint: "Forward is blocked" },
+  { value: "Check().IsEmpty()", kind: "Query", hint: "Forward is empty" },
+  { value: "Check(Here).Is(Home)", kind: "Query", hint: "Robot is at home" },
+  { value: "Check(Cargo).Any()", kind: "Query", hint: "Cargo has anything" },
+  { value: "Check(Cargo).IsFull()", kind: "Query", hint: "Cargo is full" },
+  { value: "Check(Cargo).Has(Scrap)", kind: "Query", hint: "Cargo has scrap" },
+  { value: "Check(Cargo).Has(Battery)", kind: "Query", hint: "Cargo has battery" },
+  { value: "Check(HP).Below(30)", kind: "Query", hint: "HP below threshold" },
+  { value: "Check(Damage).Above(0)", kind: "Query", hint: "Damaged this tick" },
+  { value: "Goto @Loop", kind: "Branch", hint: "Go to label" },
+  { value: "IfTrue Goto @Loop", kind: "Branch", hint: "Go if last check is true" },
+  { value: "IfFalse Goto @Loop", kind: "Branch", hint: "Go if last check is false" },
+  { value: "IfTrue PickUp()", kind: "Branch", hint: "Pick up if true" },
+  { value: "IfFalse Turn(Right)", kind: "Branch", hint: "Turn if false" },
 ];
 
 const elements = {
@@ -160,7 +171,7 @@ const i18n = {
     "world.title": "Scrapyard",
     "resources.title": "Resources",
     "resources.scrap": "Scrap",
-    "resources.cells": "Cells",
+    "resources.cells": "Batteries",
     "resources.blankTape": "Blank tape",
     "modules.aria": "Robot modules",
     "modules.title": "Modules",
@@ -213,12 +224,12 @@ const i18n = {
     "arena.empty": "No arena preview yet.",
     "arena.victory": "Victory",
     "arena.defeat": "Defeat",
-    "arena.victorySummary": "The robot survived the ladder ghost and recovered a data cell.",
+    "arena.victorySummary": "The robot survived the ladder ghost and recovered a battery.",
     "arena.defeatSummary": "The opponent forced a logic fault before extraction.",
     "arena.summary": "{result}: {summary} Score {score}/{enemyScore}.",
     "offline.empty": "No offline projection yet.",
     "offline.summary": "Fast-forwarded {ticks} ticks and recovered {scrap} scrap{cellsText}.",
-    "offline.cellsText": " plus {cells} cells",
+    "offline.cellsText": " plus {cells} batteries",
     "save.empty": "No save written this session.",
     "save.saved": "Saved tick {tick}.",
     "save.loaded": "Loaded tick {tick}.",
@@ -697,6 +708,8 @@ function highlightLine(line) {
       pieces.push(`<span class="tok-query">${escapeHtml(token)}</span>`);
     } else if (tapeBranches.has(token)) {
       pieces.push(`<span class="tok-branch">${escapeHtml(token)}</span>`);
+    } else if (tapeValues.has(token)) {
+      pieces.push(`<span class="tok-value">${escapeHtml(token)}</span>`);
     } else if (/^[A-Za-z]/.test(token)) {
       pieces.push(`<span class="tok-unknown">${escapeHtml(token)}</span>`);
     } else {
@@ -774,8 +787,6 @@ function getAutocompleteContext() {
   const lineEnd = lineEndIndex >= 0 ? lineEndIndex : editor.value.length;
   const line = editor.value.slice(lineStart, lineEnd);
   const beforeToken = editor.value.slice(lineStart, range.start);
-  const firstWord = line.trimStart().split(/\s+/)[0] ?? "";
-  const afterFirstWord = beforeToken.trimStart().length > firstWord.length;
   const token = range.token;
   const lineNumber = editor.value.slice(0, range.start).split("\n").length;
   const column = range.start - lineStart;
@@ -784,8 +795,7 @@ function getAutocompleteContext() {
     return null;
   }
 
-  const branchOperand = tapeBranches.has(firstWord) && afterFirstWord;
-  const labelContext = token.startsWith("@") || branchOperand;
+  const labelContext = token.startsWith("@") || /\bGoto\s+@?[A-Za-z0-9_]*$/.test(beforeToken.trimStart());
   if (!token && !labelContext) {
     return null;
   }
@@ -829,9 +839,8 @@ function matchesCompletion(value, prefix) {
 }
 
 function splitCompletionSegments(value) {
-  return value
-    .replaceAll("_", " ")
-    .split(/(?=[A-Z])|\s+/)
+  return (value.match(/[A-Za-z][A-Za-z0-9_]*/g) ?? [])
+    .flatMap((segment) => segment.split(/(?=[A-Z])|_/))
     .filter(Boolean);
 }
 

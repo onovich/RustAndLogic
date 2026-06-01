@@ -83,34 +83,34 @@ try {
   await page.getByTestId("tape-editor").fill("Che");
   await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
   const checkSuggestion = await page.getByTestId("tape-autocomplete").innerText();
-  if (!checkSuggestion.includes("CheckScrap")) {
-    throw new Error(`Expected CheckScrap suggestion for Che, got: ${checkSuggestion}`);
+  if (!checkSuggestion.includes("Check().Has(Scrap)")) {
+    throw new Error(`Expected Check().Has(Scrap) suggestion for Che, got: ${checkSuggestion}`);
   }
   await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
-  await expectValue(page, "tape-editor", "CheckScrap");
+  await expectValue(page, "tape-editor", "Check().Has(Scrap)");
 
   await page.getByTestId("tape-editor").fill("Scr");
   await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
   const segmentSuggestion = await page.getByTestId("tape-autocomplete").innerText();
-  if (!segmentSuggestion.includes("CheckScrap")) {
+  if (!segmentSuggestion.includes("Check().Has(Scrap)")) {
     throw new Error(`Expected segmented Scrap suggestion for Scr, got: ${segmentSuggestion}`);
   }
 
   await page.getByTestId("tape-editor").fill("Back");
   await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
   const backSuggestion = await page.getByTestId("tape-autocomplete").innerText();
-  if (!backSuggestion.includes("MoveBack")) {
-    throw new Error(`Expected segmented Back suggestion for MoveBack, got: ${backSuggestion}`);
+  if (!backSuggestion.includes("Move(Back)")) {
+    throw new Error(`Expected segmented Back suggestion for Move(Back), got: ${backSuggestion}`);
   }
 
   await page.getByTestId("tape-editor").fill("Empty");
   await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
   const emptySuggestion = await page.getByTestId("tape-autocomplete").innerText();
-  if (!emptySuggestion.includes("CheckEmpty")) {
-    throw new Error(`Expected segmented Empty suggestion for CheckEmpty, got: ${emptySuggestion}`);
+  if (!emptySuggestion.includes("Check().IsEmpty()")) {
+    throw new Error(`Expected segmented Empty suggestion for Check().IsEmpty(), got: ${emptySuggestion}`);
   }
 
-  await page.getByTestId("tape-editor").fill("@Loop\nJump ");
+  await page.getByTestId("tape-editor").fill("@Loop\nGoto ");
   await page.getByTestId("tape-editor").evaluate((editor) => {
     editor.focus();
     editor.setSelectionRange(editor.value.length, editor.value.length);
@@ -122,7 +122,7 @@ try {
     throw new Error(`Expected label suggestion after Jump, got: ${labelSuggestion}`);
   }
   await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
-  await expectValue(page, "tape-editor", "@Loop\nJump @Loop");
+  await expectValue(page, "tape-editor", "@Loop\nGoto @Loop");
   await page.getByTestId("tape-editor").fill(originalTape);
 
   const badTape = `${originalTape}\nBogus`;
@@ -146,7 +146,7 @@ try {
   }
   await page.getByTestId("tape-editor").fill(originalTape);
   await page.getByTestId("tape-editor").evaluate((editor) => {
-    const offset = editor.value.indexOf("@Loop", editor.value.indexOf("JumpIfTrue"));
+    const offset = editor.value.indexOf("@Loop", editor.value.indexOf("IfTrue"));
     editor.focus();
     editor.setSelectionRange(offset + 2, offset + 2);
   });

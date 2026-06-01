@@ -387,6 +387,10 @@ textarea[data-invalid="true"] {
   color: #f0a531;
 }
 
+.tok-value {
+  color: #ffcf73;
+}
+
 .tok-comment {
   color: #6d7c60;
 }
