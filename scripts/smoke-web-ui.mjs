@@ -139,6 +139,14 @@ try {
     throw new Error(`Expected default camera scale to fit the map with margins, got: ${transformBeforeCanvasMove}`);
   }
   const canvasBox = await page.getByTestId("world-canvas").boundingBox();
+  const gridBox = await page.getByTestId("world-grid").boundingBox();
+  const centerDelta = {
+    x: Math.abs(gridBox.x + gridBox.width / 2 - (canvasBox.x + canvasBox.width / 2)),
+    y: Math.abs(gridBox.y + gridBox.height / 2 - (canvasBox.y + canvasBox.height / 2)),
+  };
+  if (centerDelta.x > 8 || centerDelta.y > 8) {
+    throw new Error(`Expected default camera to center the map in the canvas, got: ${JSON.stringify(centerDelta)}`);
+  }
   await page.mouse.move(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2);
   await page.mouse.down();
   await page.mouse.move(canvasBox.x + canvasBox.width / 2 + 40, canvasBox.y + canvasBox.height / 2 + 20);

@@ -49,6 +49,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Make Web UI data loading tolerate both current and previously running static server asset paths.
 - [x] Redesign map symbols and barrier styling toward a quieter minimalist wabi-sabi visual language.
 - [x] Add a constrained intro camera for the map canvas with brighter stage rendering.
+- [x] Center the default map camera after the intro fit animation.
 - [x] Align the collapsed left-sidebar toggle spacing and state with the right sidebar.
 
 ## Milestone 4: Desktop/Web Packaging Path

@@ -626,7 +626,7 @@ textarea[data-invalid="true"] {
   top: 50%;
   width: 1600px;
   height: 1200px;
-  transform-origin: 0 0;
+  transform-origin: 50% 50%;
   will-change: transform;
 }
 
