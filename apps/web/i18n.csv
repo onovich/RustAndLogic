@@ -5,14 +5,20 @@ status.tick,Tick,回合
 status.tape,Tape,纸带
 status.vm,VM,虚拟机
 language.aria,Language switch,语言切换
+language.en,EN,EN
+language.zh,Chinese,中文
 workspace.aria,Game UI flow,游戏 UI 流程
 tape.aria,Tape editor,纸带编辑器
+tape.fileName,Logic_Engine.sh,Logic_Engine.sh
+tape.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 tape.title,Tape,纸带
 tape.controls,Tape controls,纸带控制
 world.aria,World map,世界地图
 world.canvas,Infinite map canvas,无限地图画布
 world.grid,Robot grid,机器人网格
 world.title,Scrapyard,垃圾场
+stage.link,Satellite_Link: Sector_07,卫星链路：07 区
+stage.feed,Live_Feed,实时画面
 side.aria,Resources and modules,资源与模块
 side.title,Systems,系统
 location.aria,Current location,当前位置
@@ -27,6 +33,7 @@ modules.aria,Robot modules,机器人模块
 modules.title,Modules,模块
 modules.armor,Armor,装甲
 modules.weapon,Weapon,武器
+modules.hp,HP,HP
 save.aria,Save,存档
 save.title,Save,存档
 settings.title,Settings,设置
@@ -73,6 +80,8 @@ save.saved,Saved tick {tick}.,已保存第 {tick} 回合。
 save.loaded,Loaded tick {tick}.,已读取第 {tick} 回合。
 save.missing,No save found.,没有找到存档。
 save.reset,Reset local session state.,已重置本地会话状态。
+log.save.loaded,Loaded save from tick {tick}.,已从第 {tick} 回合读取存档。
+log.autoPaused,Auto-paused: robot could not continue safely.,已自动暂停：机器人无法安全继续。
 story.opening.1.speaker,K-6 Commander,K-6 指挥官
 story.opening.1.text,Rain is breaking the satellite uplink. Keep the scavenger on a short loop until we recover enough scrap.,酸雨正在撕裂卫星链路。先让拾荒机器人维持短循环，直到回收足够的废铁。
 story.opening.2.speaker,K-6 Commander,K-6 指挥官
@@ -81,6 +90,40 @@ story.opening.3.speaker,K-6 Commander,K-6 指挥官
 story.opening.3.text,"Recover the nearby scrap, upgrade tape capacity, then we can route you toward the next unlocked site.",回收附近废铁，升级纸带容量，然后我们就能把路线指向下一个已解锁地点。
 story.prompt.continue,Click to continue,点击继续
 story.prompt.begin,Click to begin idle mode,点击进入挂机模式
+completion.kind.action,Action,动作
+completion.kind.query,Query,查询
+completion.kind.branch,Branch,分支
+completion.kind.label,Label,标签
+completion.label.target,jump target,跳转目标
+completion.move.forward,Move forward,向前移动
+completion.move.back,Move backward,向后移动
+completion.move.home,Move toward home,朝基地移动
+completion.turn.left,Turn left,左转
+completion.turn.right,Turn right,右转
+completion.turn.around,Turn around,转身
+completion.pickup.forward,Pick up from forward cell,拾取面前一格
+completion.drop.forward,Drop cargo to forward cell,把货物丢到面前一格
+completion.unload.home,Unload cargo at home,在基地卸货
+completion.fire.forward,Fire forward,向前开火
+completion.wait,Spend one tick,等待一个回合
+completion.repair,Repair HP with scrap,消耗废铁修复 HP
+completion.check.forward.scrap,Forward has scrap,面前有废铁
+completion.check.forward.battery,Forward has battery,面前有电芯
+completion.check.enemy,Enemy signal,检测敌方信号
+completion.check.wall,Forward is blocked,面前被阻挡
+completion.check.empty,Forward is empty,面前为空
+completion.check.home,Robot is at home,机器人位于基地
+completion.cargo.any,Cargo has anything,货舱不为空
+completion.cargo.full,Cargo is full,货舱已满
+completion.cargo.scrap,Cargo has scrap,货舱里有废铁
+completion.cargo.battery,Cargo has battery,货舱里有电芯
+completion.hp.low,HP below threshold,HP 低于阈值
+completion.damage.any,Damaged this tick,本回合受到伤害
+completion.goto.loop,Go to label,跳转到标签
+completion.iftrue.goto,Go if last check is true,上次查询为真时跳转
+completion.iffalse.goto,Go if last check is false,上次查询为假时跳转
+completion.iftrue.pickup,Pick up if true,为真时拾取
+completion.iffalse.turn,Turn if false,为假时右转
 vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止

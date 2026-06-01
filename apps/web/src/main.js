@@ -23,27 +23,9 @@ let activeSuggestionIndex = 0;
 let deployedSource = "";
 let storyIndex = 0;
 let storyActive = true;
-const storyPages = [
-  {
-    speakerKey: "story.opening.1.speaker",
-    textKey: "story.opening.1.text",
-  },
-  {
-    speakerKey: "story.opening.2.speaker",
-    textKey: "story.opening.2.text",
-  },
-  {
-    speakerKey: "story.opening.3.speaker",
-    textKey: "story.opening.3.text",
-  },
-];
-const flow = {
-  deploy: false,
-  collect: false,
-  tape: false,
-  hardware: false,
-  save: false,
-};
+let appData = null;
+let storyPages = [];
+let flow = {};
 const canvasState = {
   x: 0,
   y: 0,
@@ -58,81 +40,13 @@ const canvasState = {
 const saveKey = "rust-and-logic.save.v1";
 const languageKey = "rust-and-logic.language";
 let language = detectLanguage();
-const speeds = [1, 5, 10];
-const speedProfiles = {
-  1: { interval: 720, duration: 420 },
-  5: { interval: 170, duration: 130 },
-  10: { interval: 90, duration: 70 },
-};
-const tapeActions = new Set([
-  "Move",
-  "MoveToward",
-  "Turn",
-  "PickUp",
-  "Drop",
-  "Unload",
-  "Fire",
-  "Wait",
-  "Repair",
-]);
-const tapeQueries = new Set([
-  "Check",
-  "Has",
-  "Is",
-  "IsEmpty",
-  "Any",
-  "IsFull",
-  "Below",
-  "Above",
-]);
-const tapeBranches = new Set(["Goto", "IfTrue", "IfFalse"]);
-const tapeValues = new Set([
-  "Forward",
-  "Back",
-  "Here",
-  "Home",
-  "Left",
-  "Right",
-  "Around",
-  "Scrap",
-  "Battery",
-  "Enemy",
-  "Wall",
-  "Cargo",
-  "HP",
-  "Damage",
-]);
-const tapeCompletions = [
-  { value: "Move()", kind: "Action", hint: "Move forward" },
-  { value: "Move(Back)", kind: "Action", hint: "Move backward" },
-  { value: "MoveToward(Home)", kind: "Action", hint: "Move toward home" },
-  { value: "Turn(Left)", kind: "Action", hint: "Turn left" },
-  { value: "Turn(Right)", kind: "Action", hint: "Turn right" },
-  { value: "Turn(Around)", kind: "Action", hint: "Turn around" },
-  { value: "PickUp()", kind: "Action", hint: "Pick up from forward cell" },
-  { value: "Drop()", kind: "Action", hint: "Drop cargo to forward cell" },
-  { value: "Unload(Home)", kind: "Action", hint: "Unload cargo at home" },
-  { value: "Fire()", kind: "Action", hint: "Fire forward" },
-  { value: "Wait()", kind: "Action", hint: "Spend one tick" },
-  { value: "Repair()", kind: "Action", hint: "Repair HP with scrap" },
-  { value: "Check().Has(Scrap)", kind: "Query", hint: "Forward has scrap" },
-  { value: "Check().Has(Battery)", kind: "Query", hint: "Forward has battery" },
-  { value: "Check().Has(Enemy)", kind: "Query", hint: "Enemy signal" },
-  { value: "Check().Is(Wall)", kind: "Query", hint: "Forward is blocked" },
-  { value: "Check().IsEmpty()", kind: "Query", hint: "Forward is empty" },
-  { value: "Check(Here).Is(Home)", kind: "Query", hint: "Robot is at home" },
-  { value: "Check(Cargo).Any()", kind: "Query", hint: "Cargo has anything" },
-  { value: "Check(Cargo).IsFull()", kind: "Query", hint: "Cargo is full" },
-  { value: "Check(Cargo).Has(Scrap)", kind: "Query", hint: "Cargo has scrap" },
-  { value: "Check(Cargo).Has(Battery)", kind: "Query", hint: "Cargo has battery" },
-  { value: "Check(HP).Below(30)", kind: "Query", hint: "HP below threshold" },
-  { value: "Check(Damage).Above(0)", kind: "Query", hint: "Damaged this tick" },
-  { value: "Goto @Loop", kind: "Branch", hint: "Go to label" },
-  { value: "IfTrue Goto @Loop", kind: "Branch", hint: "Go if last check is true" },
-  { value: "IfFalse Goto @Loop", kind: "Branch", hint: "Go if last check is false" },
-  { value: "IfTrue PickUp()", kind: "Branch", hint: "Pick up if true" },
-  { value: "IfFalse Turn(Right)", kind: "Branch", hint: "Turn if false" },
-];
+let speeds = [1];
+let speedProfiles = { 1: { interval: 720, duration: 420 } };
+let tapeActions = new Set();
+let tapeQueries = new Set();
+let tapeBranches = new Set();
+let tapeValues = new Set();
+let tapeCompletions = [];
 
 const elements = {
   editor: query("tape-editor"),
@@ -189,6 +103,28 @@ async function loadI18n() {
     throw new Error("Failed to load i18n.csv: " + response.status);
   }
   i18n = parseI18nCsv(await response.text());
+}
+
+async function loadAppData() {
+  const response = await fetch("./app-data.json", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Failed to load app-data.json: " + response.status);
+  }
+  appData = await response.json();
+}
+
+function initializeAppData() {
+  storyPages = appData.storyPages ?? [];
+  speeds = appData.playback?.speeds ?? [1];
+  speedProfiles = appData.playback?.profiles ?? { 1: { interval: 720, duration: 420 } };
+  flow = Object.fromEntries((appData.tasks ?? []).map((task) => [task.id, false]));
+  tapeActions = new Set(appData.tape?.syntax?.actions ?? []);
+  tapeQueries = new Set(appData.tape?.syntax?.queries ?? []);
+  tapeBranches = new Set(appData.tape?.syntax?.branches ?? []);
+  tapeValues = new Set(appData.tape?.syntax?.values ?? []);
+  tapeCompletions = appData.tape?.completions ?? [];
+  elements.editor.value = (appData.tape?.initialSource ?? []).join("\n");
+  renderFlowList();
 }
 
 function parseI18nCsv(source) {
@@ -372,7 +308,7 @@ elements.load.addEventListener("click", () => {
     return;
   }
   game = restoreGame(serialized);
-  game.logs.unshift(`Loaded save from tick ${game.tick}.`);
+  game.logs.unshift(t("log.save.loaded", { tick: game.tick }));
   flow.save = true;
   saveStatus = { key: "save.loaded", values: { tick: game.tick } };
   render(snapshot(game), { animate: false });
@@ -387,6 +323,8 @@ elements.reset.addEventListener("click", () => {
 });
 
 await loadI18n();
+await loadAppData();
+initializeAppData();
 applyLanguage();
 updateEditorTools();
 applyCanvasTransform();
@@ -514,8 +452,9 @@ function schedulePlayback() {
 function pauseForBlock(state) {
   playbackMode = "paused";
   clearPlaybackTimer();
-  if (!state.logs[0]?.startsWith("Auto-paused:")) {
-    game.logs.unshift("Auto-paused: robot could not continue safely.");
+  const message = t("log.autoPaused");
+  if (state.logs[0] !== message) {
+    game.logs.unshift(message);
     render(snapshot(game), { animate: false });
   }
   updateControls();
@@ -634,6 +573,18 @@ function resetFlow() {
   for (const key of Object.keys(flow)) {
     flow[key] = false;
   }
+}
+
+function renderFlowList() {
+  elements.flowChecklist.replaceChildren();
+  for (const task of appData.tasks ?? []) {
+    const item = document.createElement("li");
+    item.dataset.flow = task.id;
+    item.dataset.i18n = task.labelKey;
+    item.textContent = t(task.labelKey);
+    elements.flowChecklist.append(item);
+  }
+  renderFlow();
 }
 
 function updateEditorTools(errors = null) {
@@ -760,7 +711,9 @@ function updateAutocomplete() {
     item.className = "autocomplete-item";
     item.dataset.index = String(index);
     item.dataset.active = String(index === activeSuggestionIndex);
-    item.innerHTML = `<span>${escapeHtml(suggestion.value)}</span><small>${escapeHtml(suggestion.kind)} · ${escapeHtml(suggestion.hint)}</small>`;
+    item.innerHTML =
+      `<span>${escapeHtml(suggestion.value)}</span>` +
+      `<small>${escapeHtml(t(suggestion.kindKey))} / ${escapeHtml(t(suggestion.hintKey))}</small>`;
     elements.autocomplete.append(item);
   });
   elements.autocomplete.hidden = false;
@@ -808,7 +761,11 @@ function findSuggestions(context) {
     return currentLabels()
       .filter((label) => matchesCompletion(label, prefix))
       .slice(0, 8)
-      .map((label) => ({ value: `@${label}`, kind: "Label", hint: "jump target" }));
+      .map((label) => ({
+        value: `@${label}`,
+        kindKey: "completion.kind.label",
+        hintKey: "completion.label.target",
+      }));
   }
 
   return tapeCompletions

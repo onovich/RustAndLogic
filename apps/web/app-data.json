@@ -1,0 +1,70 @@
+{
+  "playback": {
+    "speeds": [1, 5, 10],
+    "profiles": {
+      "1": { "interval": 720, "duration": 420 },
+      "5": { "interval": 170, "duration": 130 },
+      "10": { "interval": 90, "duration": 70 }
+    }
+  },
+  "tasks": [
+    { "id": "deploy", "labelKey": "flow.deploy" },
+    { "id": "collect", "labelKey": "flow.collect" },
+    { "id": "tape", "labelKey": "flow.tape" },
+    { "id": "hardware", "labelKey": "flow.hardware" },
+    { "id": "save", "labelKey": "flow.save" }
+  ],
+  "storyPages": [
+    { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
+    { "speakerKey": "story.opening.2.speaker", "textKey": "story.opening.2.text" },
+    { "speakerKey": "story.opening.3.speaker", "textKey": "story.opening.3.text" }
+  ],
+  "tape": {
+    "initialSource": [
+      "@Loop",
+      "PickUp()",
+      "Check().Has(Scrap)",
+      "IfTrue Goto @Loop",
+      "Move()",
+      "Turn(Right)",
+      "Goto @Loop"
+    ],
+    "syntax": {
+      "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Fire", "Wait", "Repair"],
+      "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above"],
+      "branches": ["Goto", "IfTrue", "IfFalse"],
+      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Enemy", "Wall", "Cargo", "HP", "Damage"]
+    },
+    "completions": [
+      { "value": "Move()", "kindKey": "completion.kind.action", "hintKey": "completion.move.forward" },
+      { "value": "Move(Back)", "kindKey": "completion.kind.action", "hintKey": "completion.move.back" },
+      { "value": "MoveToward(Home)", "kindKey": "completion.kind.action", "hintKey": "completion.move.home" },
+      { "value": "Turn(Left)", "kindKey": "completion.kind.action", "hintKey": "completion.turn.left" },
+      { "value": "Turn(Right)", "kindKey": "completion.kind.action", "hintKey": "completion.turn.right" },
+      { "value": "Turn(Around)", "kindKey": "completion.kind.action", "hintKey": "completion.turn.around" },
+      { "value": "PickUp()", "kindKey": "completion.kind.action", "hintKey": "completion.pickup.forward" },
+      { "value": "Drop()", "kindKey": "completion.kind.action", "hintKey": "completion.drop.forward" },
+      { "value": "Unload(Home)", "kindKey": "completion.kind.action", "hintKey": "completion.unload.home" },
+      { "value": "Fire()", "kindKey": "completion.kind.action", "hintKey": "completion.fire.forward" },
+      { "value": "Wait()", "kindKey": "completion.kind.action", "hintKey": "completion.wait" },
+      { "value": "Repair()", "kindKey": "completion.kind.action", "hintKey": "completion.repair" },
+      { "value": "Check().Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.check.forward.scrap" },
+      { "value": "Check().Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.check.forward.battery" },
+      { "value": "Check().Has(Enemy)", "kindKey": "completion.kind.query", "hintKey": "completion.check.enemy" },
+      { "value": "Check().Is(Wall)", "kindKey": "completion.kind.query", "hintKey": "completion.check.wall" },
+      { "value": "Check().IsEmpty()", "kindKey": "completion.kind.query", "hintKey": "completion.check.empty" },
+      { "value": "Check(Here).Is(Home)", "kindKey": "completion.kind.query", "hintKey": "completion.check.home" },
+      { "value": "Check(Cargo).Any()", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.any" },
+      { "value": "Check(Cargo).IsFull()", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.full" },
+      { "value": "Check(Cargo).Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.scrap" },
+      { "value": "Check(Cargo).Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.battery" },
+      { "value": "Check(HP).Below(30)", "kindKey": "completion.kind.query", "hintKey": "completion.hp.low" },
+      { "value": "Check(Damage).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.damage.any" },
+      { "value": "Goto @Loop", "kindKey": "completion.kind.branch", "hintKey": "completion.goto.loop" },
+      { "value": "IfTrue Goto @Loop", "kindKey": "completion.kind.branch", "hintKey": "completion.iftrue.goto" },
+      { "value": "IfFalse Goto @Loop", "kindKey": "completion.kind.branch", "hintKey": "completion.iffalse.goto" },
+      { "value": "IfTrue PickUp()", "kindKey": "completion.kind.branch", "hintKey": "completion.iftrue.pickup" },
+      { "value": "IfFalse Turn(Right)", "kindKey": "completion.kind.branch", "hintKey": "completion.iffalse.turn" }
+    ]
+  }
+}
