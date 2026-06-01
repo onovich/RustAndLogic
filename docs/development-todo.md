@@ -47,6 +47,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Split Web UI configuration into `apps/web/app-data.json` and keep player-facing text in `apps/web/i18n.csv`.
 - [x] Add a root `RunWebUI.cmd` command for manual browser testing.
 - [x] Make Web UI data loading tolerate both current and previously running static server asset paths.
+- [x] Redesign map symbols and barrier styling toward a quieter minimalist wabi-sabi visual language.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

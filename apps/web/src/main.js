@@ -1024,7 +1024,7 @@ function renderRobot(state, options = {}) {
     return;
   }
 
-  const size = Math.min(position.width * 0.52, 34);
+  const size = Math.min(position.width * 0.42, 24);
   robotNode.style.width = `${size}px`;
   robotNode.style.height = `${size}px`;
   robotNode.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
@@ -1045,7 +1045,7 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
     return;
   }
 
-  const size = Math.min(from.width * 0.48, 28);
+  const size = Math.min(from.width * 0.4, 23);
   const ghost = document.createElement("div");
   ghost.className = `deposit pickup-ghost ${deposit.type}`;
   ghost.style.width = `${size}px`;

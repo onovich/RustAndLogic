@@ -578,10 +578,11 @@ textarea[data-invalid="true"] {
   overflow: hidden;
   cursor: grab;
   background:
-    repeating-linear-gradient(0deg, rgba(0, 234, 255, 0.025) 0 1px, transparent 1px 11px),
-    repeating-linear-gradient(90deg, rgba(0, 234, 255, 0.018) 0 1px, transparent 1px 13px),
-    radial-gradient(circle at 46% 48%, rgba(0, 234, 255, 0.08), transparent 19rem),
+    linear-gradient(rgba(0, 234, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 234, 255, 0.014) 1px, transparent 1px),
+    radial-gradient(circle at 46% 48%, rgba(0, 234, 255, 0.055), transparent 20rem),
     #010505;
+  background-size: 18px 18px, 18px 18px, auto;
   touch-action: none;
 }
 
@@ -595,17 +596,18 @@ textarea[data-invalid="true"] {
 
 .canvas-viewport::before {
   background:
-    linear-gradient(90deg, rgba(255, 0, 110, 0.08) 0 1px, transparent 1px 100%),
-    linear-gradient(180deg, rgba(215, 255, 0, 0.04) 0 1px, transparent 1px 100%);
-  background-size: 97px 97px, 131px 131px;
-  opacity: 0.75;
+    linear-gradient(90deg, rgba(153, 118, 86, 0.045) 0 1px, transparent 1px 100%),
+    linear-gradient(180deg, rgba(210, 220, 205, 0.03) 0 1px, transparent 1px 100%);
+  background-size: 144px 144px, 144px 144px;
+  opacity: 0.65;
 }
 
 .canvas-viewport::after {
   background:
-    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 4px);
+    radial-gradient(circle at 18% 22%, rgba(210, 220, 205, 0.05), transparent 18rem),
+    repeating-radial-gradient(circle at 50% 50%, rgba(210, 220, 205, 0.028) 0 1px, transparent 1px 5px);
   mix-blend-mode: screen;
-  opacity: 0.16;
+  opacity: 0.12;
 }
 
 .canvas-viewport[data-dragging="true"] {
@@ -627,16 +629,16 @@ textarea[data-invalid="true"] {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 28% 35%, rgba(255, 0, 110, 0.08), transparent 13rem),
-    radial-gradient(circle at 71% 62%, rgba(215, 255, 0, 0.06), transparent 11rem);
-  opacity: 0.9;
+    radial-gradient(circle at 28% 35%, rgba(153, 118, 86, 0.055), transparent 14rem),
+    radial-gradient(circle at 71% 62%, rgba(0, 234, 255, 0.035), transparent 12rem);
+  opacity: 0.72;
 }
 
 .playfield-barrier {
   position: absolute;
   left: 50%;
   top: 50%;
-  padding: 18px;
+  padding: 22px;
   transform: translate(-50%, -50%);
 }
 
@@ -648,50 +650,54 @@ textarea[data-invalid="true"] {
 }
 
 .playfield-barrier::before {
-  inset: -22px;
-  border: 1px solid rgba(255, 0, 110, 0.58);
+  inset: -18px;
+  border: 1px solid rgba(210, 220, 205, 0.22);
   background:
-    linear-gradient(90deg, rgba(255, 0, 110, 0.14), transparent 18%, transparent 82%, rgba(0, 234, 255, 0.12)),
-    repeating-linear-gradient(135deg, rgba(255, 0, 110, 0.22) 0 5px, transparent 5px 15px);
-  clip-path: polygon(0 3%, 98% 0, 100% 92%, 95% 100%, 2% 98%);
-  opacity: 0.58;
+    linear-gradient(90deg, rgba(210, 220, 205, 0.08), transparent 16%, transparent 84%, rgba(0, 234, 255, 0.045)),
+    linear-gradient(180deg, rgba(153, 118, 86, 0.06), transparent 26%, transparent 72%, rgba(210, 220, 205, 0.035));
+  clip-path: polygon(0 2%, 99% 0, 100% 94%, 96% 100%, 2% 98%);
+  opacity: 0.56;
 }
 
 .playfield-barrier::after {
-  inset: -36px;
-  border: 1px dashed rgba(215, 255, 0, 0.34);
-  filter: blur(0.2px);
+  inset: -28px;
+  background:
+    linear-gradient(rgba(210, 220, 205, 0.38), rgba(210, 220, 205, 0.38)) left top / 34px 1px no-repeat,
+    linear-gradient(rgba(210, 220, 205, 0.38), rgba(210, 220, 205, 0.38)) left top / 1px 34px no-repeat,
+    linear-gradient(rgba(210, 220, 205, 0.28), rgba(210, 220, 205, 0.28)) right bottom / 34px 1px no-repeat,
+    linear-gradient(rgba(210, 220, 205, 0.28), rgba(210, 220, 205, 0.28)) right bottom / 1px 34px no-repeat;
+  opacity: 0.46;
 }
 
 .grid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(var(--cols, 7), 58px);
-  grid-template-rows: repeat(var(--rows, 5), 58px);
-  gap: 2px;
+  grid-template-columns: repeat(var(--cols, 7), 56px);
+  grid-template-rows: repeat(var(--rows, 5), 56px);
+  gap: 1px;
   width: auto;
   height: auto;
   padding: 0;
-  border: 1px solid rgba(0, 234, 255, 0.36);
+  border: 1px solid rgba(210, 220, 205, 0.2);
   background:
-    linear-gradient(rgba(0, 234, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 234, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(135deg, rgba(255, 0, 110, 0.06), rgba(0, 234, 255, 0.04)),
-    rgba(1, 7, 8, 0.92);
-  background-size: 14px 14px, 14px 14px, auto, auto;
+    radial-gradient(circle at 50% 50%, rgba(210, 220, 205, 0.018), transparent 23px),
+    linear-gradient(rgba(0, 234, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 234, 255, 0.018) 1px, transparent 1px),
+    rgba(3, 9, 9, 0.82);
+  background-size: auto, 28px 28px, 28px 28px, auto;
   box-shadow:
-    0 0 0 1px rgba(0, 234, 255, 0.12),
-    0 0 34px rgba(255, 0, 110, 0.08),
-    inset 0 0 38px rgba(0, 234, 255, 0.05);
+    0 0 0 1px rgba(0, 234, 255, 0.055),
+    0 20px 50px rgba(0, 0, 0, 0.28),
+    inset 0 0 42px rgba(0, 234, 255, 0.025);
 }
 
 .grid::before {
   content: "";
   position: absolute;
-  inset: -18px;
+  inset: -12px;
   pointer-events: none;
-  border: 1px solid rgba(0, 234, 255, 0.18);
+  border: 1px solid rgba(0, 234, 255, 0.12);
 }
 
 .cell {
@@ -699,11 +705,10 @@ textarea[data-invalid="true"] {
   display: grid;
   place-items: center;
   min-width: 0;
-  border: 1px solid rgba(0, 234, 255, 0.13);
+  border: 1px solid rgba(210, 220, 205, 0.055);
   background:
-    radial-gradient(circle at 34% 38%, rgba(215, 255, 0, 0.055), transparent 12px),
-    linear-gradient(135deg, rgba(0, 234, 255, 0.04), transparent 44%),
-    rgba(0, 10, 12, 0.44);
+    radial-gradient(circle at 58% 42%, rgba(210, 220, 205, 0.026), transparent 14px),
+    rgba(0, 10, 11, 0.26);
   background-size: auto;
 }
 
@@ -712,27 +717,29 @@ textarea[data-invalid="true"] {
   position: absolute;
   right: 4px;
   bottom: 3px;
-  color: rgba(0, 234, 255, 0.3);
-  font-size: 0.58rem;
+  color: rgba(210, 220, 205, 0.16);
+  font-size: 0.5rem;
 }
 
 .robot,
 .deposit {
-  width: 50%;
-  max-width: 28px;
+  width: 42%;
+  max-width: 23px;
   aspect-ratio: 1;
 }
 
 .robot {
-  clip-path: polygon(50% 0, 90% 28%, 75% 100%, 50% 82%, 25% 100%, 10% 28%);
-  border: 0;
+  display: grid;
+  place-items: center;
+  clip-path: none;
+  border: 1px solid rgba(210, 220, 205, 0.82);
+  border-radius: 50%;
   background:
-    linear-gradient(135deg, rgba(0, 234, 255, 0.98), rgba(215, 255, 0, 0.84) 48%, rgba(255, 0, 110, 0.78) 52%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 1px, transparent 1px 4px);
+    radial-gradient(circle at 50% 50%, rgba(210, 220, 205, 0.18), transparent 38%),
+    rgba(0, 10, 11, 0.86);
   box-shadow:
-    0 0 18px rgba(0, 234, 255, 0.54),
-    -4px 0 0 rgba(255, 0, 110, 0.45),
-    4px 0 0 rgba(215, 255, 0, 0.28);
+    0 0 0 1px rgba(0, 234, 255, 0.08),
+    0 0 12px rgba(210, 220, 205, 0.12);
 }
 
 .robot-avatar {
@@ -749,11 +756,12 @@ textarea[data-invalid="true"] {
 .robot::before {
   content: "";
   display: block;
-  width: 32%;
-  height: 42%;
-  margin: 18% auto 0;
-  clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%);
-  background: rgba(1, 11, 13, 0.94);
+  width: 38%;
+  height: 54%;
+  margin: 0;
+  clip-path: polygon(50% 0, 100% 100%, 50% 76%, 0 100%);
+  background: rgba(210, 220, 205, 0.92);
+  transform: translateY(-1px);
 }
 
 .robot[data-dir="N"] { transform: rotate(0deg); }
@@ -762,57 +770,68 @@ textarea[data-invalid="true"] {
 .robot[data-dir="W"] { transform: rotate(270deg); }
 
 .deposit {
-  border-radius: 0;
-  border: 0;
-  transform: rotate(7deg);
-  clip-path: polygon(8% 22%, 56% 0, 100% 30%, 88% 86%, 30% 100%, 0 70%);
-  background-blend-mode: screen;
+  position: relative;
+  border-radius: 50%;
+  border: 1px solid rgba(210, 220, 205, 0.28);
+  transform: none;
+  clip-path: none;
+  background-blend-mode: normal;
+}
+
+.deposit::before {
+  content: "";
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.86;
 }
 
 .deposit.scrap {
+  color: #b88765;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px 5px),
-    linear-gradient(135deg, rgba(255, 157, 0, 0.95), rgba(255, 0, 110, 0.82));
+    radial-gradient(circle at 38% 34%, rgba(184, 135, 101, 0.34), transparent 45%),
+    rgba(34, 22, 17, 0.62);
   box-shadow:
-    0 0 14px rgba(255, 157, 0, 0.52),
-    4px -2px 0 rgba(0, 234, 255, 0.2);
+    0 0 0 1px rgba(184, 135, 101, 0.1),
+    0 0 10px rgba(184, 135, 101, 0.12);
 }
 
 .deposit.cell {
+  color: #b7c9bd;
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 4px),
-    linear-gradient(135deg, rgba(0, 234, 255, 0.95), rgba(215, 255, 0, 0.76));
+    radial-gradient(circle at 44% 40%, rgba(183, 201, 189, 0.36), transparent 46%),
+    rgba(17, 28, 27, 0.66);
   box-shadow:
-    0 0 14px rgba(0, 234, 255, 0.5),
-    -4px 2px 0 rgba(255, 0, 110, 0.2);
+    0 0 0 1px rgba(183, 201, 189, 0.1),
+    0 0 10px rgba(0, 234, 255, 0.1);
 }
 
 .obstacle {
-  width: 72%;
-  height: 72%;
-  border: 1px solid rgba(255, 0, 110, 0.84);
-  clip-path: polygon(7% 8%, 94% 0, 100% 78%, 78% 100%, 0 91%);
+  width: 44%;
+  height: 44%;
+  border: 1px solid rgba(210, 220, 205, 0.38);
+  clip-path: none;
   background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 0, 110, 0.64) 0 5px,
-      rgba(32, 3, 14, 0.98) 5px 11px
-    ),
-    radial-gradient(circle at 60% 30%, rgba(0, 234, 255, 0.24), transparent 12px);
-  box-shadow: 0 0 16px rgba(255, 0, 110, 0.38);
+    linear-gradient(135deg, transparent 46%, rgba(210, 220, 205, 0.24) 47% 53%, transparent 54%),
+    linear-gradient(45deg, transparent 46%, rgba(210, 220, 205, 0.18) 47% 53%, transparent 54%),
+    rgba(12, 14, 13, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(0, 234, 255, 0.035),
+    0 0 14px rgba(0, 0, 0, 0.22);
 }
 
 .base-marker {
   position: absolute;
   left: 6px;
   top: 6px;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--lime);
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(210, 220, 205, 0.52);
   background:
-    linear-gradient(90deg, rgba(215, 255, 0, 0.5), rgba(0, 234, 255, 0.12));
+    linear-gradient(90deg, rgba(210, 220, 205, 0.2), rgba(0, 234, 255, 0.08));
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  box-shadow: 0 0 12px rgba(215, 255, 0, 0.32);
+  box-shadow: 0 0 10px rgba(210, 220, 205, 0.12);
 }
 
 .pickup-ghost {
