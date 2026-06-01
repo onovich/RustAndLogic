@@ -98,19 +98,27 @@ const elements = {
 let i18n = { en: {}, zh: {} };
 
 async function loadI18n() {
-  const response = await fetch("./i18n.csv", { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Failed to load i18n.csv: " + response.status);
-  }
-  i18n = parseI18nCsv(await response.text());
+  i18n = parseI18nCsv(await loadTextAsset(["/apps/web/i18n.csv", "./i18n.csv"]));
 }
 
 async function loadAppData() {
-  const response = await fetch("./app-data.json", { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Failed to load app-data.json: " + response.status);
+  appData = JSON.parse(await loadTextAsset(["/apps/web/app-data.json", "./app-data.json"]));
+}
+
+async function loadTextAsset(paths) {
+  const failures = [];
+  for (const path of paths) {
+    try {
+      const response = await fetch(path, { cache: "no-store" });
+      if (response.ok) {
+        return response.text();
+      }
+      failures.push(`${path}: ${response.status}`);
+    } catch (error) {
+      failures.push(`${path}: ${error.message}`);
+    }
   }
-  appData = await response.json();
+  throw new Error(`Failed to load asset. Tried ${failures.join("; ")}`);
 }
 
 function initializeAppData() {

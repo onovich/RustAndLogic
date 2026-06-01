@@ -46,6 +46,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add pan/zoom behavior to the stage canvas and redesign map markers with glitch/noise styling.
 - [x] Split Web UI configuration into `apps/web/app-data.json` and keep player-facing text in `apps/web/i18n.csv`.
 - [x] Add a root `RunWebUI.cmd` command for manual browser testing.
+- [x] Make Web UI data loading tolerate both current and previously running static server asset paths.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
