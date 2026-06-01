@@ -532,7 +532,7 @@ function shouldAutoPause(before, state) {
   const latestLog = state.logs[0] ?? "";
   if (
     latestLog.includes("Blocked by boundary") ||
-    latestLog.includes("Nothing in reach") ||
+    latestLog.includes("Nothing ahead") ||
     latestLog.includes("No cargo to drop") ||
     latestLog.includes("Drop blocked") ||
     latestLog.includes("No target lock") ||

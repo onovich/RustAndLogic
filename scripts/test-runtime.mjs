@@ -171,7 +171,24 @@ Jump @Loop`;
   state = stepGame(cargoGame);
   assert.equal(state.resources.scrap, 0);
   assert.equal(state.robot.cargo.length, 0);
-  assert.equal(state.deposits.some((deposit) => deposit.type === "scrap" && deposit.x === 1 && deposit.y === 2), true);
+  assert.equal(state.deposits.some((deposit) => deposit.type === "scrap" && deposit.x === 2 && deposit.y === 2), true);
+
+  const footPickupGame = createGame();
+  footPickupGame.deposits = [{ id: "underfoot", type: "scrap", x: 1, y: 2 }];
+  state = deployProgram(footPickupGame, "PickUp");
+  state = stepGame(footPickupGame);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.logs.includes("PickUp: Nothing ahead to pick up."), true);
+
+  const occupiedDropGame = createGame();
+  occupiedDropGame.robot.cargo.push("scrap");
+  occupiedDropGame.resources.scrap = 1;
+  occupiedDropGame.deposits = [{ id: "front", type: "cell", x: 2, y: 2 }];
+  state = deployProgram(occupiedDropGame, "Drop");
+  state = stepGame(occupiedDropGame);
+  assert.equal(state.robot.cargo.length, 1);
+  assert.equal(state.resources.scrap, 1);
+  assert.equal(state.logs.includes("Drop: Drop blocked by occupied cell."), true);
 
   const fireGame = createGame();
   fireGame.tick = 6;

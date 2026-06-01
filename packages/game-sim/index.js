@@ -301,18 +301,15 @@ function turn(game, delta) {
 }
 
 function pickUp(game) {
-  const locations = [{ x: game.robot.x, y: game.robot.y }, aheadOf(game)];
-  for (const location of locations) {
-    const deposit = findDeposit(game, location);
-    if (!deposit) {
-      continue;
-    }
-    game.deposits = game.deposits.filter((item) => item.id !== deposit.id);
-    game.resources[deposit.type] += 1;
-    game.robot.cargo.push(deposit.type);
-    return { ok: true, message: `Collected ${deposit.type}.` };
+  const target = aheadOf(game);
+  const deposit = findDeposit(game, target);
+  if (!deposit) {
+    return { ok: false, message: "Nothing ahead to pick up." };
   }
-  return { ok: false, message: "Nothing in reach." };
+  game.deposits = game.deposits.filter((item) => item.id !== deposit.id);
+  game.resources[deposit.type] += 1;
+  game.robot.cargo.push(deposit.type);
+  return { ok: true, message: `Collected ${deposit.type}.` };
 }
 
 function dropCargo(game) {
@@ -320,7 +317,12 @@ function dropCargo(game) {
   if (!cargo) {
     return { ok: false, message: "No cargo to drop." };
   }
-  if (findDeposit(game, game.robot)) {
+  const target = aheadOf(game);
+  if (target.x < 0 || target.y < 0 || target.x >= game.width || target.y >= game.height) {
+    game.robot.cargo.push(cargo);
+    return { ok: false, message: "Drop blocked by boundary." };
+  }
+  if (findDeposit(game, target)) {
     game.robot.cargo.push(cargo);
     return { ok: false, message: "Drop blocked by occupied cell." };
   }
@@ -328,8 +330,8 @@ function dropCargo(game) {
   game.deposits.push({
     id: `dropped-${cargo}-${game.tick}-${game.deposits.length}`,
     type: cargo,
-    x: game.robot.x,
-    y: game.robot.y,
+    x: target.x,
+    y: target.y,
   });
   return { ok: true, message: `Dropped ${cargo}.` };
 }

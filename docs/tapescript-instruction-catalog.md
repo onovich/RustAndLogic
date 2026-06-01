@@ -18,8 +18,8 @@
 | keep | 动作 |  | `MoveBack` | 让机器人朝背后的方向移动一格，并且不改变朝向。 | 如果目标格在地图外，或被障碍物阻挡，动作失败，自动播放应暂停。 | `MoveBack` |
 | keep | 动作 | `TurnLeft` | `TurnLeft` | 让机器人原地向左转 90 度，不移动位置。 | 除非机器人处于无法行动状态，否则总是成功。 | `TurnLeft` |
 | keep | 动作 | `TurnRight` | `TurnRight` | 让机器人原地向右转 90 度，不移动位置。 | 除非机器人处于无法行动状态，否则总是成功。 | `TurnRight` |
-| keep | 动作 | `PickUp` | `PickUp` | 拾取机器人脚下或正前方一格内的资源。 | 如果范围内没有可拾取资源，动作失败，自动播放应暂停。 | `PickUp` |
-| keep | 动作 | `Drop` | `Drop` | 把机器人最近携带的一份货物放到当前格子。 | 如果没有货物，或当前格子已经有资源，动作失败，自动播放应暂停。成功时从资源计数中扣回对应货物，并在当前格生成资源。 | `Drop` |
+| keep | 动作 | `PickUp` | `PickUp` | 拾取机器人正前方一格内的资源。 | 如果正前方没有可拾取资源，动作失败，自动播放应暂停。 | `PickUp` |
+| keep | 动作 | `Drop` | `Drop` | 把机器人最近携带的一份货物放到正前方一格。 | 如果没有货物、正前方在地图外，或正前方已经有资源，动作失败，自动播放应暂停。成功时从资源计数中扣回对应货物，并在正前方生成资源。 | `Drop` |
 | keep | 动作 | `Fire` | `Fire` | 在探测到敌人时触发机器人的武器继电器并开火。 | 如果当前没有目标锁定，动作失败，自动播放应暂停。 | `Fire` |
 | keep | 查询 | `CheckScrap` | `CheckScrap` | 检查机器人正前方一格是否有废铁。 | 设置条件标志为 true 或 false。查询本身不消耗物理动作 tick。 | `CheckScrap` |
 | keep | 查询 | `CheckEnemy` | `CheckEnemy` | 检查当前是否探测到敌人。 | 设置条件标志为 true 或 false。当前原型使用确定性占位规则。 | `CheckEnemy` |
@@ -43,10 +43,15 @@
 | --- | --- | --- | --- | --- | --- |
 | later | 查询 | `CheckWall` | 检查机器人正前方一格是否是墙、障碍物或地图边界。 | 设置条件标志为 true 或 false。 | `CheckWall` |
 | later | 查询 | `CheckCell` | 检查机器人正前方一格是否有数据电芯。 | 设置条件标志为 true 或 false。 | `CheckCell` |
+| later | 查询 | `CheckEmpty` | 检查机器人正前方一格是否为空，可以移动或放下货物。 | 设置条件标志为 true 或 false。 | `CheckEmpty` |
+| later | 查询 | `CheckCargoScrap` | 检查机器人货舱里是否携带废铁。 | 设置条件标志为 true 或 false。 | `CheckCargoScrap` |
+| later | 查询 | `CheckCargoCell` | 检查机器人货舱里是否携带数据电芯。 | 设置条件标志为 true 或 false。 | `CheckCargoCell` |
 | later | 查询 | `CheckCargo` | 检查机器人当前是否携带任何货物。 | 设置条件标志为 true 或 false。 | `CheckCargo` |
 | later | 查询 | `CheckCargoFull` | 检查机器人货舱是否已满。 | 设置条件标志为 true 或 false。需要先定义货舱容量。 | `CheckCargoFull` |
 | later | 查询 | `CheckHome` | 检查机器人是否站在基地、回收点或安全区。 | 设置条件标志为 true 或 false。需要先定义基地格子。 | `CheckHome` |
+| later | 查询 | `CheckDamage` | 检查机器人本轮是否刚受到伤害。 | 设置条件标志为 true 或 false。需要先定义伤害事件。 | `CheckDamage` |
 | later | 动作 | `TurnAround` | 让机器人原地转身 180 度。 | 除非机器人处于无法行动状态，否则总是成功。 | `TurnAround` |
+| later | 动作 | `MoveTowardHome` | 朝基地方向移动一格。 | 如果路线被阻挡，动作失败。需要先定义基地格子和寻路规则。 | `MoveTowardHome` |
 | later | 动作 | `Wait` | 消耗一个动作 tick，什么也不做。 | 除非机器人处于无法行动状态，否则总是成功。 | `Wait` |
 | later | 动作 | `Repair` | 消耗资源或能量，恢复机器人 HP。 | 如果资源不足，则动作失败。 | `Repair` |
 | later | 动作 | `Unload` | 在基地或回收点卸下全部货物。 | 如果不在可卸货位置，动作失败。需要先定义基地格子和货物结算规则。 | `Unload` |
