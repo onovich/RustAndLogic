@@ -12,7 +12,7 @@ export function createStaticServer() {
     const requestUrl = new URL(request.url ?? "/", `http://127.0.0.1:${port}`);
     const pathname = decodeURIComponent(requestUrl.pathname);
     let relativePath = pathname === "/" ? "apps/web/index.html" : pathname.slice(1);
-    if (["styles.css"].includes(relativePath) || relativePath.startsWith("src/")) {
+    if (["styles.css", "i18n.csv"].includes(relativePath) || relativePath.startsWith("src/")) {
       relativePath = `apps/web/${relativePath}`;
     }
     const fullPath = resolve(root, relativePath);
@@ -53,6 +53,13 @@ function contentType(path) {
       return "text/javascript; charset=utf-8";
     case ".svg":
       return "image/svg+xml";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".csv":
+      return "text/csv; charset=utf-8";
     default:
       return "application/octet-stream";
   }

@@ -39,9 +39,18 @@ try {
 
   await page.getByTestId("story-dialogue").waitFor({ state: "visible" });
   const openingText = await page.getByTestId("story-text").innerText();
-  if (!openingText.includes("satellite uplink")) {
+  if (!openingText.includes("satellite uplink") && !openingText.includes("卫星链路")) {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
+  await page.locator(".settings-panel").evaluate((details) => {
+    details.open = true;
+  });
+  await page.getByTestId("lang-zh-button").click();
+  const zhOpeningText = await page.getByTestId("story-text").innerText();
+  if (!zhOpeningText.includes("卫星链路")) {
+    throw new Error(`Expected localized Chinese story dialogue, got: ${zhOpeningText}`);
+  }
+  await page.getByTestId("lang-en-button").click();
   for (let index = 0; index < 3; index += 1) {
     await page.getByTestId("story-dialogue").click();
   }
@@ -52,12 +61,13 @@ try {
   });
   await page.getByTestId("lang-zh-button").click();
   await expectText(page, "play-button", "▶");
-  await expectText(page, "step-button", "▸|");
+  await expectText(page, "step-button", "⏭");
+  await expectText(page, "save-summary", "本轮尚未写入存档。");
   await page.getByTestId("lang-en-button").click();
   await expectText(page, "compile-status", "Waiting");
   await expectText(page, "capacity-label", "Capacity 8");
   await expectText(page, "play-button", "▶");
-  await expectText(page, "step-button", "▸|");
+  await expectText(page, "step-button", "⏭");
   await expectText(page, "speed-button", "x1");
   await page.getByTestId("speed-button").click();
   await expectText(page, "speed-button", "x5");
@@ -69,6 +79,57 @@ try {
   const devDebugVisible = await page.locator(".dev-panel [data-testid='diff-list']").isVisible();
   if (devDebugVisible) {
     throw new Error("Expected developer diff panel to be closed by default.");
+  }
+  const arenaButtonCount = await page.getByTestId("arena-button").count();
+  if (arenaButtonCount !== 0) {
+    throw new Error("Expected arena preview to be removed from the player UI.");
+  }
+
+  const layoutBeforeCollapse = await page.evaluate(() => {
+    const editor = document.querySelector(".editor-panel").getBoundingClientRect();
+    const right = document.querySelector(".right-sidebar").getBoundingClientRect();
+    return { editorLeft: editor.left, editorWidth: editor.width, rightWidth: right.width };
+  });
+  await page.getByTestId("objectives-toggle").click();
+  await page.waitForTimeout(240);
+  const layoutAfterLeftCollapse = await page.evaluate(() => {
+    const editor = document.querySelector(".editor-panel").getBoundingClientRect();
+    return { editorLeft: editor.left, editorWidth: editor.width };
+  });
+  if (
+    layoutAfterLeftCollapse.editorLeft >= layoutBeforeCollapse.editorLeft ||
+    layoutAfterLeftCollapse.editorWidth <= layoutBeforeCollapse.editorWidth
+  ) {
+    throw new Error(
+      `Expected code area to expand when left panel collapses, got ${JSON.stringify({
+        before: layoutBeforeCollapse,
+        after: layoutAfterLeftCollapse,
+      })}`,
+    );
+  }
+  await page.getByTestId("right-sidebar-toggle").click();
+  await page.waitForTimeout(240);
+  const layoutAfterRightCollapse = await page.evaluate(() => {
+    const right = document.querySelector(".right-sidebar").getBoundingClientRect();
+    return { rightWidth: right.width };
+  });
+  if (layoutAfterRightCollapse.rightWidth >= layoutBeforeCollapse.rightWidth) {
+    throw new Error(`Expected right sidebar to collapse, got ${JSON.stringify(layoutAfterRightCollapse)}`);
+  }
+  await page.getByTestId("objectives-toggle").click();
+  await page.getByTestId("right-sidebar-toggle").click();
+  await page.waitForTimeout(240);
+
+  const transformBeforeCanvasMove = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
+  const canvasBox = await page.getByTestId("world-canvas").boundingBox();
+  await page.mouse.move(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + canvasBox.width / 2 + 40, canvasBox.y + canvasBox.height / 2 + 20);
+  await page.mouse.up();
+  await page.mouse.wheel(0, -240);
+  const transformAfterCanvasMove = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
+  if (transformAfterCanvasMove === transformBeforeCanvasMove || !transformAfterCanvasMove.includes("scale(")) {
+    throw new Error(`Expected infinite canvas pan/zoom transform, got: ${transformAfterCanvasMove}`);
   }
 
   const editorMetrics = await page.evaluate(() => {
@@ -170,18 +231,11 @@ try {
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 10");
 
-  await page.getByTestId("arena-button").click();
-  const arenaText = await page.getByTestId("arena-summary").innerText();
-  if (!arenaText.includes("Victory")) {
-    throw new Error(`Expected arena preview victory, got: ${arenaText}`);
-  }
-
   const checklist = await page.getByTestId("flow-checklist").innerText();
   for (const label of [
-    "Deploy a valid tape",
+    "Compile a valid tape",
     "Collect scrap",
     "Upgrade tape",
-    "Preview arena",
     "Upgrade robot hardware",
     "Save and reload",
   ]) {

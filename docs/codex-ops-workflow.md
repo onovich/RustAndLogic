@@ -40,9 +40,9 @@ lint, typecheck, build, test, structureCheck, docsCheck
 
 ## Dev Server
 
-Start command: ``
-Health URL: ``
-Ready text: ``
+Start command: `C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe scripts/serve-web-ui.mjs 4173`
+Health URL: `http://127.0.0.1:4173/`
+Ready text: `Rust & Logic Web UI`
 Timeout seconds: 30
 
 ## Safety Policy

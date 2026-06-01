@@ -2,8 +2,6 @@ import {
   createGame,
   deployProgram,
   diffSnapshots,
-  fastForwardOffline,
-  previewArena,
   serializeGame,
   snapshot,
   stepGame,
@@ -27,26 +25,34 @@ let storyIndex = 0;
 let storyActive = true;
 const storyPages = [
   {
-    speaker: "K-6 Commander",
-    text: "Rain is breaking the satellite uplink. Keep the scavenger on a short loop until we recover enough scrap.",
+    speakerKey: "story.opening.1.speaker",
+    textKey: "story.opening.1.text",
   },
   {
-    speaker: "K-6 Commander",
-    text: "The script on the left is your tape. Press play or single-frame after this briefing; the system will compile it on demand.",
+    speakerKey: "story.opening.2.speaker",
+    textKey: "story.opening.2.text",
   },
   {
-    speaker: "K-6 Commander",
-    text: "Recover the nearby scrap, upgrade tape capacity, then we can route you toward the next unlocked site.",
+    speakerKey: "story.opening.3.speaker",
+    textKey: "story.opening.3.text",
   },
 ];
 const flow = {
   deploy: false,
   collect: false,
   tape: false,
-  arena: false,
-  offline: false,
   hardware: false,
   save: false,
+};
+const canvasState = {
+  x: 0,
+  y: 0,
+  scale: 1,
+  pointerId: null,
+  dragStartX: 0,
+  dragStartY: 0,
+  originX: 0,
+  originY: 0,
 };
 
 const saveKey = "rust-and-logic.save.v1";
@@ -143,11 +149,11 @@ const elements = {
   upgrade: query("upgrade-button"),
   armorUpgrade: query("armor-upgrade-button"),
   weaponUpgrade: query("weapon-upgrade-button"),
-  arena: query("arena-button"),
-  offline: query("offline-button"),
   save: query("save-button"),
   load: query("load-button"),
   grid: query("world-grid"),
+  canvasViewport: query("world-canvas"),
+  canvasWorld: query("world-canvas-world"),
   tick: query("tick"),
   tapeUsage: query("tape-usage"),
   vmState: query("vm-state"),
@@ -163,12 +169,11 @@ const elements = {
   consoleLog: query("console-log"),
   diffCount: query("diff-count"),
   diffList: query("diff-list"),
-  arenaSummary: query("arena-summary"),
-  offlineSummary: query("offline-summary"),
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
   languageSwitch: query("language-switch"),
   objectivesToggle: query("objectives-toggle"),
+  rightSidebarToggle: query("right-sidebar-toggle"),
   stage: document.querySelector(".stage-panel"),
   storyDialogue: query("story-dialogue"),
   storySpeaker: query("story-speaker"),
@@ -176,182 +181,72 @@ const elements = {
   storyPrompt: query("story-prompt"),
 };
 
-const i18n = {
-  en: {
-    "app.eyebrow": "TapeScript test harness",
-    "status.aria": "Simulation status",
-    "status.tick": "Tick",
-    "status.tape": "Tape",
-    "status.vm": "VM",
-    "language.aria": "Language switch",
-    "workspace.aria": "Game UI flow",
-    "tape.aria": "Tape editor",
-    "tape.title": "Tape",
-    "tape.controls": "Tape controls",
-    "world.aria": "World map",
-    "world.grid": "Robot grid",
-    "side.aria": "Progression and arena",
-    "world.title": "Scrapyard",
-    "resources.title": "Resources",
-    "resources.scrap": "Scrap",
-    "resources.cells": "Batteries",
-    "resources.blankTape": "Blank tape",
-    "modules.aria": "Robot modules",
-    "modules.title": "Modules",
-    "modules.armor": "Armor",
-    "modules.weapon": "Weapon",
-    "arena.aria": "Arena preview",
-    "arena.title": "Arena Preview",
-    "offline.aria": "Offline projection",
-    "offline.title": "Offline Projection",
-    "save.aria": "Save slot",
-    "save.title": "Save Slot",
-    "flow.aria": "Flow checklist",
-    "flow.title": "Flow Checklist",
-    "flow.deploy": "Deploy a valid tape",
-    "flow.collect": "Collect scrap from the map",
-    "flow.tape": "Upgrade tape capacity",
-    "flow.arena": "Preview arena result",
-    "flow.offline": "Resolve offline projection",
-    "flow.hardware": "Upgrade robot hardware",
-    "flow.save": "Save and reload progress",
-    "console.aria": "Runtime console",
-    "console.title": "Console",
-    "diff.aria": "State diff",
-    "diff.title": "Diff",
-    "action.deploy": "Deploy",
-    "action.play": "Play",
-    "action.pause": "Pause",
-    "action.resume": "Resume",
-    "action.frame": "Frame",
-    "action.speed": "Speed {speed}",
-    "action.stop": "Stop",
-    "action.upgradeTape": "Upgrade tape",
-    "action.armorPlus": "Armor +",
-    "action.weaponPlus": "Weapon +",
-    "action.previewArena": "Preview arena",
-    "action.offline": "Fast-forward 24",
-    "action.save": "Save",
-    "action.load": "Load",
-    "diagnostic.line": "Line {line}",
-    "diagnostic.general": "Tape",
-    "state.idle": "Idle",
-    "state.waiting": "Waiting",
-    "state.compileOk": "Compile OK",
-    "state.compileError": "Compile error",
-    "capacity": "Capacity {value}",
-    "capacity.short": "Tape capacity",
-    "diff.count": "{count} {label}",
-    "diff.change": "change",
-    "diff.changes": "changes",
-    "diff.empty": "No state changes yet.",
-    "arena.empty": "No arena preview yet.",
-    "arena.victory": "Victory",
-    "arena.defeat": "Defeat",
-    "arena.victorySummary": "The robot survived the ladder ghost and recovered a battery.",
-    "arena.defeatSummary": "The opponent forced a logic fault before extraction.",
-    "arena.summary": "{result}: {summary} Score {score}/{enemyScore}.",
-    "offline.empty": "No offline projection yet.",
-    "offline.summary": "Fast-forwarded {ticks} ticks and recovered {scrap} scrap{cellsText}.",
-    "offline.cellsText": " plus {cells} batteries",
-    "save.empty": "No save written this session.",
-    "save.saved": "Saved tick {tick}.",
-    "save.loaded": "Loaded tick {tick}.",
-    "save.missing": "No save found.",
-    "save.reset": "Reset local session state.",
-    "vm.Ready": "Ready",
-    "vm.Suspended": "Suspended",
-    "vm.Halted": "Halted",
-    "vm.Fault": "Fault",
-  },
-  zh: {
-    "app.eyebrow": "TapeScript 测试工作台",
-    "status.aria": "模拟状态",
-    "status.tick": "回合",
-    "status.tape": "纸带",
-    "status.vm": "虚拟机",
-    "language.aria": "语言切换",
-    "workspace.aria": "游戏 UI 流程",
-    "tape.aria": "纸带编辑器",
-    "tape.title": "纸带",
-    "tape.controls": "纸带控制",
-    "world.aria": "世界地图",
-    "world.grid": "机器人网格",
-    "side.aria": "成长与竞技场",
-    "world.title": "废土场",
-    "resources.title": "资源",
-    "resources.scrap": "废铁",
-    "resources.cells": "电芯",
-    "resources.blankTape": "空白纸带",
-    "modules.aria": "机器人模块",
-    "modules.title": "模块",
-    "modules.armor": "装甲",
-    "modules.weapon": "武器",
-    "arena.aria": "竞技场预览",
-    "arena.title": "竞技场预览",
-    "offline.aria": "离线推演",
-    "offline.title": "离线推演",
-    "save.aria": "存档槽",
-    "save.title": "存档槽",
-    "flow.aria": "流程清单",
-    "flow.title": "流程清单",
-    "flow.deploy": "部署有效纸带",
-    "flow.collect": "从地图收集废铁",
-    "flow.tape": "升级纸带容量",
-    "flow.arena": "预览竞技场结果",
-    "flow.offline": "结算离线推演",
-    "flow.hardware": "升级机器人硬件",
-    "flow.save": "保存并读取进度",
-    "console.aria": "运行控制台",
-    "console.title": "控制台",
-    "diff.aria": "状态差异",
-    "diff.title": "差异",
-    "action.deploy": "部署",
-    "action.play": "播放",
-    "action.pause": "暂停",
-    "action.resume": "恢复",
-    "action.frame": "快进一帧",
-    "action.speed": "速度 {speed}",
-    "action.stop": "停止",
-    "action.upgradeTape": "升级纸带",
-    "action.armorPlus": "装甲 +",
-    "action.weaponPlus": "武器 +",
-    "action.previewArena": "预览竞技场",
-    "action.offline": "快进 24",
-    "action.save": "保存",
-    "action.load": "读取",
-    "diagnostic.line": "第 {line} 行",
-    "diagnostic.general": "纸带",
-    "state.idle": "空闲",
-    "state.waiting": "等待中",
-    "state.compileOk": "编译通过",
-    "state.compileError": "编译错误",
-    "capacity": "容量 {value}",
-    "capacity.short": "纸带容量",
-    "diff.count": "{count} 项变化",
-    "diff.change": "项变化",
-    "diff.changes": "项变化",
-    "diff.empty": "暂无状态变化。",
-    "arena.empty": "尚未预览竞技场。",
-    "arena.victory": "胜利",
-    "arena.defeat": "失败",
-    "arena.victorySummary": "机器人撑过了天梯幽影，并回收了一枚数据电芯。",
-    "arena.defeatSummary": "对手在撤离前诱发了逻辑故障。",
-    "arena.summary": "{result}: {summary} 分数 {score}/{enemyScore}。",
-    "offline.empty": "尚未进行离线推演。",
-    "offline.summary": "已快进 {ticks} 回合，回收 {scrap} 废铁{cellsText}。",
-    "offline.cellsText": "与 {cells} 电芯",
-    "save.empty": "本轮尚未写入存档。",
-    "save.saved": "已保存第 {tick} 回合。",
-    "save.loaded": "已读取第 {tick} 回合。",
-    "save.missing": "没有找到存档。",
-    "save.reset": "已重置本地会话状态。",
-    "vm.Ready": "就绪",
-    "vm.Suspended": "暂停",
-    "vm.Halted": "停止",
-    "vm.Fault": "故障",
-  },
-};
+let i18n = { en: {}, zh: {} };
+
+async function loadI18n() {
+  const response = await fetch("./i18n.csv", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Failed to load i18n.csv: " + response.status);
+  }
+  i18n = parseI18nCsv(await response.text());
+}
+
+function parseI18nCsv(source) {
+  const rows = parseCsv(source.trim());
+  const [header, ...entries] = rows;
+  const keyIndex = header.indexOf("key");
+  const enIndex = header.indexOf("en");
+  const zhIndex = header.indexOf("zh");
+  if (keyIndex < 0 || enIndex < 0 || zhIndex < 0) {
+    throw new Error("i18n.csv must contain key,en,zh columns.");
+  }
+  const dictionary = { en: {}, zh: {} };
+  for (const row of entries) {
+    const key = row[keyIndex]?.trim();
+    if (!key) {
+      continue;
+    }
+    dictionary.en[key] = row[enIndex] ?? key;
+    dictionary.zh[key] = row[zhIndex] ?? dictionary.en[key] ?? key;
+  }
+  return dictionary;
+}
+
+function parseCsv(source) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    const next = source[index + 1];
+    if (quoted) {
+      if (char === '"' && next === '"') {
+        value += '"';
+        index += 1;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        value += char;
+      }
+    } else if (char === '"') {
+      quoted = true;
+    } else if (char === ',') {
+      row.push(value);
+      value = "";
+    } else if (char === '\n') {
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+    } else if (char !== '\r') {
+      value += char;
+    }
+  }
+  row.push(value);
+  rows.push(row);
+  return rows;
+}
 
 elements.languageSwitch.addEventListener("click", (event) => {
   const button = event.target.closest("[data-lang]");
@@ -409,6 +304,20 @@ if (elements.objectivesToggle) {
       document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
   });
 }
+if (elements.rightSidebarToggle) {
+  elements.rightSidebarToggle.addEventListener("click", () => {
+    document.body.dataset.rightCollapsed =
+      document.body.dataset.rightCollapsed === "true" ? "false" : "true";
+    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "[+]" : "[-]";
+  });
+}
+if (elements.canvasViewport) {
+  elements.canvasViewport.addEventListener("pointerdown", beginCanvasDrag);
+  elements.canvasViewport.addEventListener("pointermove", dragCanvas);
+  elements.canvasViewport.addEventListener("pointerup", endCanvasDrag);
+  elements.canvasViewport.addEventListener("pointercancel", endCanvasDrag);
+  elements.canvasViewport.addEventListener("wheel", zoomCanvas, { passive: false });
+}
 if (elements.storyDialogue) {
   elements.storyDialogue.addEventListener("click", advanceStory);
 }
@@ -447,20 +356,6 @@ elements.weaponUpgrade.addEventListener("click", () => {
   flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
   render(state, { animate: false });
 });
-elements.arena.addEventListener("click", () => {
-  stopPlayback(false);
-  const state = previewArena(game);
-  flow.arena = Boolean(state.arena);
-  render(state, { animate: false });
-});
-if (elements.offline) {
-  elements.offline.addEventListener("click", () => {
-    stopPlayback(false);
-    const state = fastForwardOffline(game, 24);
-    flow.offline = Boolean(state.offline?.ticks);
-    render(state, { animate: false });
-  });
-}
 elements.save.addEventListener("click", () => {
   stopPlayback(false);
   localStorage.setItem(saveKey, serializeGame(game));
@@ -491,8 +386,10 @@ elements.reset.addEventListener("click", () => {
   render(snapshot(game), { animate: false });
 });
 
+await loadI18n();
 applyLanguage();
 updateEditorTools();
+applyCanvasTransform();
 renderStoryDialogue();
 render(snapshot(game), { animate: false });
 
@@ -523,21 +420,6 @@ function render(state, options = {}) {
     elements.compileStatus.className = state.program.ok ? "ok" : "error";
   }
 
-  elements.arenaSummary.textContent = state.arena
-    ? t("arena.summary", {
-        result: state.arena.result === "Victory" ? t("arena.victory") : t("arena.defeat"),
-        summary: state.arena.result === "Victory" ? t("arena.victorySummary") : t("arena.defeatSummary"),
-        score: state.arena.score,
-        enemyScore: state.arena.enemyScore,
-      })
-    : t("arena.empty");
-  elements.offlineSummary.textContent = state.offline
-    ? t("offline.summary", {
-        ticks: state.offline.ticks,
-        scrap: state.offline.scrap,
-        cellsText: state.offline.cells > 0 ? t("offline.cellsText", { cells: state.offline.cells }) : "",
-      })
-    : t("offline.empty");
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
 
   renderGrid(state, beforeState, options);
@@ -670,9 +552,10 @@ function renderStoryDialogue() {
   const page = storyPages[storyIndex];
   elements.stage.dataset.mode = "story";
   elements.storyDialogue.hidden = false;
-  elements.storySpeaker.textContent = page.speaker;
-  elements.storyText.textContent = page.text;
-  elements.storyPrompt.textContent = storyIndex === storyPages.length - 1 ? "Click to begin idle mode" : "Click to continue";
+  elements.storySpeaker.textContent = t(page.speakerKey);
+  elements.storyText.textContent = t(page.textKey);
+  elements.storyPrompt.textContent =
+    storyIndex === storyPages.length - 1 ? t("story.prompt.begin") : t("story.prompt.continue");
 }
 
 function shouldAutoPause(before, state) {
@@ -730,7 +613,7 @@ function currentSpeedProfile() {
 
 function updateControls() {
   elements.play.textContent = "▶";
-  elements.step.textContent = "▸|";
+  elements.step.textContent = "⏭";
   elements.reset.textContent = "■";
   elements.pause.textContent = playbackMode === "paused" ? "▶" : "Ⅱ";
   elements.pause.disabled = playbackMode === "stopped" || storyActive;
@@ -1050,6 +933,67 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+function beginCanvasDrag(event) {
+  if (!elements.canvasViewport || event.button !== 0) {
+    return;
+  }
+  canvasState.pointerId = event.pointerId;
+  canvasState.dragStartX = event.clientX;
+  canvasState.dragStartY = event.clientY;
+  canvasState.originX = canvasState.x;
+  canvasState.originY = canvasState.y;
+  elements.canvasViewport.dataset.dragging = "true";
+  elements.canvasViewport.setPointerCapture(event.pointerId);
+}
+
+function dragCanvas(event) {
+  if (canvasState.pointerId !== event.pointerId) {
+    return;
+  }
+  canvasState.x = canvasState.originX + event.clientX - canvasState.dragStartX;
+  canvasState.y = canvasState.originY + event.clientY - canvasState.dragStartY;
+  applyCanvasTransform();
+}
+
+function endCanvasDrag(event) {
+  if (canvasState.pointerId !== event.pointerId) {
+    return;
+  }
+  canvasState.pointerId = null;
+  if (elements.canvasViewport) {
+    elements.canvasViewport.dataset.dragging = "false";
+    elements.canvasViewport.releasePointerCapture?.(event.pointerId);
+  }
+}
+
+function zoomCanvas(event) {
+  if (!elements.canvasViewport) {
+    return;
+  }
+  event.preventDefault();
+  const rect = elements.canvasViewport.getBoundingClientRect();
+  const beforeScale = canvasState.scale;
+  const nextScale = clamp(beforeScale * (event.deltaY < 0 ? 1.12 : 0.88), 0.55, 2.4);
+  const anchorX = event.clientX - rect.left - rect.width / 2;
+  const anchorY = event.clientY - rect.top - rect.height / 2;
+  canvasState.x = anchorX - ((anchorX - canvasState.x) / beforeScale) * nextScale;
+  canvasState.y = anchorY - ((anchorY - canvasState.y) / beforeScale) * nextScale;
+  canvasState.scale = nextScale;
+  applyCanvasTransform();
+}
+
+function applyCanvasTransform() {
+  if (!elements.canvasWorld) {
+    return;
+  }
+  elements.canvasWorld.style.transform =
+    `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y}px)) scale(${canvasState.scale})`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function renderGrid(state, beforeState, options = {}) {
   const previousDeposits = beforeState?.deposits ?? [];
   const removedDeposits = previousDeposits.filter(
@@ -1115,7 +1059,7 @@ function renderRobot(state, options = {}) {
     return;
   }
 
-  const size = Math.min(position.width * 0.64, 42);
+  const size = Math.min(position.width * 0.52, 34);
   robotNode.style.width = `${size}px`;
   robotNode.style.height = `${size}px`;
   robotNode.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
@@ -1136,7 +1080,7 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
     return;
   }
 
-  const size = Math.min(from.width * 0.5, 34);
+  const size = Math.min(from.width * 0.48, 28);
   const ghost = document.createElement("div");
   ghost.className = `deposit pickup-ghost ${deposit.type}`;
   ghost.style.width = `${size}px`;

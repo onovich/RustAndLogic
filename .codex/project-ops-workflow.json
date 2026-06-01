@@ -90,7 +90,7 @@
     "devServer":  {
                       "startCommand":  "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/serve-web-ui.mjs 4173",
                       "healthUrl":  "http://127.0.0.1:4173/",
-                      "readyText":  "Rust & Logic Web UI:",
+                      "readyText":  "Rust & Logic Web UI",
                       "startupTimeoutSeconds":  30,
                       "pidFile":  ".codex/project-ops-devserver.pid"
                   },

@@ -8,17 +8,25 @@
   </head>
   <body>
     <main class="app-shell">
-      <aside class="objective-sidebar" aria-label="Primary objectives">
-        <header class="sidebar-heading">
-          <h2>Primary Objectives</h2>
-          <button class="sidebar-toggle" data-testid="objectives-toggle" type="button" aria-label="Toggle objectives">[+]</button>
+      <aside class="location-sidebar" aria-label="Current location" data-i18n-attr="aria-label:location.aria">
+        <header class="sidebar-heading location-heading">
+          <h2 data-i18n="location.title">Location</h2>
+          <button class="sidebar-toggle" data-testid="objectives-toggle" type="button" aria-label="Toggle location panel" data-i18n-attr="aria-label:action.toggleLocation">[+]</button>
         </header>
-        <section class="flow-panel" aria-label="Flow checklist" data-i18n-attr="aria-label:flow.aria">
+        <div class="location-art">
+          <img src="/imgs/sample1.png" alt="" aria-hidden="true">
+          <div class="location-copy">
+            <span data-i18n="location.kind">Scrapfield node</span>
+            <strong data-i18n="world.title">Scrapyard</strong>
+            <p data-i18n="location.description">A rain-burned recovery site with a weak uplink and a short scavenger loop.</p>
+          </div>
+        </div>
+        <section class="flow-panel" aria-label="Task checklist" data-i18n-attr="aria-label:flow.aria">
+          <h2 data-i18n="flow.title">Tasks</h2>
           <ol data-testid="flow-checklist">
-            <li data-flow="deploy" data-i18n="flow.deploy">Deploy a valid tape</li>
+            <li data-flow="deploy" data-i18n="flow.deploy">Compile a valid tape</li>
             <li data-flow="collect" data-i18n="flow.collect">Collect scrap from the map</li>
             <li data-flow="tape" data-i18n="flow.tape">Upgrade tape capacity</li>
-            <li data-flow="arena" data-i18n="flow.arena">Preview arena result</li>
             <li data-flow="hardware" data-i18n="flow.hardware">Upgrade robot hardware</li>
             <li data-flow="save" data-i18n="flow.save">Save and reload progress</li>
           </ol>
@@ -31,11 +39,11 @@
             <h1>Logic_Engine.sh</h1>
           </div>
           <div class="toolbar" aria-label="Tape controls" data-i18n-attr="aria-label:tape.controls">
-            <button data-testid="play-button" data-i18n-attr="aria-label:action.play" type="button" title="Play">▶</button>
-            <button data-testid="step-button" data-i18n-attr="aria-label:action.frame" type="button" title="Frame">▸|</button>
+            <button data-testid="play-button" data-i18n-attr="aria-label:action.play" type="button" title="Play">&#9654;</button>
+            <button data-testid="step-button" data-i18n-attr="aria-label:action.frame" type="button" title="Frame">&#9193;</button>
             <button data-testid="speed-button" type="button" title="Speed">x1</button>
-            <button data-testid="pause-button" data-i18n-attr="aria-label:action.pause" type="button" title="Pause">Ⅱ</button>
-            <button data-testid="reset-button" data-i18n-attr="aria-label:action.stop" type="button" title="Stop">■</button>
+            <button data-testid="pause-button" data-i18n-attr="aria-label:action.pause" type="button" title="Pause">&#10074;&#10074;</button>
+            <button data-testid="reset-button" data-i18n-attr="aria-label:action.stop" type="button" title="Stop">&#9632;</button>
           </div>
         </header>
         <div class="editor-frame">
@@ -64,17 +72,27 @@ Goto @Loop</textarea>
           <strong>Satellite_Link: Sector_07</strong>
           <span>Live_Feed</span>
         </div>
-        <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
+        <div class="canvas-viewport" data-testid="world-canvas" aria-label="Infinite map canvas" data-i18n-attr="aria-label:world.canvas">
+          <div class="canvas-world" data-testid="world-canvas-world">
+            <div class="playfield-barrier">
+              <div class="grid" data-testid="world-grid" aria-label="Robot grid" data-i18n-attr="aria-label:world.grid"></div>
+            </div>
+          </div>
+        </div>
         <button class="story-dialogue" data-testid="story-dialogue" type="button" aria-live="polite">
-          <span class="story-speaker" data-testid="story-speaker">K-6 Commander</span>
+          <span class="story-speaker" data-testid="story-speaker"></span>
           <span class="story-text" data-testid="story-text"></span>
           <span class="story-prompt" data-testid="story-prompt"></span>
         </button>
       </section>
 
       <aside class="right-sidebar" aria-label="Resources and modules" data-i18n-attr="aria-label:side.aria">
+        <header class="right-sidebar-heading">
+          <h2 data-i18n="side.title">Systems</h2>
+          <button class="sidebar-toggle" data-testid="right-sidebar-toggle" type="button" aria-label="Toggle systems panel" data-i18n-attr="aria-label:action.toggleSystems">[-]</button>
+        </header>
         <section class="status-panel" aria-label="Simulation status" data-i18n-attr="aria-label:status.aria">
-          <h2>Run State</h2>
+          <h2 data-i18n="status.title">Run State</h2>
           <div class="status-strip">
             <span><span data-i18n="status.tick">Tick</span> <strong data-testid="tick">0</strong></span>
             <span><span data-i18n="status.vm">VM</span> <strong data-testid="vm-state">Idle</strong></span>
@@ -105,20 +123,14 @@ Goto @Loop</textarea>
           </div>
         </section>
 
-        <section class="arena-panel" aria-label="Arena preview" data-i18n-attr="aria-label:arena.aria">
-          <h2 data-i18n="arena.title">Arena Preview</h2>
-          <p data-testid="arena-summary">No arena preview yet.</p>
-          <button data-testid="arena-button" data-i18n="action.previewArena" type="button">Preview arena</button>
-        </section>
-
         <details class="settings-panel">
-          <summary>Settings</summary>
+          <summary data-i18n="settings.title">Settings</summary>
           <div class="language-switch" aria-label="Language switch" data-i18n-attr="aria-label:language.aria" data-testid="language-switch">
             <button data-lang="en" data-testid="lang-en-button" type="button">EN</button>
             <button data-lang="zh" data-testid="lang-zh-button" type="button">中文</button>
           </div>
-          <section class="save-panel" aria-label="Save slot" data-i18n-attr="aria-label:save.aria">
-            <h2 data-i18n="save.title">Save Slot</h2>
+          <section class="save-panel" aria-label="Save" data-i18n-attr="aria-label:save.aria">
+            <h2 data-i18n="save.title">Save</h2>
             <p data-testid="save-summary">No save written this session.</p>
             <div class="save-actions">
               <button data-testid="save-button" data-i18n="action.save" type="button">Save</button>
@@ -128,18 +140,13 @@ Goto @Loop</textarea>
         </details>
 
         <details class="dev-panel">
-          <summary>Developer Debug</summary>
+          <summary data-i18n="dev.title">Developer Debug</summary>
           <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
             <div class="panel-heading">
               <h2 data-i18n="diff.title">Diff</h2>
               <span data-testid="diff-count">0 changes</span>
             </div>
             <ol data-testid="diff-list"></ol>
-          </section>
-          <section class="offline-panel" hidden aria-label="Offline projection" data-i18n-attr="aria-label:offline.aria">
-            <h2 data-i18n="offline.title">Offline Projection</h2>
-            <p data-testid="offline-summary">No offline projection yet.</p>
-            <button data-testid="offline-button" data-i18n="action.offline" type="button">Fast-forward 24</button>
           </section>
         </details>
       </aside>

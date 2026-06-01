@@ -1,0 +1,87 @@
+key,en,zh
+status.aria,Simulation status,模拟状态
+status.title,Run State,运行状态
+status.tick,Tick,回合
+status.tape,Tape,纸带
+status.vm,VM,虚拟机
+language.aria,Language switch,语言切换
+workspace.aria,Game UI flow,游戏 UI 流程
+tape.aria,Tape editor,纸带编辑器
+tape.title,Tape,纸带
+tape.controls,Tape controls,纸带控制
+world.aria,World map,世界地图
+world.canvas,Infinite map canvas,无限地图画布
+world.grid,Robot grid,机器人网格
+world.title,Scrapyard,垃圾场
+side.aria,Resources and modules,资源与模块
+side.title,Systems,系统
+location.aria,Current location,当前位置
+location.title,Location,地点
+location.kind,Scrapfield node,废料场节点
+location.description,"A rain-burned recovery site with a weak uplink and a short scavenger loop.",一处被酸雨灼烧的回收点，链路微弱，只能维持短循环拾荒。
+resources.title,Resources,资源
+resources.scrap,Scrap,废铁
+resources.cells,Batteries,电芯
+resources.blankTape,Blank tape,空白纸带
+modules.aria,Robot modules,机器人模块
+modules.title,Modules,模块
+modules.armor,Armor,装甲
+modules.weapon,Weapon,武器
+save.aria,Save,存档
+save.title,Save,存档
+settings.title,Settings,设置
+dev.title,Developer Debug,开发者调试
+flow.aria,Task checklist,任务清单
+flow.title,Tasks,任务
+flow.deploy,Compile a valid tape,编译一条有效纸带
+flow.collect,Collect scrap from the map,从地图回收废铁
+flow.tape,Upgrade tape capacity,升级纸带容量
+flow.hardware,Upgrade robot hardware,升级机器人硬件
+flow.save,Save and reload progress,保存并读取进度
+console.aria,Runtime console,运行控制台
+console.title,Console,控制台
+diff.aria,State diff,状态差异
+diff.title,Diff,差异
+action.toggleLocation,Toggle location panel,折叠或展开地点栏
+action.toggleSystems,Toggle systems panel,折叠或展开系统栏
+action.deploy,Deploy,部署
+action.play,Play,播放
+action.pause,Pause,暂停
+action.resume,Resume,恢复
+action.frame,Frame,快进一帧
+action.speed,Speed {speed},速度 {speed}
+action.stop,Stop,停止
+action.upgradeTape,Upgrade tape,升级纸带
+action.armorPlus,Armor +,装甲 +
+action.weaponPlus,Weapon +,武器 +
+action.save,Save,保存
+action.load,Load,读取
+diagnostic.line,Line {line},第 {line} 行
+diagnostic.general,Tape,纸带
+state.idle,Idle,空闲
+state.waiting,Waiting,等待中
+state.compileOk,Compile OK,编译通过
+state.compileError,Compile error,编译错误
+capacity,Capacity {value},容量 {value}
+capacity.short,Tape capacity,纸带容量
+diff.count,{count} {label},{count} 项
+diff.change,change,变化
+diff.changes,changes,变化
+diff.empty,No state changes yet.,暂无状态变化。
+save.empty,No save written this session.,本轮尚未写入存档。
+save.saved,Saved tick {tick}.,已保存第 {tick} 回合。
+save.loaded,Loaded tick {tick}.,已读取第 {tick} 回合。
+save.missing,No save found.,没有找到存档。
+save.reset,Reset local session state.,已重置本地会话状态。
+story.opening.1.speaker,K-6 Commander,K-6 指挥官
+story.opening.1.text,Rain is breaking the satellite uplink. Keep the scavenger on a short loop until we recover enough scrap.,酸雨正在撕裂卫星链路。先让拾荒机器人维持短循环，直到回收足够的废铁。
+story.opening.2.speaker,K-6 Commander,K-6 指挥官
+story.opening.2.text,The script on the left is your tape. Press play or single-frame after this briefing; the system will compile it on demand.,左侧脚本就是你的纸带。简报结束后点击播放或快进一帧，系统会按需编译。
+story.opening.3.speaker,K-6 Commander,K-6 指挥官
+story.opening.3.text,"Recover the nearby scrap, upgrade tape capacity, then we can route you toward the next unlocked site.",回收附近废铁，升级纸带容量，然后我们就能把路线指向下一个已解锁地点。
+story.prompt.continue,Click to continue,点击继续
+story.prompt.begin,Click to begin idle mode,点击进入挂机模式
+vm.Ready,Ready,就绪
+vm.Suspended,Suspended,暂停
+vm.Halted,Halted,停止
+vm.Fault,Fault,故障
