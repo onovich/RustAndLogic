@@ -1,58 +1,58 @@
-# TapeScript Instruction Catalog
+# TapeScript 指令清单
 
-Use this file as the source of truth for TapeScript instruction changes.
+这份文档是 TapeScript 指令变更的唯一人工编辑入口。
 
-How to edit:
+编辑方式：
 
-- To rename an instruction, change `Target name`.
-- To add an instruction, add a row under `Proposed New Instructions`.
-- To remove or postpone an instruction, set `Status` to `remove` or `later`.
-- Describe behavior in natural language first. Implementation details can stay rough.
-- Keep names in PascalCase or PascalCase_with_Suffix, for example `MoveForward` or `CheckHP_Low`.
+- 如果要修改指令名称，修改 `目标名称`。
+- 如果要新增指令，在 `拟新增指令` 表格里添加一行。
+- 如果要删除或暂缓某条指令，把 `状态` 改成 `remove` 或 `later`。
+- 请优先用自然语言描述“这个指令在游戏里做什么”。实现细节可以先写得粗略。
+- 指令名建议保持 PascalCase 或 PascalCase_with_Suffix，例如 `MoveForward`、`CheckHP_Low`。
 
-## Current Instructions
+## 当前指令
 
-| Status | Category | Current name | Target name | Natural language behavior | Result / failure behavior | Example |
+| 状态 | 类型 | 当前名称 | 目标名称 | 自然语言功能描述 | 结果 / 失败行为 | 示例 |
 | --- | --- | --- | --- | --- | --- | --- |
-| keep | Action | `MoveForward` | `MoveForward` | Move the robot one grid cell in the direction it is facing. | If the target cell is outside the map or blocked, the action fails and automatic playback should pause. | `MoveForward` |
-| keep | Action | `TurnLeft` | `TurnLeft` | Rotate the robot 90 degrees counter-clockwise without moving. | Always succeeds unless the robot is unable to act. | `TurnLeft` |
-| keep | Action | `TurnRight` | `TurnRight` | Rotate the robot 90 degrees clockwise without moving. | Always succeeds unless the robot is unable to act. | `TurnRight` |
-| keep | Action | `PickUp` | `PickUp` | Pick up a resource from the robot's current cell or the cell directly in front of it. | If no reachable resource exists, the action fails and automatic playback should pause. | `PickUp` |
-| keep | Action | `Drop` | `Drop` | Open the cargo clamp and drop carried cargo. | Currently succeeds as a placeholder. Please describe exact cargo behavior if this should become real. | `Drop` |
-| keep | Action | `Fire` | `Fire` | Fire the robot's weapon relay. | Currently succeeds as a placeholder. Please describe targeting, cost, and hit behavior if this should become real. | `Fire` |
-| keep | Query | `CheckScrap` | `CheckScrap` | Check whether scrap exists in the cell directly in front of the robot. | Sets the condition flag to true or false. Does not consume a physical action tick by itself. | `CheckScrap` |
-| keep | Query | `CheckEnemy` | `CheckEnemy` | Check whether an enemy is currently detectable. | Sets the condition flag to true or false. Current prototype uses a deterministic placeholder. | `CheckEnemy` |
-| keep | Query | `CheckHP_Low` | `CheckHP_Low` | Check whether the robot's HP is low. | Sets the condition flag to true when HP is at or below the low-health threshold. | `CheckHP_Low` |
-| keep | Branch | `Jump` | `Jump` | Jump unconditionally to a label. | If the label does not exist, compilation fails. | `Jump @Loop` |
-| keep | Branch | `JumpIfTrue` | `JumpIfTrue` | Jump to a label only when the condition flag is true. | If the label does not exist, compilation fails. | `JumpIfTrue @Grab` |
-| keep | Branch | `JumpIfFalse` | `JumpIfFalse` | Jump to a label only when the condition flag is false. | If the label does not exist, compilation fails. | `JumpIfFalse @Patrol` |
+| keep | 动作 | `MoveForward` | `MoveForward` | 让机器人朝当前面向的方向移动一格。 | 如果目标格在地图外，或被障碍物阻挡，动作失败，自动播放应暂停。 | `MoveForward` |
+| keep | 动作 | `TurnLeft` | `TurnLeft` | 让机器人原地向左转 90 度，不移动位置。 | 除非机器人处于无法行动状态，否则总是成功。 | `TurnLeft` |
+| keep | 动作 | `TurnRight` | `TurnRight` | 让机器人原地向右转 90 度，不移动位置。 | 除非机器人处于无法行动状态，否则总是成功。 | `TurnRight` |
+| keep | 动作 | `PickUp` | `PickUp` | 拾取机器人脚下或正前方一格内的资源。 | 如果范围内没有可拾取资源，动作失败，自动播放应暂停。 | `PickUp` |
+| keep | 动作 | `Drop` | `Drop` | 打开货舱夹具，把携带物放下。 | 当前只是占位行为，会直接成功。如果要做成真实功能，请描述具体货物规则。 | `Drop` |
+| keep | 动作 | `Fire` | `Fire` | 触发机器人的武器继电器并开火。 | 当前只是占位行为，会直接成功。如果要做成真实功能，请描述目标、消耗和命中规则。 | `Fire` |
+| keep | 查询 | `CheckScrap` | `CheckScrap` | 检查机器人正前方一格是否有废铁。 | 设置条件标志为 true 或 false。查询本身不消耗物理动作 tick。 | `CheckScrap` |
+| keep | 查询 | `CheckEnemy` | `CheckEnemy` | 检查当前是否探测到敌人。 | 设置条件标志为 true 或 false。当前原型使用确定性占位规则。 | `CheckEnemy` |
+| keep | 查询 | `CheckHP_Low` | `CheckHP_Low` | 检查机器人生命值是否处于低血量状态。 | 当 HP 小于等于低血量阈值时，把条件标志设为 true。 | `CheckHP_Low` |
+| keep | 跳转 | `Jump` | `Jump` | 无条件跳转到指定标签。 | 如果目标标签不存在，编译失败。 | `Jump @Loop` |
+| keep | 跳转 | `JumpIfTrue` | `JumpIfTrue` | 当条件标志为 true 时跳转到指定标签。 | 如果目标标签不存在，编译失败。 | `JumpIfTrue @Grab` |
+| keep | 跳转 | `JumpIfFalse` | `JumpIfFalse` | 当条件标志为 false 时跳转到指定标签。 | 如果目标标签不存在，编译失败。 | `JumpIfFalse @Patrol` |
 
-## Language Forms
+## 语言形式
 
-| Status | Form | Current syntax | Target syntax | Natural language behavior | Example |
+| 状态 | 形式 | 当前语法 | 目标语法 | 自然语言功能描述 | 示例 |
 | --- | --- | --- | --- | --- | --- |
-| keep | Label | `@Name` | `@Name` | Define a jump target. Labels consume tape capacity like instructions. | `@Loop` |
-| keep | Comment | `// text` | `// text` | Human notes ignored by the compiler. Comments do not consume tape capacity. | `// Patrol route` |
+| keep | 标签 | `@Name` | `@Name` | 定义一个可跳转的位置。标签和普通指令一样占用纸带容量。 | `@Loop` |
+| keep | 注释 | `// text` | `// text` | 给人看的备注，编译器会忽略。注释不占用纸带容量。 | `// 巡逻路线` |
 
-## Proposed New Instructions
+## 拟新增指令
 
-Add new rows here. These are examples you can replace.
+在这里添加新指令。下面只是示例，可以直接改掉或删除。
 
-| Status | Category | Target name | Natural language behavior | Result / failure behavior | Example |
+| 状态 | 类型 | 目标名称 | 自然语言功能描述 | 结果 / 失败行为 | 示例 |
 | --- | --- | --- | --- | --- | --- |
-| later | Query | `CheckWall` | Check whether the cell directly in front of the robot is blocked by a wall or map boundary. | Sets the condition flag to true or false. | `CheckWall` |
-| later | Query | `CheckCell` | Check whether a data cell exists in the cell directly in front of the robot. | Sets the condition flag to true or false. | `CheckCell` |
-| later | Action | `Wait` | Spend one action tick doing nothing. | Always succeeds unless the robot is unable to act. | `Wait` |
-| later | Action | `Repair` | Spend resources or energy to restore robot HP. | Fails if required resources are missing. | `Repair` |
+| later | 查询 | `CheckWall` | 检查机器人正前方一格是否是墙、障碍物或地图边界。 | 设置条件标志为 true 或 false。 | `CheckWall` |
+| later | 查询 | `CheckCell` | 检查机器人正前方一格是否有数据电芯。 | 设置条件标志为 true 或 false。 | `CheckCell` |
+| later | 动作 | `Wait` | 消耗一个动作 tick，什么也不做。 | 除非机器人处于无法行动状态，否则总是成功。 | `Wait` |
+| later | 动作 | `Repair` | 消耗资源或能量，恢复机器人 HP。 | 如果资源不足，则动作失败。 | `Repair` |
 
-## Implementation Notes For Codex
+## 给 Codex 的实现说明
 
-When this document is updated, implement the accepted rows across:
+当这份文档被你修改后，Codex 需要把状态为 `keep` 的现有指令变更，以及你明确要求实现的新指令，落到以下位置：
 
-- `packages/tapescript-runtime/index.js`: instruction names, parsing, validation, labels, errors.
-- `packages/game-sim/index.js`: hardware query/action behavior, step result, logs, snapshots if needed.
-- `apps/web/src/main.js`: syntax highlighting, autocomplete candidates, UI text if needed.
-- `scripts/test-runtime.mjs`: compiler, VM, and game simulation tests.
-- `scripts/smoke-web-ui.mjs`: browser smoke coverage for visible behavior.
+- `packages/tapescript-runtime/index.js`：指令名称、解析规则、校验规则、标签、错误信息。
+- `packages/game-sim/index.js`：硬件查询/动作行为、执行结果、日志、必要的快照字段。
+- `apps/web/src/main.js`：语法高亮、候选词、必要的界面文本。
+- `scripts/test-runtime.mjs`：编译器、VM、游戏模拟测试。
+- `scripts/smoke-web-ui.mjs`：浏览器端可见行为的 smoke test。
 
-Do not implement rows whose `Status` is `later`, `remove`, or `question` unless the user explicitly asks for them.
+除非你明确要求实现，否则不要实现状态为 `later`、`remove` 或 `question` 的行。
