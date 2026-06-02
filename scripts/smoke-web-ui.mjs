@@ -167,7 +167,7 @@ try {
   }
 
   const editorMetrics = await page.evaluate(() => {
-    const editor = document.querySelector('[data-testid="tape-editor"]');
+    const editor = document.querySelector('[data-testid="script-editor"]');
     const lines = [...document.querySelectorAll(".code-line")];
     const lineHeight = Number.parseFloat(getComputedStyle(editor).lineHeight);
     return {
@@ -186,42 +186,42 @@ try {
     throw new Error(`Expected editor highlight rows to align with textarea rows, got: ${JSON.stringify(editorMetrics)}`);
   }
 
-  const originalTape = await page.getByTestId("tape-editor").inputValue();
-  await page.getByTestId("tape-editor").fill("Che");
-  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
-  const checkSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  const originalScript = await page.getByTestId("script-editor").inputValue();
+  await page.getByTestId("script-editor").fill("Che");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const checkSuggestion = await page.getByTestId("script-autocomplete").innerText();
   if (!checkSuggestion.includes("Check().Has(Scrap)")) {
     throw new Error(`Expected Check().Has(Scrap) suggestion for Che, got: ${checkSuggestion}`);
   }
-  await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
-  await expectValue(page, "tape-editor", "Check().Has(Scrap)");
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "Check().Has(Scrap)");
 
-  await page.getByTestId("tape-editor").fill("Back");
-  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
-  const backSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  await page.getByTestId("script-editor").fill("Back");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const backSuggestion = await page.getByTestId("script-autocomplete").innerText();
   if (!backSuggestion.includes("Move(Back)")) {
     throw new Error(`Expected segmented Back suggestion for Move(Back), got: ${backSuggestion}`);
   }
 
-  await page.getByTestId("tape-editor").fill("@Loop\nGoto ");
-  await page.getByTestId("tape-editor").evaluate((editor) => {
+  await page.getByTestId("script-editor").fill("@Loop\nGoto ");
+  await page.getByTestId("script-editor").evaluate((editor) => {
     editor.focus();
     editor.setSelectionRange(editor.value.length, editor.value.length);
     editor.dispatchEvent(new Event("keyup", { bubbles: true }));
   });
-  await page.locator('[data-testid="tape-autocomplete"]').waitFor({ state: "visible" });
-  const labelSuggestion = await page.getByTestId("tape-autocomplete").innerText();
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const labelSuggestion = await page.getByTestId("script-autocomplete").innerText();
   if (!labelSuggestion.includes("@Loop")) {
     throw new Error(`Expected label suggestion after Goto, got: ${labelSuggestion}`);
   }
-  await page.locator('[data-testid="tape-autocomplete"] [data-index="0"]').click();
-  await expectValue(page, "tape-editor", "@Loop\nGoto @Loop");
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "@Loop\nGoto @Loop");
 
-  const badTape = `${originalTape}\nBogus`;
-  await page.getByTestId("tape-editor").fill(badTape);
+  const badScript = `${originalScript}\nBogus`;
+  await page.getByTestId("script-editor").fill(badScript);
   await page.getByTestId("play-button").click();
   await expectText(page, "compile-status", "Compile error");
-  const diagnosticText = await page.getByTestId("tape-diagnostics").innerText();
+  const diagnosticText = await page.getByTestId("script-diagnostics").innerText();
   if (!diagnosticText.includes("Line 8") || !diagnosticText.includes("Unknown instruction: Bogus")) {
     throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
   }
@@ -229,22 +229,22 @@ try {
   if (unknownTokenCount === 0) {
     throw new Error("Expected syntax highlighter to mark an unknown token.");
   }
-  await page.locator('[data-testid="tape-diagnostics"] li').first().click();
-  const selectedLine = await page.getByTestId("tape-editor").evaluate((editor) =>
+  await page.locator('[data-testid="script-diagnostics"] li').first().click();
+  const selectedLine = await page.getByTestId("script-editor").evaluate((editor) =>
     editor.value.slice(editor.selectionStart, editor.selectionEnd),
   );
   if (selectedLine.trim() !== "Bogus") {
     throw new Error(`Expected diagnostic click to select the bad line, got: ${selectedLine}`);
   }
 
-  await page.getByTestId("tape-editor").fill(originalTape);
-  await page.getByTestId("tape-editor").evaluate((editor) => {
+  await page.getByTestId("script-editor").fill(originalScript);
+  await page.getByTestId("script-editor").evaluate((editor) => {
     const offset = editor.value.indexOf("@Loop", editor.value.indexOf("IfTrue"));
     editor.focus();
     editor.setSelectionRange(offset + 2, offset + 2);
   });
-  await page.getByTestId("tape-editor").dispatchEvent("click", { ctrlKey: true });
-  const jumpedLine = await page.getByTestId("tape-editor").evaluate((editor) =>
+  await page.getByTestId("script-editor").dispatchEvent("click", { ctrlKey: true });
+  const jumpedLine = await page.getByTestId("script-editor").evaluate((editor) =>
     editor.value.slice(editor.selectionStart, editor.selectionEnd),
   );
   if (jumpedLine.trim() !== "@Loop") {
@@ -267,9 +267,9 @@ try {
 
   const checklist = await page.getByTestId("flow-checklist").innerText();
   for (const label of [
-    "Compile a valid tape",
+    "Compile a valid script",
     "Collect scrap",
-    "Upgrade tape",
+    "Expand logic memory",
     "Upgrade robot hardware",
     "Save and reload",
   ]) {

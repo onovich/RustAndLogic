@@ -13,8 +13,8 @@ export function createGame() {
     width: 7,
     height: 5,
     tick: 0,
-    tapeCapacity: 8,
-    resources: { scrap: 0, cells: 0, blankTape: 1 },
+    instructionCapacity: 8,
+    resources: { scrap: 0, cells: 0, memoryShards: 1 },
     robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, cargo: [] },
     cargoCapacity: 3,
     base: { x: 0, y: 0 },
@@ -27,7 +27,7 @@ export function createGame() {
     ],
     program: null,
     vm: null,
-    logs: ["System ready. Load a tape and deploy."],
+    logs: ["System ready. Load a script and press play."],
     arena: null,
     offline: null,
   };
@@ -43,7 +43,11 @@ export function restoreGame(serialized) {
   return {
     ...base,
     ...parsed,
-    resources: { ...base.resources, ...parsed.resources },
+    resources: {
+      ...base.resources,
+      ...parsed.resources,
+      memoryShards: parsed.resources?.memoryShards ?? base.resources.memoryShards,
+    },
     robot: { ...base.robot, ...parsed.robot },
     deposits: Array.isArray(parsed.deposits) ? parsed.deposits : base.deposits,
     obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles : base.obstacles,
@@ -53,11 +57,11 @@ export function restoreGame(serialized) {
 }
 
 export function deployProgram(game, source) {
-  const program = compileTapeScript(source, { tapeCapacity: game.tapeCapacity });
+  const program = compileTapeScript(source, { instructionCapacity: game.instructionCapacity });
   game.program = program;
   game.vm = createVm(program);
   if (program.ok) {
-    game.logs.unshift(`Deploy OK: ${program.tapeUsed}/${program.tapeCapacity} tape rows used.`);
+    game.logs.unshift(`Compile OK: ${program.instructionUsed}/${program.instructionCapacity} instruction slots used.`);
   } else {
     game.logs.unshift(`Deploy failed: ${program.errors.map((error) => error.message).join(" ")}`);
   }
@@ -66,7 +70,7 @@ export function deployProgram(game, source) {
 
 export function stepGame(game) {
   if (!game.program || !game.vm) {
-    game.logs.unshift("No tape deployed.");
+    game.logs.unshift("No script deployed.");
     return snapshot(game);
   }
 
@@ -105,15 +109,15 @@ export function runGame(game, steps = 6) {
   return snapshot(game);
 }
 
-export function upgradeTape(game) {
+export function expandLogicMemory(game) {
   if (game.resources.scrap < 1) {
     game.logs.unshift("Upgrade blocked: collect at least 1 scrap.");
     return snapshot(game);
   }
   spendResource(game, "scrap", 1);
-  game.resources.blankTape += 1;
-  game.tapeCapacity += 2;
-  game.logs.unshift(`Tape upgraded. Capacity is now ${game.tapeCapacity}.`);
+  game.resources.memoryShards += 1;
+  game.instructionCapacity += 2;
+  game.logs.unshift(`Logic memory expanded. Capacity is now ${game.instructionCapacity}.`);
   return snapshot(game);
 }
 
@@ -146,8 +150,8 @@ export function upgradeHardware(game, module) {
 }
 
 export function previewArena(game) {
-  const tapeScore = game.program?.ok ? game.program.tapeUsed : 0;
-  const offense = game.robot.weapon * 3 + tapeScore;
+  const instructionScore = game.program?.ok ? game.program.instructionUsed : 0;
+  const offense = game.robot.weapon * 3 + instructionScore;
   const defense = game.robot.armor * 2 + game.robot.hp;
   const enemy = 15;
   const victory = offense + defense >= enemy;
@@ -169,18 +173,18 @@ export function previewArena(game) {
 
 export function fastForwardOffline(game, ticks = 24) {
   if (!game.program?.ok) {
-    game.logs.unshift("Offline projection blocked: deploy a valid tape first.");
+    game.logs.unshift("Offline projection blocked: compile a valid script first.");
     game.offline = {
       ticks: 0,
       scrap: 0,
       cells: 0,
-      summary: "No valid tape was available for offline work.",
+      summary: "No valid script was available for offline work.",
     };
     return snapshot(game);
   }
 
   const safeTicks = Math.max(1, Math.floor(ticks));
-  const efficiency = Math.max(1, game.program.tapeUsed + game.robot.armor + game.robot.weapon);
+  const efficiency = Math.max(1, game.program.instructionUsed + game.robot.armor + game.robot.weapon);
   const scrap = Math.max(1, Math.floor((safeTicks * efficiency) / 32));
   const cells = Math.floor((safeTicks * game.robot.weapon) / 48);
 
@@ -202,7 +206,7 @@ export function snapshot(game) {
     width: game.width,
     height: game.height,
     tick: game.tick,
-    tapeCapacity: game.tapeCapacity,
+    instructionCapacity: game.instructionCapacity,
     resources: game.resources,
     robot: game.robot,
     cargoCapacity: game.cargoCapacity,
@@ -216,8 +220,8 @@ export function snapshot(game) {
           errors: game.program.errors,
           instructions: game.program.instructions,
           labels: game.program.labels,
-          tapeUsed: game.program.tapeUsed,
-          tapeCapacity: game.program.tapeCapacity,
+          instructionUsed: game.program.instructionUsed,
+          instructionCapacity: game.program.instructionCapacity,
         }
       : null,
     vm: game.vm,
@@ -230,10 +234,10 @@ export function snapshot(game) {
 export function diffSnapshots(before, after) {
   const changes = [];
   compare(changes, "tick", before?.tick, after?.tick);
-  compare(changes, "tapeCapacity", before?.tapeCapacity, after?.tapeCapacity);
+  compare(changes, "instructionCapacity", before?.instructionCapacity, after?.instructionCapacity);
   compare(changes, "resources.scrap", before?.resources?.scrap, after?.resources?.scrap);
   compare(changes, "resources.cells", before?.resources?.cells, after?.resources?.cells);
-  compare(changes, "resources.blankTape", before?.resources?.blankTape, after?.resources?.blankTape);
+  compare(changes, "resources.memoryShards", before?.resources?.memoryShards, after?.resources?.memoryShards);
   compare(changes, "robot.cargo.count", before?.robot?.cargo?.length ?? 0, after?.robot?.cargo?.length ?? 0);
   compare(changes, "robot.x", before?.robot?.x, after?.robot?.x);
   compare(changes, "robot.y", before?.robot?.y, after?.robot?.y);
@@ -242,7 +246,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "robot.armor", before?.robot?.armor, after?.robot?.armor);
   compare(changes, "robot.weapon", before?.robot?.weapon, after?.robot?.weapon);
   compare(changes, "program.ok", before?.program?.ok, after?.program?.ok);
-  compare(changes, "program.tapeUsed", before?.program?.tapeUsed, after?.program?.tapeUsed);
+  compare(changes, "program.instructionUsed", before?.program?.instructionUsed, after?.program?.instructionUsed);
   compare(changes, "vm.pc", before?.vm?.pc, after?.vm?.pc);
   compare(changes, "vm.state", before?.vm?.state, after?.vm?.state);
   compare(changes, "arena.result", before?.arena?.result, after?.arena?.result);

@@ -7,7 +7,7 @@ import {
   stepGame,
   restoreGame,
   upgradeHardware,
-  upgradeTape,
+  expandLogicMemory,
 } from "../../../packages/game-sim/index.js";
 import { compileTapeScript } from "../../../packages/tapescript-runtime/index.js";
 
@@ -47,18 +47,18 @@ const languageKey = "rust-and-logic.language";
 let language = detectLanguage();
 let speeds = [1];
 let speedProfiles = { 1: { interval: 720, duration: 420 } };
-let tapeActions = new Set();
-let tapeQueries = new Set();
-let tapeBranches = new Set();
-let tapeValues = new Set();
-let tapeCompletions = [];
+let scriptActions = new Set();
+let scriptQueries = new Set();
+let scriptBranches = new Set();
+let scriptValues = new Set();
+let scriptCompletions = [];
 
 const elements = {
-  editor: query("tape-editor"),
-  highlight: query("tape-highlight"),
-  lineNumbers: query("tape-line-numbers"),
-  diagnostics: query("tape-diagnostics"),
-  autocomplete: query("tape-autocomplete"),
+  editor: query("script-editor"),
+  highlight: query("script-highlight"),
+  lineNumbers: query("script-line-numbers"),
+  diagnostics: query("script-diagnostics"),
+  autocomplete: query("script-autocomplete"),
   deploy: query("deploy-button"),
   play: query("play-button"),
   pause: query("pause-button"),
@@ -75,13 +75,13 @@ const elements = {
   canvasWorld: query("world-canvas-world"),
   playfieldBarrier: document.querySelector(".playfield-barrier"),
   tick: query("tick"),
-  tapeUsage: query("tape-usage"),
+  instructionUsage: query("instruction-usage"),
   vmState: query("vm-state"),
   capacityLabel: query("capacity-label"),
   robotPosition: query("robot-position"),
   scrap: query("scrap-count"),
   cells: query("cell-count"),
-  blankTape: query("blank-tape-count"),
+  memoryShards: query("memory-shard-count"),
   armor: query("armor-level"),
   weapon: query("weapon-level"),
   hp: query("hp-value"),
@@ -132,12 +132,12 @@ function initializeAppData() {
   speeds = appData.playback?.speeds ?? [1];
   speedProfiles = appData.playback?.profiles ?? { 1: { interval: 720, duration: 420 } };
   flow = Object.fromEntries((appData.tasks ?? []).map((task) => [task.id, false]));
-  tapeActions = new Set(appData.tape?.syntax?.actions ?? []);
-  tapeQueries = new Set(appData.tape?.syntax?.queries ?? []);
-  tapeBranches = new Set(appData.tape?.syntax?.branches ?? []);
-  tapeValues = new Set(appData.tape?.syntax?.values ?? []);
-  tapeCompletions = appData.tape?.completions ?? [];
-  elements.editor.value = (appData.tape?.initialSource ?? []).join("\n");
+  scriptActions = new Set(appData.script?.syntax?.actions ?? []);
+  scriptQueries = new Set(appData.script?.syntax?.queries ?? []);
+  scriptBranches = new Set(appData.script?.syntax?.branches ?? []);
+  scriptValues = new Set(appData.script?.syntax?.values ?? []);
+  scriptCompletions = appData.script?.completions ?? [];
+  elements.editor.value = (appData.script?.initialSource ?? []).join("\n");
   renderFlowList();
 }
 
@@ -292,8 +292,8 @@ elements.speed.addEventListener("click", () => {
 });
 elements.upgrade.addEventListener("click", () => {
   stopPlayback(false);
-  const state = upgradeTape(game);
-  flow.tape = state.tapeCapacity > 8;
+  const state = expandLogicMemory(game);
+  flow.memory = state.instructionCapacity > 8;
   render(state, { animate: false });
 });
 elements.armorUpgrade.addEventListener("click", () => {
@@ -353,15 +353,15 @@ function render(state, options = {}) {
   previousState = state;
 
   elements.tick.textContent = state.tick;
-  elements.tapeUsage.textContent = state.program
-    ? `${state.program.tapeUsed}/${state.tapeCapacity}`
-    : `0/${state.tapeCapacity}`;
+  elements.instructionUsage.textContent = state.program
+    ? `${state.program.instructionUsed}/${state.instructionCapacity}`
+    : `0/${state.instructionCapacity}`;
   elements.vmState.textContent = translateVmState(state.vm?.state);
-  elements.capacityLabel.textContent = t("capacity", { value: state.tapeCapacity });
+  elements.capacityLabel.textContent = t("capacity", { value: state.instructionCapacity });
   elements.robotPosition.textContent = `${state.robot.x},${state.robot.y} ${state.robot.dir}`;
   elements.scrap.textContent = state.resources.scrap;
   elements.cells.textContent = state.resources.cells;
-  elements.blankTape.textContent = state.resources.blankTape;
+  elements.memoryShards.textContent = state.resources.memoryShards;
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
@@ -531,10 +531,10 @@ function shouldAutoPause(before, state) {
     latestLog.includes("No target lock") ||
     latestLog.includes("Repair blocked") ||
     latestLog.includes("Already at home") ||
-    latestLog.includes("No tape deployed") ||
+    latestLog.includes("No script deployed") ||
     latestLog.includes("Unknown action") ||
     latestLog.includes("Logic Overload") ||
-    latestLog.includes("Program counter left the tape")
+    latestLog.includes("Program counter left executable memory")
   ) {
     return true;
   }
@@ -604,14 +604,14 @@ function renderFlowList() {
 }
 
 function updateEditorTools(errors = null) {
-  const program = errors ? null : compileTapeScript(elements.editor.value, { tapeCapacity: game.tapeCapacity });
+  const program = errors ? null : compileTapeScript(elements.editor.value, { instructionCapacity: game.instructionCapacity });
   const activeErrors = errors ?? program.errors;
-  renderTapeHighlight(activeErrors);
+  renderScriptHighlight(activeErrors);
   renderDiagnostics(activeErrors);
   syncEditorScroll();
 }
 
-function renderTapeHighlight(errors) {
+function renderScriptHighlight(errors) {
   const errorLines = new Set(errors.filter((error) => error.line > 0).map((error) => error.line));
   const lines = elements.editor.value.split("\n");
   elements.lineNumbers.textContent = lines.map((_, index) => String(index + 1)).join("\n");
@@ -661,13 +661,13 @@ function highlightLine(line) {
       pieces.push(escapeHtml(token));
     } else if (token.startsWith("@")) {
       pieces.push(`<span class="tok-label">${escapeHtml(token)}</span>`);
-    } else if (tapeActions.has(token)) {
+    } else if (scriptActions.has(token)) {
       pieces.push(`<span class="tok-action">${escapeHtml(token)}</span>`);
-    } else if (tapeQueries.has(token)) {
+    } else if (scriptQueries.has(token)) {
       pieces.push(`<span class="tok-query">${escapeHtml(token)}</span>`);
-    } else if (tapeBranches.has(token)) {
+    } else if (scriptBranches.has(token)) {
       pieces.push(`<span class="tok-branch">${escapeHtml(token)}</span>`);
-    } else if (tapeValues.has(token)) {
+    } else if (scriptValues.has(token)) {
       pieces.push(`<span class="tok-value">${escapeHtml(token)}</span>`);
     } else if (/^[A-Za-z]/.test(token)) {
       pieces.push(`<span class="tok-unknown">${escapeHtml(token)}</span>`);
@@ -784,7 +784,7 @@ function findSuggestions(context) {
       }));
   }
 
-  return tapeCompletions
+  return scriptCompletions
     .filter((item) => matchesCompletion(item.value, context.prefix))
     .slice(0, 8);
 }

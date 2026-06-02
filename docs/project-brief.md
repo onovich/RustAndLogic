@@ -21,7 +21,9 @@ TapeScript should not depend on game UI, Tauri, rendering, saves, economy, or pr
 
 ## TapeScript Understanding
 
-TapeScript is intentionally minimal: one instruction per line, no nested syntax, no variables, no scopes, and strict top-to-bottom execution. Labels start with `@` and consume tape capacity just like executable instructions, making control flow a physical resource decision.
+TapeScript is intentionally minimal: one instruction per line, no nested syntax, no variables, no scopes, and strict top-to-bottom execution. Labels start with `@` and consume instruction-memory capacity just like executable instructions, making control flow a physical resource decision.
+
+The original legacy presentation metaphor is retired from the game layer. Player-facing UI, resources, tasks, dialogue, and logs should use script, instruction slot, logic memory, and memory shard language instead. `TapeScript` remains a technical language/runtime boundary name until the language itself is deliberately renamed.
 
 The VM model is Rust-first and deterministic. Each programmable robot owns a VM state with `pc`, `cf`, and lifecycle state. Physical actions suspend execution for the current tick, while pure logic instructions can continue inside a tick until an action or watchdog limit is reached.
 
@@ -38,10 +40,10 @@ Rust & Logic is an automation/programming idle game with asynchronous arena and 
 
 - write and deploy TapeScript,
 - let robots scavenge resources,
-- upgrade tape capacity, sensors, hardware, armor, and weapons,
+- expand logic memory, sensors, hardware, armor, and weapons,
 - use deterministic simulation for offline rewards and arena replays.
 
-Core resources are Scrap, Cells, and Blank Tape. Blank Tape is the central progression constraint because it directly expands executable program length.
+Core resources are Scrap, Cells, and Memory Shards. Memory Shards are the central progression constraint because they directly expand executable program length through logic memory.
 
 The target application architecture is Tauri plus Rust backend and React frontend:
 
@@ -67,4 +69,3 @@ The synced roadmap suggests five broad phases:
 - Game design: `docs/source-docs/rust-and-logic-game-design.md`
 - Game technical architecture: `docs/source-docs/rust-and-logic-technical-architecture.md`
 - Roadmap: `docs/source-docs/rust-and-logic-roadmap.md`
-

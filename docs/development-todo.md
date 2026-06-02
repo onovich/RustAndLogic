@@ -34,7 +34,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Provide deploy/run/step/reset controls.
 - [x] Render a grid map with robot state, scrap, cells, and logs.
 - [x] Show compile/runtime feedback in a console panel.
-- [x] Add progression panels for resources, tape capacity, upgrades, and robot modules.
+- [x] Add progression panels for resources, logic memory, upgrades, and robot modules.
 - [x] Add hardware module upgrade actions that spend resources and update robot stats.
 - [x] Add a local "arena preview" flow that can replay deterministic combat/scavenge results without network.
 - [x] Add save/load flow that restores the current local game state in the Web UI.
@@ -51,6 +51,8 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add a constrained intro camera for the map canvas with brighter stage rendering.
 - [x] Center the default map camera after the intro fit animation.
 - [x] Align the collapsed left-sidebar toggle spacing and state with the right sidebar.
+- [x] Retire legacy player-facing resource language in favor of script, logic memory, and memory shards.
+- [x] Add a compact bilingual README with truthful run, validation, and architecture notes.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

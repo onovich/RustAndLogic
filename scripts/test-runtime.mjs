@@ -12,7 +12,7 @@ import {
   stepGame,
   restoreGame,
   upgradeHardware,
-  upgradeTape,
+  expandLogicMemory,
 } from "../packages/game-sim/index.js";
 
 testCompiler();
@@ -23,7 +23,7 @@ console.log("Runtime tests passed.");
 
 function testCompiler() {
   const program = compileTapeScript(`
-// comments do not consume tape
+// comments do not consume instruction slots
 @Loop
 Check().Has(Scrap)
 IfTrue Goto @Grab
@@ -31,27 +31,27 @@ Move()
 Goto @Loop
 @Grab
 PickUp()
-`, { tapeCapacity: 7 });
+`, { instructionCapacity: 7 });
 
   assert.equal(program.ok, true);
-  assert.equal(program.tapeUsed, 7);
+  assert.equal(program.instructionUsed, 7);
   assert.equal(program.labels.Loop, 0);
   assert.equal(program.labels.Grab, 5);
   assert.equal(program.instructions[2].inner.target, 5);
   assert.equal(program.instructions[4].target, 0);
 
-  const overCapacity = compileTapeScript("Move()\nTurn(Left)", { tapeCapacity: 1 });
+  const overCapacity = compileTapeScript("Move()\nTurn(Left)", { instructionCapacity: 1 });
   assert.equal(overCapacity.ok, false);
-  assert.match(overCapacity.errors[0].message, /Tape capacity exceeded/);
+  assert.match(overCapacity.errors[0].message, /Instruction memory exceeded/);
 
-  const moveBack = compileTapeScript("Move(Back)", { tapeCapacity: 1 });
+  const moveBack = compileTapeScript("Move(Back)", { instructionCapacity: 1 });
   assert.equal(moveBack.ok, true);
 
-  const missingLabel = compileTapeScript("Goto @Missing", { tapeCapacity: 3 });
+  const missingLabel = compileTapeScript("Goto @Missing", { instructionCapacity: 3 });
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
 
-  const oldSyntax = compileTapeScript("MoveForward\nCheckScrap\nJumpIfTrue @Loop", { tapeCapacity: 8 });
+  const oldSyntax = compileTapeScript("MoveForward\nCheckScrap\nJumpIfTrue @Loop", { instructionCapacity: 8 });
   assert.equal(oldSyntax.ok, false);
   assert.equal(oldSyntax.errors.some((error) => error.message.includes("Unknown instruction: MoveForward")), true);
 }
@@ -64,7 +64,7 @@ IfTrue Goto @Grab
 Move()
 @Grab
 PickUp()
-`, { tapeCapacity: 8 });
+`, { instructionCapacity: 8 });
   const vm = createVm(program);
   const calls = [];
   const hardware = {
@@ -84,7 +84,7 @@ PickUp()
   assert.equal(vm.pc, 6);
   assert.equal(vm.state, "Suspended");
 
-  const infinite = compileTapeScript("@Loop\nGoto @Loop", { tapeCapacity: 2 });
+  const infinite = compileTapeScript("@Loop\nGoto @Loop", { instructionCapacity: 2 });
   const infiniteVm = createVm(infinite);
   const overload = executeUntilPhysical(infinite, infiniteVm, hardware, { maxLogicSteps: 3 });
   assert.equal(overload.status, "fault");
@@ -119,9 +119,9 @@ Goto @Loop`;
   assert.equal(state.robot.y, 2);
   assert.equal(state.vm.state, "Suspended");
 
-  state = upgradeTape(game);
+  state = expandLogicMemory(game);
   assert.equal(state.resources.scrap, 0);
-  assert.equal(state.tapeCapacity, 10);
+  assert.equal(state.instructionCapacity, 10);
 
   state = runGame(game, 6);
   assert.equal(state.tick, 8);

@@ -10,7 +10,7 @@
   "tasks": [
     { "id": "deploy", "labelKey": "flow.deploy" },
     { "id": "collect", "labelKey": "flow.collect" },
-    { "id": "tape", "labelKey": "flow.tape" },
+    { "id": "memory", "labelKey": "flow.memory" },
     { "id": "hardware", "labelKey": "flow.hardware" },
     { "id": "save", "labelKey": "flow.save" }
   ],
@@ -19,7 +19,7 @@
     { "speakerKey": "story.opening.2.speaker", "textKey": "story.opening.2.text" },
     { "speakerKey": "story.opening.3.speaker", "textKey": "story.opening.3.text" }
   ],
-  "tape": {
+  "script": {
     "initialSource": [
       "@Loop",
       "PickUp()",

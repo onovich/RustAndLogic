@@ -92,7 +92,7 @@ Goto @Loop
 - `packages/tapescript-runtime/index.js`：解析规则、校验规则、标签、错误信息、VM 指令结构。
 - `packages/game-sim/index.js`：硬件查询、动作行为、执行结果、日志、必要的快照字段。
 - `apps/web/src/main.js`：语法高亮、候选词、标签补全、必要的界面文本。
-- `apps/web/index.html`：默认纸带示例。
+- `apps/web/app-data.json`：默认脚本示例与候选词数据。
 - `scripts/test-runtime.mjs`：编译器、VM、游戏模拟测试。
 - `scripts/smoke-web-ui.mjs`：浏览器端可见行为 smoke test。
 

@@ -7,7 +7,7 @@ const TERRAIN_ARGS = new Set(["Wall", "Home"]);
 const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Damage"]);
 
 export function compileTapeScript(source, options = {}) {
-  const tapeCapacity = options.tapeCapacity ?? 8;
+  const instructionCapacity = options.instructionCapacity ?? 8;
   const errors = [];
   const rows = [];
   const labels = new Map();
@@ -42,10 +42,10 @@ export function compileTapeScript(source, options = {}) {
     rows.push({ ...parsed.instruction, source: withoutComment, sourceLine: sourceLine + 1 });
   });
 
-  if (rows.length > tapeCapacity) {
+  if (rows.length > instructionCapacity) {
     errors.push({
       line: 0,
-      message: `Tape capacity exceeded: ${rows.length}/${tapeCapacity} rows used.`,
+      message: `Instruction memory exceeded: ${rows.length}/${instructionCapacity} slots used.`,
     });
   }
 
@@ -84,8 +84,8 @@ export function compileTapeScript(source, options = {}) {
     errors,
     instructions,
     labels: Object.fromEntries(labels.entries()),
-    tapeUsed: rows.length,
-    tapeCapacity,
+    instructionUsed: rows.length,
+    instructionCapacity,
   };
 }
 
@@ -110,7 +110,7 @@ export function executeUntilPhysical(program, vm, hardware, options = {}) {
   while (logicSteps <= maxLogicSteps) {
     if (vm.pc < 0 || vm.pc >= program.instructions.length) {
       vm.state = "Halted";
-      events.push({ type: "halt", message: "Program counter left the tape." });
+      events.push({ type: "halt", message: "Program counter left executable memory." });
       return { status: "halted", events };
     }
 
