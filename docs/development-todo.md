@@ -88,6 +88,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Decide when to introduce Tauri versus keeping the Web UI as the first test harness.
 - [x] Keep the simulation authoritative when Tauri arrives.
 - [x] Keep Web/WASM and desktop IPC boundaries explicit.
+- [x] Add a GitHub Pages deployment path for the current Web UI harness.
 - [ ] Document release and packaging commands once a desktop shell exists.
 
 ## Milestone 5: Developer Visual Authoring Tooling
