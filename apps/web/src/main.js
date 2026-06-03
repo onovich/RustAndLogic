@@ -19,6 +19,8 @@ let speedIndex = 0;
 let playbackTimer = 0;
 let robotNode = null;
 let worldLayers = null;
+let robotTweenFrame = 0;
+let robotVisualTransform = "";
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
 let deployedSource = "";
@@ -1330,6 +1332,7 @@ function renderGrid(state, beforeState, options = {}) {
 
   syncWorldBounds(state);
   ensureWorldLayers();
+  clearWorldLayers();
   elements.grid.dataset.loaded = "true";
 
   for (const obstacle of state.obstacles ?? []) {
@@ -1357,9 +1360,6 @@ function renderGrid(state, beforeState, options = {}) {
 
 function ensureWorldLayers() {
   if (worldLayers) {
-    worldLayers.obstacles.replaceChildren();
-    worldLayers.base.replaceChildren();
-    worldLayers.deposits.replaceChildren();
     return worldLayers;
   }
 
@@ -1379,6 +1379,15 @@ function ensureWorldLayers() {
   return worldLayers;
 }
 
+function clearWorldLayers() {
+  if (!worldLayers) {
+    return;
+  }
+  worldLayers.obstacles.replaceChildren();
+  worldLayers.base.replaceChildren();
+  worldLayers.deposits.replaceChildren();
+}
+
 function renderRobot(state, options = {}) {
   if (!robotNode) {
     robotNode = document.createElement("div");
@@ -1386,9 +1395,11 @@ function renderRobot(state, options = {}) {
   }
   robotNode.title = `Robot facing ${state.robot.dir}`;
   robotNode.dataset.dir = state.robot.dir;
-  robotNode.style.transitionDuration = `${options.animationDuration ?? currentSpeedProfile().duration}ms`;
-  ensureWorldLayers();
-  worldLayers.actors.append(robotNode);
+  const duration = options.animationDuration ?? currentSpeedProfile().duration;
+  if (robotNode.parentNode !== worldLayers?.actors) {
+    ensureWorldLayers();
+    worldLayers.actors.append(robotNode);
+  }
 
   const position = gridPositionFor(state.robot.x, state.robot.y);
   if (!position) {
@@ -1396,17 +1407,40 @@ function renderRobot(state, options = {}) {
   }
 
   const size = ROBOT_WORLD_SIZE;
+  const nextTransform =
+    `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
+
   robotNode.style.width = `${size}px`;
   robotNode.style.height = `${size}px`;
-  robotNode.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
-  if (options.animate === false) {
+  if (options.animate === false || !robotVisualTransform) {
+    if (robotTweenFrame) {
+      cancelAnimationFrame(robotTweenFrame);
+      robotTweenFrame = 0;
+    }
     robotNode.style.transitionDuration = "0ms";
+    robotNode.style.transform = nextTransform;
+    robotVisualTransform = nextTransform;
     requestAnimationFrame(() => {
       if (robotNode) {
         robotNode.style.transitionDuration = `${currentSpeedProfile().duration}ms`;
       }
     });
+    return;
   }
+
+  if (robotVisualTransform === nextTransform) {
+    return;
+  }
+
+  if (robotTweenFrame) {
+    cancelAnimationFrame(robotTweenFrame);
+  }
+  robotNode.style.transitionDuration = `${duration}ms`;
+  robotTweenFrame = requestAnimationFrame(() => {
+    robotNode.style.transform = nextTransform;
+    robotTweenFrame = 0;
+  });
+  robotVisualTransform = nextTransform;
 }
 
 function animatePickup(deposit, robot, duration = currentSpeedProfile().duration) {
