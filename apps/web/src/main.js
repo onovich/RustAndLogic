@@ -18,6 +18,7 @@ let playbackMode = "stopped";
 let speedIndex = 0;
 let playbackTimer = 0;
 let robotNode = null;
+let worldLayers = null;
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
 let deployedSource = "";
@@ -1328,19 +1329,21 @@ function renderGrid(state, beforeState, options = {}) {
   );
 
   syncWorldBounds(state);
-  elements.grid.replaceChildren();
+  ensureWorldLayers();
   elements.grid.dataset.loaded = "true";
 
   for (const obstacle of state.obstacles ?? []) {
-    elements.grid.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
+    worldLayers.obstacles.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
   }
 
   if (state.base) {
-    elements.grid.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
+    worldLayers.base.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
   }
 
   for (const deposit of state.deposits) {
-    elements.grid.append(createWorldEntity(`deposit ${deposit.type}`, deposit.x, deposit.y, DEPOSIT_WORLD_SIZE, deposit.type));
+    worldLayers.deposits.append(
+      createWorldEntity(`deposit ${deposit.type}`, deposit.x, deposit.y, DEPOSIT_WORLD_SIZE, deposit.type),
+    );
   }
 
   renderRobot(state, options);
@@ -1352,6 +1355,30 @@ function renderGrid(state, beforeState, options = {}) {
   }
 }
 
+function ensureWorldLayers() {
+  if (worldLayers) {
+    worldLayers.obstacles.replaceChildren();
+    worldLayers.base.replaceChildren();
+    worldLayers.deposits.replaceChildren();
+    return worldLayers;
+  }
+
+  const obstacles = document.createElement("div");
+  obstacles.className = "world-layer world-layer-obstacles";
+  const base = document.createElement("div");
+  base.className = "world-layer world-layer-base";
+  const deposits = document.createElement("div");
+  deposits.className = "world-layer world-layer-deposits";
+  const effects = document.createElement("div");
+  effects.className = "world-layer world-layer-effects";
+  const actors = document.createElement("div");
+  actors.className = "world-layer world-layer-actors";
+
+  worldLayers = { obstacles, base, deposits, effects, actors };
+  elements.grid.replaceChildren(obstacles, base, deposits, effects, actors);
+  return worldLayers;
+}
+
 function renderRobot(state, options = {}) {
   if (!robotNode) {
     robotNode = document.createElement("div");
@@ -1360,7 +1387,8 @@ function renderRobot(state, options = {}) {
   robotNode.title = `Robot facing ${state.robot.dir}`;
   robotNode.dataset.dir = state.robot.dir;
   robotNode.style.transitionDuration = `${options.animationDuration ?? currentSpeedProfile().duration}ms`;
-  elements.grid.append(robotNode);
+  ensureWorldLayers();
+  worldLayers.actors.append(robotNode);
 
   const position = gridPositionFor(state.robot.x, state.robot.y);
   if (!position) {
@@ -1395,7 +1423,8 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
   ghost.style.height = `${size}px`;
   ghost.style.transitionDuration = `${duration}ms`;
   ghost.style.transform = `translate(${from.left + (from.width - size) / 2}px, ${from.top + (from.height - size) / 2}px) scale(1)`;
-  elements.grid.append(ghost);
+  ensureWorldLayers();
+  worldLayers.effects.append(ghost);
 
   requestAnimationFrame(() => {
     ghost.style.opacity = "0";

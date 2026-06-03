@@ -887,6 +887,12 @@ textarea[data-invalid="true"] {
   height: 200px;
 }
 
+.world-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 .robot,
 .deposit,
 .obstacle,
