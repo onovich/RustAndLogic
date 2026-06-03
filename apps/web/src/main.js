@@ -110,6 +110,7 @@ const elements = {
   storySpeaker: query("story-speaker"),
   storyText: query("story-text"),
   storyPrompt: query("story-prompt"),
+  storySpotlight: query("story-spotlight"),
   runtimeToast: query("runtime-toast"),
   runtimeToastTitle: query("runtime-toast-title"),
   runtimeToastBody: query("runtime-toast-body"),
@@ -668,6 +669,9 @@ function advanceStory() {
     if (elements.storyDialogue) {
       elements.storyDialogue.hidden = true;
     }
+    if (elements.storySpotlight) {
+      elements.storySpotlight.hidden = true;
+    }
     applyCanvasTransform();
     updateControls();
     return;
@@ -682,12 +686,19 @@ function renderStoryDialogue() {
   if (!storyActive) {
     elements.stage.dataset.mode = "idle";
     elements.storyDialogue.hidden = true;
+    if (elements.storySpotlight) {
+      elements.storySpotlight.hidden = true;
+    }
     applyCanvasTransform();
     return;
   }
   const page = storyPages[storyIndex];
   elements.stage.dataset.mode = "story";
   elements.storyDialogue.hidden = false;
+  if (elements.storySpotlight) {
+    elements.storySpotlight.hidden = false;
+    elements.storySpotlight.textContent = "R1";
+  }
   elements.storySpeaker.textContent = t(page.speakerKey);
   elements.storyText.textContent = t(page.textKey);
   elements.storyPrompt.textContent =

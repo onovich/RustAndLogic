@@ -61,6 +61,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Tighten the terminal-style Web UI replica with a second visual refinement pass and refreshed local comparison screenshots.
 - [x] Add a reusable screenshot capture script and complete a third visual refinement pass for shell framing, dialogue density, and runtime halt styling.
 - [x] Complete a fourth visual refinement pass for story-mode stage composition, four-column proportions, and suffix-based compare screenshots.
+- [x] Complete a fifth visual refinement pass for story-mode focal composition and tighter action-stack sizing.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
