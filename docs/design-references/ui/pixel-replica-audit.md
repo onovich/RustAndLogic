@@ -370,3 +370,18 @@
   - 微调了对话正文的最大宽度、行距和提示层级，让底部对白在英文与中文模式下都更稳地贴近参考稿节奏。
   - 继续压紧了右下角抽屉区的整体垂直节奏，包括 `sidebar-drawers` 间距、DevLog 展开态高度、日志字号与按钮栈间隔，让 DevLog 与动作按钮的上下关系更贴近参考稿。
   - 将 DevLog 对照截图从“空抽屉展开态”改成“先跑出真实运行日志再展开”的状态，补强了右下角调试区域的像素级对照证据，避免后续收边时只盯着空态。
+
+## pass18 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass18-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass18-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass18-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass18-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass18-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass18-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass18-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass18-zh.png`
+- 本轮新增收边：
+  - 继续压紧了左上地点插画里的文字块：缩小主标题字级、压低副文案行距、缩窄文案宽度，并把文字整体再往底色里压了一点，让地点识别区更接近参考稿那种“信息被场景吞进去”的感觉。
+  - 轻微收窄了右下角动作按钮与抽屉区的底部留白，并把按钮高度再压细一档，让 `SETTINGS / LOCALIZATION / DEV_LOG / SAVE_STATE` 更接近参考稿里的细长终端条比例。

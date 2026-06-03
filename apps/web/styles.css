@@ -354,11 +354,11 @@ h2 {
 
 .location-copy {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 9px;
+  left: 7px;
+  right: 10px;
+  bottom: 7px;
   display: grid;
-  gap: 1px;
+  gap: 0;
   z-index: 2;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.68);
 }
@@ -372,12 +372,13 @@ h2 {
   color: var(--muted);
   font-size: 8px;
   letter-spacing: 0.08em;
+  line-height: 1;
 }
 
 .location-copy strong {
   color: var(--text-strong);
-  font-size: 15px;
-  line-height: 1.02;
+  font-size: 14px;
+  line-height: 1;
   text-shadow: 0 0 5px var(--accent-glow);
 }
 
@@ -385,8 +386,8 @@ h2 {
   font-family: var(--font-body);
   color: var(--muted);
   font-size: 8px;
-  line-height: 1.15;
-  max-width: 15ch;
+  line-height: 1.1;
+  max-width: 14ch;
   text-transform: none;
 }
 
@@ -1232,7 +1233,7 @@ textarea[data-invalid="true"] {
   grid-template-rows: minmax(0, auto) minmax(0, auto) auto;
   align-content: end;
   gap: 4px;
-  padding: 5px 12px 10px;
+  padding: 5px 12px 8px;
 }
 
 .settings-panel {
@@ -1298,7 +1299,7 @@ textarea[data-invalid="true"] {
 .module-actions button,
 .action-stack button,
 .language-switch button {
-  min-height: 23px;
+  min-height: 22px;
   padding: 0 8px;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
@@ -1333,13 +1334,13 @@ textarea[data-invalid="true"] {
 .action-stack {
   display: grid;
   gap: 4px;
-  padding-top: 2px;
+  padding-top: 1px;
   margin-top: auto;
 }
 
 .action-stack button {
   width: 100%;
-  min-height: 21px;
+  min-height: 20px;
   font-size: 0.6rem;
   letter-spacing: 0.06em;
 }

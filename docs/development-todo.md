@@ -74,6 +74,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a fifteenth visual refinement pass for diagnostics severity treatment, autocomplete density, and tighter systems-field rhythm.
 - [x] Complete a sixteenth visual refinement pass for location-hero cadence, task-list compaction, and DevLog drawer framing.
 - [x] Complete a seventeenth visual refinement pass for stage-dialogue balance, right-sidebar lower-region cadence, and richer DevLog comparison captures.
+- [x] Complete an eighteenth visual refinement pass for location-hero compression and tighter right-action docking.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
