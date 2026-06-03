@@ -4,6 +4,7 @@ import { chromium } from "file:///C:/Users/Administrator/.cache/codex-runtimes/c
 
 const artifactsDir = new URL("../.codex-artifacts/", import.meta.url);
 const suffix = process.argv[2] ?? "pass";
+const language = process.argv[3] ?? "en";
 
 await mkdir(artifactsDir, { recursive: true });
 
@@ -27,7 +28,7 @@ try {
   await page.goto(appUrl, { waitUntil: "domcontentloaded" });
   await page.getByTestId("world-grid").waitFor({ state: "visible", timeout: 10000 });
 
-  await setLanguage(page, "zh");
+  await setLanguage(page, language);
   await page.screenshot({ path: filePath(`compare-default-${suffix}.png`), fullPage: true });
 
   await dismissStory(page);
@@ -40,7 +41,9 @@ try {
   await page.getByTestId("runtime-toast").waitFor({ state: "visible", timeout: 6000 });
   await page.screenshot({ path: filePath(`compare-runtime-${suffix}.png`), fullPage: true });
 
-  console.log(`Captured compare-default-${suffix}.png, compare-editor-${suffix}.png, compare-runtime-${suffix}.png`);
+  console.log(
+    `Captured compare-default-${suffix}.png, compare-editor-${suffix}.png, compare-runtime-${suffix}.png in ${language.toUpperCase()} mode`,
+  );
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

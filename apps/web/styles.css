@@ -674,13 +674,13 @@ textarea[data-invalid="true"] {
 
 .story-spotlight {
   position: absolute;
-  left: 29%;
-  top: 66px;
+  left: 31.2%;
+  top: 64px;
   z-index: 6;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 34px;
+  width: 32px;
+  height: 35px;
   border: 1px solid rgba(255, 194, 139, 0.92);
   background:
     linear-gradient(180deg, rgba(255, 171, 86, 0.98), rgba(231, 128, 42, 0.96));
@@ -730,7 +730,7 @@ textarea[data-invalid="true"] {
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier {
-  opacity: 0.22;
+  opacity: 0.14;
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier::before,
@@ -738,7 +738,7 @@ textarea[data-invalid="true"] {
 .stage-panel[data-mode="story"] .deposit,
 .stage-panel[data-mode="story"] .obstacle,
 .stage-panel[data-mode="story"] .base-marker {
-  opacity: 0.34;
+  opacity: 0.18;
 }
 
 .stage-panel[data-mode="story"] .cell::after {
@@ -898,14 +898,14 @@ textarea[data-invalid="true"] {
 
 .story-dialogue {
   position: absolute;
-  left: 20px;
-  right: 24px;
-  bottom: 18px;
+  left: 24px;
+  right: 20px;
+  bottom: 19px;
   z-index: 7;
   display: grid;
   gap: 6px;
-  min-height: 88px;
-  padding: 12px 15px 10px;
+  min-height: 84px;
+  padding: 11px 14px 10px;
   border: 1px solid var(--accent-soft);
   background: rgba(13, 7, 3, 0.965);
   color: var(--text);
@@ -940,6 +940,7 @@ textarea[data-invalid="true"] {
 .story-prompt {
   justify-self: end;
   font-size: 0.62rem;
+  opacity: 0.8;
 }
 
 .right-sidebar {
@@ -951,15 +952,15 @@ textarea[data-invalid="true"] {
 }
 
 .terminal-section {
-  padding: 8px 12px 9px;
+  padding: 7px 11px 8px;
   border-bottom: 1px solid var(--line);
 }
 
 .terminal-section dl,
 .status-panel dl {
   display: grid;
-  gap: 5px;
-  margin-top: 10px;
+  gap: 4px;
+  margin-top: 9px;
 }
 
 .terminal-section dl div,
@@ -969,7 +970,7 @@ textarea[data-invalid="true"] {
   justify-content: space-between;
   gap: 12px;
   color: var(--text);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
 }
 
@@ -986,13 +987,13 @@ textarea[data-invalid="true"] {
 
 .meter-stack {
   display: grid;
-  gap: 14px;
-  margin-top: 12px;
+  gap: 11px;
+  margin-top: 10px;
 }
 
 .meter-row {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .meter-labels {
@@ -1001,7 +1002,7 @@ textarea[data-invalid="true"] {
   justify-content: space-between;
   gap: 12px;
   color: var(--text);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
 }
 
@@ -1028,7 +1029,7 @@ textarea[data-invalid="true"] {
   grid-template-rows: minmax(0, auto) minmax(0, auto) auto;
   align-content: end;
   gap: 4px;
-  padding: 6px 10px 10px;
+  padding: 6px 12px 10px;
 }
 
 .settings-panel,
@@ -1104,14 +1105,15 @@ textarea[data-invalid="true"] {
 .action-stack {
   display: grid;
   gap: 4px;
-  padding-left: 2px;
-  padding-right: 2px;
+  padding-left: 8px;
+  padding-right: 8px;
   margin-top: auto;
 }
 
 .action-stack button {
-  min-height: 21px;
-  font-size: 0.58rem;
+  min-height: 20px;
+  font-size: 0.56rem;
+  letter-spacing: 0.05em;
 }
 
 .ok {
