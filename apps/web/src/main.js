@@ -498,12 +498,15 @@ function render(state, options = {}) {
   elements.armorMeter.style.width = `${armorPercent}%`;
   elements.energyMeter.style.width = `${energyPercent}%`;
 
-  if (!state.program) {
-    elements.compileStatus.textContent = t("state.waiting");
+  const compileStatusHost = elements.compileStatus.closest(".stage-mode");
+  if (!state.program || state.program.ok) {
+    elements.compileStatus.textContent = "";
     elements.compileStatus.className = "";
+    compileStatusHost?.setAttribute("data-visible", "false");
   } else {
-    elements.compileStatus.textContent = state.program.ok ? t("state.compileOk") : t("state.compileError");
-    elements.compileStatus.className = state.program.ok ? "ok" : "error";
+    elements.compileStatus.textContent = "";
+    elements.compileStatus.className = "";
+    compileStatusHost?.setAttribute("data-visible", "false");
   }
 
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);

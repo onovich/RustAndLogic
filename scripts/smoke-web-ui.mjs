@@ -60,11 +60,27 @@ try {
   }
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
 
-  await expectText(page, "compile-status", "Waiting");
+  await expectText(page, "compile-status", "");
   await expectText(page, "capacity-label", "Capacity 8");
   await expectText(page, "play-button", "Play");
   await expectText(page, "step-button", "Step");
   await expectText(page, "speed-button", "1X");
+
+  const stageHeaderLayout = await page.evaluate(() => {
+    const panel = document.querySelector(".stage-panel").getBoundingClientRect();
+    const heading = document.querySelector(".stage-heading").getBoundingClientRect();
+    const canvas = document.querySelector(".canvas-viewport").getBoundingClientRect();
+    return {
+      panelTop: panel.top,
+      headingBottom: heading.bottom,
+      canvasTop: canvas.top,
+      canvasOffset: canvas.top - panel.top,
+      gapBelowHeading: canvas.top - heading.bottom,
+    };
+  });
+  if (stageHeaderLayout.gapBelowHeading > 2 || stageHeaderLayout.canvasOffset > 42) {
+    throw new Error(`Expected map canvas to start directly below the stage header, got ${JSON.stringify(stageHeaderLayout)}`);
+  }
 
   await page.getByTestId("speed-button").click();
   await expectText(page, "speed-button", "5X");
@@ -209,7 +225,7 @@ try {
   const badScript = `${originalScript}\nBogus`;
   await page.getByTestId("script-editor").fill(badScript);
   await page.getByTestId("play-button").click();
-  await expectText(page, "compile-status", "Compile error");
+  await expectText(page, "compile-status", "");
   const diagnosticText = await page.getByTestId("script-diagnostics").innerText();
   if (!diagnosticText.includes("Line 8") || !diagnosticText.includes("Unknown instruction: Bogus")) {
     throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
@@ -241,7 +257,7 @@ try {
   }
 
   await page.getByTestId("step-button").click();
-  await expectText(page, "compile-status", "Compile OK");
+  await expectText(page, "compile-status", "");
   await expectText(page, "scrap-count", "1");
   const pickupGhosts = await page.locator(".pickup-ghost").count();
   if (pickupGhosts === 0) {
