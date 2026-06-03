@@ -1,5 +1,20 @@
 # Pixel Replica Audit
 
+## pass23 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass23-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass23-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass23-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass23-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass23-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass23-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass23-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass23-zh.png`
+- 本轮新增收边：
+  - 彻底移除了剧情遗留的固定 `story-spotlight` 占位层，不再在任何状态下额外绘制一个固定位置的 `R1` 假实体。
+  - 同步删除了对应的 HTML 节点、样式块和 JS 显隐逻辑，避免以后又因为隐藏分支或状态切换把它带回来。
+
 ## pass22 补充
 
 - 新增截图：

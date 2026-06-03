@@ -836,44 +836,6 @@ textarea[data-invalid="true"] {
   opacity: 1;
 }
 
-.story-spotlight {
-  position: absolute;
-  left: 31.2%;
-  top: 64px;
-  z-index: 6;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 35px;
-  border: 1px solid rgba(255, 194, 139, 0.92);
-  background:
-    linear-gradient(180deg, rgba(255, 171, 86, 0.98), rgba(231, 128, 42, 0.96));
-  color: #2a1207;
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
-  box-shadow:
-    0 0 16px rgba(255, 164, 79, 0.42),
-    inset 0 -4px 0 rgba(123, 58, 18, 0.22);
-}
-
-.story-spotlight::before,
-.story-spotlight::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 1px;
-  background: rgba(120, 53, 16, 0.34);
-}
-
-.story-spotlight::before {
-  top: 8px;
-}
-
-.story-spotlight::after {
-  bottom: 8px;
-}
-
 .playfield-barrier {
   position: absolute;
   left: 50%;
@@ -1025,10 +987,6 @@ textarea[data-invalid="true"] {
 }
 
 .story-dialogue[hidden] {
-  display: none;
-}
-
-.story-spotlight[hidden] {
   display: none;
 }
 
