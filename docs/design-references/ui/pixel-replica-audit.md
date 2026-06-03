@@ -96,9 +96,22 @@
   - 用于对照第十一轮编辑器态，采用英文模式截图，重点检查编辑器字号、行号栏、补全面板高亮与底部诊断密度
 - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass11.png`
   - 用于对照第十一轮运行时中断态，采用英文模式截图，重点检查 halt toast 阴影、进度条发光和舞台区亮度平衡
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass12.png`
+  - 用于对照第十二轮默认剧情态，采用英文模式截图，重点检查任务列表竖线/复选框结构、标题栏与控制栏拆层、以及侧栏折叠按钮口径
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass12.png`
+  - 用于对照第十二轮编辑器态，采用英文模式截图，重点检查控制栏拆层、行号居中、补全面板与诊断区在新框架下的贴稿程度
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass12.png`
+  - 用于对照第十二轮运行时中断态，采用英文模式截图，重点检查新控制栏、任务栏激活态和 runtime halt 反馈在整体版式中的协调性
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass12.png`
+  - 用于对照第十二轮 DevLog 展开态，采用英文模式截图，重点检查开发日志抽屉的展开高度、低优先级信息密度以及与右下动作按钮的关系
 
 ## 本轮新增收边
 
+- 将左侧任务清单从伪元素占位改成了更贴设计稿的“2px 竖线 + 8px 复选框 + 12px 缩进”结构，并补上首个未完成任务的激活态
+- 将代码区改成了“标题栏 / 控制栏 / 编辑器 / 诊断区”的四层结构，让控制按钮终于从标题行里拆出来，更接近参考稿的三明治分层
+- 侧边栏折叠按钮改回更贴稿的窄条箭头结构，宽高、贴边关系和折叠后残留窄轨都更接近设计图
+- DevLog 改成默认收起、通过 `max-height` 展开的抽屉模型，并补拍了专门的展开态对照图
+- 同步修正了 smoke，使验证逻辑跟上新的 DevLog 抽屉实现和侧栏箭头状态，避免测试还停在旧 UI 假设上
 - 吸收了设计师补充的精确滤镜与辉光参数：统一 `--accent-glow`、扫描线密度、顶部彩虹条颜色带与暗晕口径
 - 将左上地点 hero 的遮罩、标题字级和副文案可读性进一步收回到更接近设计稿的状态，并补上更明确的琥珀文字辉光
 - 提高了编辑器区的代码字号、行号栏密度和诊断面板高度，让编辑器态更接近参考稿里的终端编排
@@ -250,12 +263,46 @@
 - 若两种语言都会长期存在，是否需要分别维护一套英文 / 中文的对照截图基线
 - 某些按钮或标题在中英文下长度差异明显时，优先服从哪个版本的视觉比例
 
+### 12. 倍速按钮的最终视觉口径
+
+当前产品逻辑是一个循环切换的单按钮：
+
+- `1X`
+- `5X`
+- `10X`
+
+但参考设计里出现过：
+
+- 右侧单个激活态 `1X`
+- 右侧双按钮 `1X / 5X`
+
+它没有完整覆盖当前实际产品的单按钮循环态，也没有明确：
+
+- `10X` 时的正式视觉
+- 单按钮循环与多按钮并排二选一时，最终以哪套为准
+- 激活态是否总是用琥珀底，还是只在当前倍率高亮描边 / 内发光
+
 ## 当前判断
 
 这轮实现已经把“整体版式、主要气质、关键交互位置”继续往设计稿上压了一步，适合继续做第五轮后的局部像素级校准。
 
 接下来若要继续提高精度，优先级建议是：
 
-1. 补齐上面 11 个缺设计点
+1. 补齐上面 12 个缺设计点
 2. 针对左侧插画裁切口径、剧情模式焦点落点，以及右栏字段语义映射后的最终排版继续做下一轮像素级微调
 3. 再补一轮对应截图，逐张贴着设计稿收细节
+
+## pass13 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass13-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass13-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass13-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass13-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass13-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass13-zh.png`
+- 本轮新增收边：
+  - 将字体正式拆成 `--font-mono`、`--font-display`、`--font-body` 三层，避免中文进入后把终端式对齐和信息密度打散。
+  - 等宽信息区继续保持终端基线，优先覆盖代码区、行号、日志与诊断。
+  - 标题与状态标签单独切到 display 字体栈，让中文标题保持更硬朗的机械感，同时不影响代码区宽度节奏。
+  - 对话正文、地点说明、抽屉说明文案切到 body 字体栈，提升中文可读性，并避免剧情文本被强制全大写带来的观感噪声。

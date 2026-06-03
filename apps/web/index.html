@@ -33,17 +33,18 @@
       </aside>
 
       <section class="editor-panel" aria-label="Script editor" data-i18n-attr="aria-label:script.aria">
-        <header class="code-header">
-          <div class="code-title">
-            <h1 data-i18n="script.fileName"></h1>
-          </div>
-          <div class="toolbar" aria-label="Run controls" data-i18n-attr="aria-label:script.controls">
+        <header class="code-label">
+          <h1 data-i18n="script.fileName"></h1>
+        </header>
+        <div class="controls" aria-label="Run controls" data-i18n-attr="aria-label:script.controls">
+          <div class="toolbar">
             <button data-testid="play-button" data-i18n-attr="aria-label:action.play" type="button">PLAY</button>
             <button data-testid="step-button" data-i18n-attr="aria-label:action.frame" type="button">STEP</button>
+            <div class="control-spacer" aria-hidden="true"></div>
             <button data-testid="speed-button" type="button">1X</button>
             <button data-testid="reset-button" data-i18n-attr="aria-label:action.stop" type="button">STOP</button>
           </div>
-        </header>
+        </div>
         <div class="editor-frame">
           <pre class="line-numbers" data-testid="script-line-numbers" aria-hidden="true"></pre>
           <div class="editor-stack">

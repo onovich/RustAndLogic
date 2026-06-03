@@ -89,9 +89,15 @@ try {
   await page.getByTestId("speed-button").click();
   await expectText(page, "speed-button", "1X");
 
-  const devDebugVisible = await page.locator(".dev-panel").isVisible();
-  if (devDebugVisible) {
-    throw new Error("Expected developer log drawer to be closed by default.");
+  const devDebugState = await page.evaluate(() => {
+    const panel = document.querySelector(".dev-panel");
+    return {
+      open: panel?.dataset.open,
+      height: panel?.getBoundingClientRect().height ?? 0,
+    };
+  });
+  if (devDebugState.open !== "false" || devDebugState.height > 4) {
+    throw new Error(`Expected developer log drawer to be collapsed by default, got ${JSON.stringify(devDebugState)}.`);
   }
   const arenaButtonCount = await page.getByTestId("arena-button").count();
   if (arenaButtonCount !== 0) {
@@ -103,10 +109,10 @@ try {
     const right = document.querySelector(".right-sidebar").getBoundingClientRect();
     return { editorLeft: editor.left, editorWidth: editor.width, rightWidth: right.width };
   });
-  await expectText(page, "objectives-toggle", "[-]");
+  await expectText(page, "objectives-toggle", "◀");
   await page.getByTestId("objectives-toggle").click();
   await page.waitForTimeout(260);
-  await expectText(page, "objectives-toggle", "[+]");
+  await expectText(page, "objectives-toggle", "▶");
   const layoutAfterLeftCollapse = await page.evaluate(() => {
     const editor = document.querySelector(".editor-panel").getBoundingClientRect();
     const sidebar = document.querySelector(".location-sidebar").getBoundingClientRect();
@@ -314,9 +320,15 @@ try {
   await expectText(page, "tick", "0");
 
   await page.getByTestId("devlog-toggle").click();
-  const devLogVisible = await page.locator(".dev-panel").isVisible();
-  if (!devLogVisible) {
-    throw new Error("Expected developer log drawer to open.");
+  const devLogState = await page.evaluate(() => {
+    const panel = document.querySelector(".dev-panel");
+    return {
+      open: panel?.dataset.open,
+      height: panel?.getBoundingClientRect().height ?? 0,
+    };
+  });
+  if (devLogState.open !== "true" || devLogState.height < 20) {
+    throw new Error(`Expected developer log drawer to open, got ${JSON.stringify(devLogState)}.`);
   }
   await expectText(page, "devlog-toggle", "Dev_Log [-]");
 

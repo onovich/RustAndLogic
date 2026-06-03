@@ -245,10 +245,10 @@ function detectLanguageMode() {
 
 function updateSidebarToggles() {
   if (elements.objectivesToggle) {
-    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "[+]" : "[-]";
+    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "▶" : "◀";
   }
   if (elements.rightSidebarToggle) {
-    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "[+]" : "[-]";
+    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "◀" : "▶";
   }
 }
 
@@ -793,8 +793,14 @@ function renderFlowList() {
   for (const task of appData.tasks ?? []) {
     const item = document.createElement("li");
     item.dataset.flow = task.id;
-    item.dataset.i18n = task.labelKey;
-    item.textContent = t(task.labelKey);
+    const checkbox = document.createElement("span");
+    checkbox.className = "task-checkbox";
+    checkbox.setAttribute("aria-hidden", "true");
+    const copy = document.createElement("span");
+    copy.className = "task-copy";
+    copy.dataset.i18n = task.labelKey;
+    copy.textContent = t(task.labelKey);
+    item.append(checkbox, copy);
     elements.flowChecklist.append(item);
   }
   renderFlow();
@@ -1476,9 +1482,17 @@ function translateVmState(state) {
 
 function renderFlow() {
   const items = elements.flowChecklist.querySelectorAll("[data-flow]");
+  let firstPendingAssigned = false;
   for (const item of items) {
     const key = item.dataset.flow;
-    item.dataset.done = flow[key] ? "true" : "false";
+    const done = flow[key] ? "true" : "false";
+    item.dataset.done = done;
+    if (done === "false" && !firstPendingAssigned) {
+      item.dataset.active = "true";
+      firstPendingAssigned = true;
+    } else {
+      item.dataset.active = "false";
+    }
   }
 }
 
