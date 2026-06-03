@@ -1,8 +1,40 @@
+@font-face {
+  font-family: "RAL Mono";
+  src:
+    local("Cascadia Mono"),
+    local("Cascadia Code"),
+    local("Consolas"),
+    local("Courier New");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "RAL Body";
+  src:
+    local("Noto Sans SC"),
+    local("NotoSansSC"),
+    local("Microsoft YaHei UI"),
+    local("Microsoft YaHei"),
+    local("DengXian");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "RAL Display";
+  src:
+    local("Noto Sans SC"),
+    local("NotoSansSC"),
+    local("SimHei"),
+    local("Microsoft YaHei UI"),
+    local("Microsoft YaHei");
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
-  --font-mono: "Noto Sans Mono CJK SC", "Microsoft YaHei UI", "Microsoft YaHei", "Courier New", Courier, monospace;
-  --font-body: "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
-  --font-display: "YouSheBiaoTiHei", "YouShe Title Hei", "ZCOOL GaoDuanHei", "Noto Sans CJK SC", "Microsoft YaHei UI", sans-serif;
+  --font-mono: "RAL Mono", "RAL Body", monospace;
+  --font-body: "RAL Body", sans-serif;
+  --font-display: "RAL Display", "RAL Body", sans-serif;
   --bg: #060302;
   --bg-2: #0b0503;
   --bg-deep: #0d0805;

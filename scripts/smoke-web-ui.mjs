@@ -33,6 +33,20 @@ try {
     throw new Error(`App did not initialize: ${error.message} Browser errors: ${pageErrors.join(" | ")} Body: ${bodyText.slice(0, 500)}`);
   });
 
+  const fontStackCheck = await page.evaluate(() => {
+    const body = getComputedStyle(document.body).fontFamily;
+    const title = getComputedStyle(document.querySelector(".code-label h1")).fontFamily;
+    const editor = getComputedStyle(document.querySelector('[data-testid="script-editor"]')).fontFamily;
+    return { body, title, editor };
+  });
+  if (
+    !fontStackCheck.body.includes("RAL Body") ||
+    !fontStackCheck.title.includes("RAL Display") ||
+    !fontStackCheck.editor.includes("RAL Mono")
+  ) {
+    throw new Error(`Expected updated font aliases to be applied, got ${JSON.stringify(fontStackCheck)}.`);
+  }
+
   if (pageErrors.length > 0) {
     throw new Error(`Browser errors before smoke actions: ${pageErrors.join(" | ")}`);
   }

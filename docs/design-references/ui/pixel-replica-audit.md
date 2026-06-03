@@ -1,5 +1,21 @@
 # Pixel Replica Audit
 
+## pass24 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass24-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass24-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass24-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass24-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass24-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass24-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass24-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass24-zh.png`
+- 本轮新增收边：
+  - 将此前失配的字体名改成了浏览器可命中的本机字体别名，代码区、正文区、标题区分别绑定到真正可用的 mono/body/display 栈。
+  - 代码区优先命中 `Cascadia Mono / Consolas`，中文正文优先命中 `Noto Sans SC`，标题区则走更硬朗的显示字体栈。
+  - smoke 新增了计算后字体族断言，避免后续又回退成“CSS 里写了设计建议，但浏览器实际上没用上”。
+
 ## pass23 补充
 
 - 新增截图：
