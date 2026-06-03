@@ -1,5 +1,22 @@
 # Pixel Replica Audit
 
+## pass21 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass21-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass21-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass21-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass21-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass21-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass21-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass21-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass21-zh.png`
+- 本轮新增收边：
+  - 将剧情态与挂机态的地图分层重新拆开：剧情态继续使用 viewport 假图网格，挂机态改为 world 层真图网格。
+  - 真图网格跟着 `canvasWorld` 一起平移和缩放，拖拽相机、滚轮缩放时不再和实体脱节。
+  - 重新校正 world 尺寸，让居中的真实地图锚点落在 40px 网格上，修复实体整体半格错位的问题。
+  - smoke 额外断言了 story/idle 两种网格承载模式，避免之后又回退到“假图和真图混在一层”。
+
 这份清单用于记录当前这轮 UI 高保真复刻，哪些功能与设计稿已经有明确对应，哪些功能仍缺少足够细节，后续需要用户继续补图或补交互说明。
 
 ## 本轮已对齐的设计块

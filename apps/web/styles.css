@@ -794,11 +794,8 @@ textarea[data-invalid="true"] {
   overflow: hidden;
   cursor: grab;
   background:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
     linear-gradient(180deg, rgba(255, 155, 61, 0.03), rgba(0, 0, 0, 0)),
     var(--grid-bg);
-  background-size: 40px 40px, 40px 40px, auto, auto;
 }
 
 .canvas-viewport[data-dragging="true"] {
@@ -819,10 +816,37 @@ textarea[data-invalid="true"] {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 1680px;
-  height: 1220px;
+  width: 1720px;
+  height: 1240px;
   transform-origin: 50% 50%;
   will-change: transform;
+}
+
+.canvas-world::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 155, 61, 0.03), rgba(0, 0, 0, 0)),
+    var(--grid-bg);
+  background-size: 40px 40px, 40px 40px, auto, auto;
+  opacity: 1;
+}
+
+.stage-panel[data-mode="story"] .canvas-viewport {
+  background:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 155, 61, 0.03), rgba(0, 0, 0, 0)),
+    var(--grid-bg);
+  background-size: 40px 40px, 40px 40px, auto, auto;
+}
+
+.stage-panel[data-mode="story"] .canvas-world::before {
+  opacity: 0;
 }
 
 .story-spotlight {

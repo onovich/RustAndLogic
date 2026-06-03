@@ -46,6 +46,17 @@ try {
   if (storyEntityCount !== 0) {
     throw new Error(`Expected stage entities to stay unloaded during story mode, got ${storyEntityCount}.`);
   }
+  const storyGridMode = await page.evaluate(() => {
+    const viewport = document.querySelector(".canvas-viewport");
+    const world = document.querySelector(".canvas-world");
+    return {
+      viewportBackgroundSize: getComputedStyle(viewport).backgroundSize,
+      worldGridOpacity: getComputedStyle(world, "::before").opacity,
+    };
+  });
+  if (!storyGridMode.viewportBackgroundSize.includes("40px 40px") || storyGridMode.worldGridOpacity !== "0") {
+    throw new Error(`Expected story mode to use the fake viewport grid, got ${JSON.stringify(storyGridMode)}.`);
+  }
 
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("lang-zh-button").click();
@@ -66,6 +77,22 @@ try {
   const idleEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
   if (idleEntityCount < 4) {
     throw new Error(`Expected stage entities to load after story mode, got ${idleEntityCount}.`);
+  }
+  const idleGridMode = await page.evaluate(() => {
+    const viewport = document.querySelector(".canvas-viewport");
+    const world = document.querySelector(".canvas-world");
+    return {
+      viewportBackgroundSize: getComputedStyle(viewport).backgroundSize,
+      worldGridOpacity: getComputedStyle(world, "::before").opacity,
+      worldGridBackgroundSize: getComputedStyle(world, "::before").backgroundSize,
+    };
+  });
+  if (
+    idleGridMode.viewportBackgroundSize.includes("40px 40px") ||
+    idleGridMode.worldGridOpacity !== "1" ||
+    !idleGridMode.worldGridBackgroundSize.includes("40px 40px")
+  ) {
+    throw new Error(`Expected idle mode to use the transformed world grid, got ${JSON.stringify(idleGridMode)}.`);
   }
 
   await expectText(page, "compile-status", "");
