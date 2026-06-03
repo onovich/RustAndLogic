@@ -87,6 +87,12 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Keep Web/WASM and desktop IPC boundaries explicit.
 - [ ] Document release and packaging commands once a desktop shell exists.
 
+## Milestone 5: Developer Visual Authoring Tooling
+
+- [ ] Add a developer-only graphics editor entry for authoring entity visuals for robots, items, obstacles, walls, and other map entities.
+- [ ] Support layered composition per entity with editable glyph and shape controls:
+  `character glyph`, `font size`, `glyph color`, `glyph position`, `background color`, `stroke color`, `shape type` (`rectangle`, `circle`, `regular polygon`, `star polygon`), `corner radius`, `polygon side count`, `star inner radius`, `star outer radius`, `star point count`, `stripe texture` (`color`, `width`, `angle`, `gap`), `pixel-dither texture` (`scale`, `texture type`), and multi-shape stacking where each shape carries the same editable styling model.
+
 ## Definition Of Done For A Small Item
 
 Each small item is complete only after:
