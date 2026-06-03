@@ -90,9 +90,20 @@
   - 用于对照第十轮编辑器态，采用英文模式截图，重点检查新按钮基线、扫描线覆盖与候选词层级是否仍保持清晰
 - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass10.png`
   - 用于对照第十轮运行时中断态，采用英文模式截图，重点检查终端外壳效果加强后 halt toast 仍是否清晰可辨
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass11.png`
+  - 用于对照第十一轮默认剧情态，采用英文模式截图，重点检查左上 hero 遮罩、对话框 blur、地图亮度和精确辉光口径
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass11.png`
+  - 用于对照第十一轮编辑器态，采用英文模式截图，重点检查编辑器字号、行号栏、补全面板高亮与底部诊断密度
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass11.png`
+  - 用于对照第十一轮运行时中断态，采用英文模式截图，重点检查 halt toast 阴影、进度条发光和舞台区亮度平衡
 
 ## 本轮新增收边
 
+- 吸收了设计师补充的精确滤镜与辉光参数：统一 `--accent-glow`、扫描线密度、顶部彩虹条颜色带与暗晕口径
+- 将左上地点 hero 的遮罩、标题字级和副文案可读性进一步收回到更接近设计稿的状态，并补上更明确的琥珀文字辉光
+- 提高了编辑器区的代码字号、行号栏密度和诊断面板高度，让编辑器态更接近参考稿里的终端编排
+- 重做了候选词下拉、剧情对话框和运行时 halt toast 的阴影/blur/高亮参数，使交互浮层更贴近设计师提供的精确数值
+- 微调了舞台区底色与网格亮度，并给进度条填充补上统一的发光与过渡口径，减少地图相对其余区域偏暗的问题
 - 压缩了左侧地点插画高度，让任务区更靠近设计稿的紧凑节奏
 - 修正了左侧任务列表的纵向分布，不再被容器高度拉得过散
 - 微调了代码区列宽、按钮尺寸和终端按钮字重

@@ -67,6 +67,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete an eighth visual refinement pass for single-line stage headers and higher map start alignment.
 - [x] Complete a ninth visual refinement pass for denser left-column rhythm, tighter dialogue framing, and slimmer systems fields.
 - [x] Complete a tenth visual refinement pass for terminal shell effects, location-art readability, and button baseline alignment.
+- [x] Complete an eleventh visual refinement pass for exact glow, blur, mask, and motion-parameter alignment.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
