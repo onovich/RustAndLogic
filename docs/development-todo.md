@@ -54,6 +54,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Retire legacy player-facing resource language in favor of script, logic memory, and memory shards.
 - [x] Add a compact bilingual README with truthful run, validation, and architecture notes.
 - [x] Archive the latest user-provided UI reference images under `docs/design-references/ui/`.
+- [x] Archive the editor diagnostics, autocomplete, and runtime halt UI reference images under `docs/design-references/ui/`.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
