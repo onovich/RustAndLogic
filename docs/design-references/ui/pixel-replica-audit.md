@@ -306,3 +306,18 @@
   - 等宽信息区继续保持终端基线，优先覆盖代码区、行号、日志与诊断。
   - 标题与状态标签单独切到 display 字体栈，让中文标题保持更硬朗的机械感，同时不影响代码区宽度节奏。
   - 对话正文、地点说明、抽屉说明文案切到 body 字体栈，提升中文可读性，并避免剧情文本被强制全大写带来的观感噪声。
+
+## pass14 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass14-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass14-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass14-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass14-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass14-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass14-zh.png`
+- 本轮新增收边：
+  - 给演出区底部对话补上了设计稿里明确存在的分页点，让多页剧情的翻页反馈不再只靠文案提示。
+  - 将对话框底部提示改成更接近稿子的 bracket 口径，并压细了 speaker 与正文的主次关系。
+  - 把右下动作按钮栈收回到更接近参考稿的满宽终端条比例，减少此前左右留白过多导致的按钮显瘦问题。
+  - 给运行时 halt toast 补上了更贴近设计稿的横向扫线质感，让错误块从纯色警报条更靠近终端红色告警片。

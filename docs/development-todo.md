@@ -70,6 +70,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete an eleventh visual refinement pass for exact glow, blur, mask, and motion-parameter alignment.
 - [x] Complete a twelfth visual refinement pass for task-list structure, split editor controls, sidebar handles, and DevLog reveal behavior.
 - [x] Complete a thirteenth visual refinement pass for Chinese font layering across terminal, display, and narrative text zones.
+- [x] Complete a fourteenth visual refinement pass for dialogue pagination affordances, runtime halt texture, and action-stack width alignment.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

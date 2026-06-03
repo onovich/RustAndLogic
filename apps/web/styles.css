@@ -999,7 +999,9 @@ textarea[data-invalid="true"] {
   max-width: 214px;
   padding: 8px 16px;
   border: 1px solid rgba(255, 233, 226, 0.9);
-  background: linear-gradient(180deg, rgba(208, 80, 56, 0.96), rgba(195, 70, 47, 0.96));
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(208, 80, 56, 0.96), rgba(195, 70, 47, 0.96));
   color: #ffe2d9;
   box-shadow: 0 0 12px rgba(192, 57, 43, 0.3);
 }
@@ -1018,14 +1020,14 @@ textarea[data-invalid="true"] {
 
 .story-dialogue {
   position: absolute;
-  left: 24px;
+  left: 20px;
   right: 20px;
-  bottom: 19px;
+  bottom: 20px;
   z-index: 7;
   display: grid;
-  gap: 5px;
-  min-height: 80px;
-  padding: 16px;
+  gap: 4px;
+  min-height: 76px;
+  padding: 14px 16px 12px;
   border: 1px solid var(--accent-soft);
   background: rgba(13, 8, 5, 0.95);
   backdrop-filter: blur(4px);
@@ -1043,7 +1045,6 @@ textarea[data-invalid="true"] {
 }
 
 .story-channel,
-.story-speaker,
 .story-prompt {
   font-family: var(--font-display);
   color: var(--accent);
@@ -1053,17 +1054,51 @@ textarea[data-invalid="true"] {
   text-shadow: 0 0 5px var(--accent-glow);
 }
 
+.story-speaker {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .story-text {
   font-family: var(--font-body);
   color: var(--text-strong);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.55;
   max-width: 96ch;
   text-transform: none;
 }
 
+.story-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.story-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 8px;
+}
+
+.story-page-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.story-page-dot[data-active="true"] {
+  background: var(--accent);
+  box-shadow: 0 0 4px var(--accent-glow);
+}
+
 .story-prompt {
-  justify-self: end;
   font-size: 9px;
   opacity: 0.8;
 }
@@ -1263,15 +1298,14 @@ textarea[data-invalid="true"] {
 .action-stack {
   display: grid;
   gap: 4px;
-  padding-left: 8px;
-  padding-right: 8px;
   margin-top: auto;
 }
 
 .action-stack button {
-  min-height: 20px;
-  font-size: 0.56rem;
-  letter-spacing: 0.05em;
+  width: 100%;
+  min-height: 22px;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
 }
 
 .ok {

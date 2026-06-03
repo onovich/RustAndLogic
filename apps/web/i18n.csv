@@ -102,8 +102,8 @@ story.opening.2.speaker,K-6 Commander,K-6 指挥官
 story.opening.2.text,The script on the left feeds the robot logic core. Press play or single-frame after this briefing; the system will compile it on demand.,左侧脚本会写入机器人的逻辑核心。简报结束后点击播放或步进，系统会按需编译。
 story.opening.3.speaker,K-6 Commander,K-6 指挥官
 story.opening.3.text,"Recover the nearby scrap, expand logic memory, then we can route you toward the next unlocked site.",回收附近废铁，扩展逻辑内存，然后我们就能把路线指向下一个已解锁地点。
-story.prompt.continue,Click to continue,点击继续
-story.prompt.begin,Click to begin idle mode,点击进入挂机模式
+story.prompt.continue,[ Click to continue ],[ 点击继续 ]
+story.prompt.begin,[ Click to begin idle mode ],[ 点击进入挂机模式 ]
 completion.kind.action,Action,动作
 completion.kind.query,Query,查询
 completion.kind.branch,Branch,分支

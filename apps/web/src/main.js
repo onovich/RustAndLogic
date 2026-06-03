@@ -109,6 +109,7 @@ const elements = {
   storyDialogue: query("story-dialogue"),
   storySpeaker: query("story-speaker"),
   storyText: query("story-text"),
+  storyPages: query("story-pages"),
   storyPrompt: query("story-prompt"),
   storySpotlight: query("story-spotlight"),
   runtimeToast: query("runtime-toast"),
@@ -683,12 +684,20 @@ function advanceStory() {
 }
 
 function renderStoryDialogue() {
-  if (!elements.storyDialogue || !elements.storyText || !elements.storySpeaker || !elements.storyPrompt || !elements.stage) {
+  if (
+    !elements.storyDialogue ||
+    !elements.storyText ||
+    !elements.storySpeaker ||
+    !elements.storyPages ||
+    !elements.storyPrompt ||
+    !elements.stage
+  ) {
     return;
   }
   if (!storyActive) {
     elements.stage.dataset.mode = "idle";
     elements.storyDialogue.hidden = true;
+    elements.storyPages.replaceChildren();
     if (elements.storySpotlight) {
       elements.storySpotlight.hidden = true;
     }
@@ -704,9 +713,20 @@ function renderStoryDialogue() {
   }
   elements.storySpeaker.textContent = t(page.speakerKey);
   elements.storyText.textContent = t(page.textKey);
+  renderStoryPageDots();
   elements.storyPrompt.textContent =
     storyIndex === storyPages.length - 1 ? t("story.prompt.begin") : t("story.prompt.continue");
   applyCanvasTransform();
+}
+
+function renderStoryPageDots() {
+  elements.storyPages.replaceChildren();
+  for (let index = 0; index < storyPages.length; index += 1) {
+    const dot = document.createElement("span");
+    dot.className = "story-page-dot";
+    dot.dataset.active = String(index === storyIndex);
+    elements.storyPages.append(dot);
+  }
 }
 
 function shouldAutoPause(before, state) {
