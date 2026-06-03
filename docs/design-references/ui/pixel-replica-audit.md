@@ -36,6 +36,21 @@
   - 用于对照候选词下拉、诊断区、设置抽屉展开态
 - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime.png`
   - 用于对照运行时中断提示、开发日志展开态
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass2.png`
+  - 用于对照第二轮收边后的左栏节奏、默认镜头和底部按钮比例
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass2.png`
+  - 用于对照第二轮编辑器态，包括候选词下拉底部提示和右侧抽屉块感
+- `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass2.png`
+  - 用于对照第二轮运行时中断态，包括开发者日志展开后的底部层级关系
+
+## 本轮新增收边
+
+- 压缩了左侧地点插画高度，让任务区更靠近设计稿的紧凑节奏
+- 修正了左侧任务列表的纵向分布，不再被容器高度拉得过散
+- 微调了代码区列宽、按钮尺寸和终端按钮字重
+- 给候选词下拉补了终端式底部按键提示
+- 收窄了底部动作按钮、设置抽屉和开发日志抽屉的尺寸与间距
+- 将剧情演出态的地图内容进一步压暗、缩远、上提，使舞台更接近“剧情优先、地图退后”的设计观感
 
 ## 当前仍缺设计细节，需要补全
 

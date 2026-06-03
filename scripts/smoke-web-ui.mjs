@@ -178,8 +178,8 @@ try {
   const originalScript = await page.getByTestId("script-editor").inputValue();
   await page.getByTestId("script-editor").fill("Che");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
-  const checkSuggestion = await page.getByTestId("script-autocomplete").innerText();
-  if (!checkSuggestion.includes("Check().Has(Scrap)")) {
+  const checkSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!checkSuggestion.includes("CHECK().HAS(SCRAP)")) {
     throw new Error(`Expected Check().Has(Scrap) suggestion for Che, got: ${checkSuggestion}`);
   }
   await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
@@ -187,8 +187,8 @@ try {
 
   await page.getByTestId("script-editor").fill("Back");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
-  const backSuggestion = await page.getByTestId("script-autocomplete").innerText();
-  if (!backSuggestion.includes("Move(Back)")) {
+  const backSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!backSuggestion.includes("MOVE(BACK)")) {
     throw new Error(`Expected segmented Back suggestion for Move(Back), got: ${backSuggestion}`);
   }
 
@@ -199,8 +199,8 @@ try {
     editor.dispatchEvent(new Event("keyup", { bubbles: true }));
   });
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
-  const labelSuggestion = await page.getByTestId("script-autocomplete").innerText();
-  if (!labelSuggestion.includes("@Loop")) {
+  const labelSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!labelSuggestion.includes("@LOOP")) {
     throw new Error(`Expected label suggestion after Goto, got: ${labelSuggestion}`);
   }
   await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();

@@ -668,6 +668,7 @@ function advanceStory() {
     if (elements.storyDialogue) {
       elements.storyDialogue.hidden = true;
     }
+    applyCanvasTransform();
     updateControls();
     return;
   }
@@ -681,6 +682,7 @@ function renderStoryDialogue() {
   if (!storyActive) {
     elements.stage.dataset.mode = "idle";
     elements.storyDialogue.hidden = true;
+    applyCanvasTransform();
     return;
   }
   const page = storyPages[storyIndex];
@@ -690,6 +692,7 @@ function renderStoryDialogue() {
   elements.storyText.textContent = t(page.textKey);
   elements.storyPrompt.textContent =
     storyIndex === storyPages.length - 1 ? t("story.prompt.begin") : t("story.prompt.continue");
+  applyCanvasTransform();
 }
 
 function shouldAutoPause(before, state) {
@@ -915,6 +918,10 @@ function updateAutocomplete() {
       `<small>${escapeHtml(t(suggestion.kindKey))} / ${escapeHtml(t(suggestion.hintKey))}</small>`;
     elements.autocomplete.append(item);
   });
+  const footer = document.createElement("div");
+  footer.className = "autocomplete-footer";
+  footer.textContent = "[TAB] Accept   [ESC] Close";
+  elements.autocomplete.append(footer);
   elements.autocomplete.hidden = false;
   updateAutocompletePosition(context);
 }
@@ -1147,8 +1154,10 @@ function applyCanvasTransform() {
   if (!elements.canvasWorld) {
     return;
   }
+  const storyScale = storyActive ? 0.92 : 1;
+  const storyOffsetY = storyActive ? -44 : 0;
   elements.canvasWorld.style.transform =
-    `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y}px)) scale(${canvasState.scale})`;
+    `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y + storyOffsetY}px)) scale(${canvasState.scale * storyScale})`;
 }
 
 function setupCanvasCamera() {
@@ -1168,9 +1177,9 @@ function setupCanvasCamera() {
   canvasState.introPlayed = true;
   canvasState.introActive = true;
   elements.canvasViewport.dataset.camera = "intro";
-  canvasState.scale = target.scale * 0.94;
+  canvasState.scale = target.scale * 0.9;
   canvasState.x = -22;
-  canvasState.y = 16;
+  canvasState.y = -42;
   clampCanvasOffset();
   elements.canvasWorld.style.transition = "transform 680ms cubic-bezier(0.22, 1, 0.36, 1)";
   applyCanvasTransform();
