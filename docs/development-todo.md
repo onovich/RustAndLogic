@@ -81,6 +81,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a twenty-second visual refinement pass for immediate real-map loading from startup and removal of any fake-grid fallback.
 - [x] Complete a twenty-third visual refinement pass for removing the fixed spotlight duplicate from the stage layer.
 - [x] Complete a twenty-fourth visual refinement pass for binding the UI to actually available mono/body/display font stacks.
+- [x] Document the current Web UI design system for future extension and reuse.
 
 ## Milestone 4: Desktop/Web Packaging Path
 
