@@ -1125,7 +1125,7 @@ function updateAutocompletePosition(context = getAutocompleteContext()) {
   const paddingTop = Number.parseFloat(style.paddingTop) || 0;
   const left = paddingLeft + context.column * columnWidth - elements.editor.scrollLeft;
   const top = paddingTop + context.lineNumber * lineHeight - elements.editor.scrollTop + 4;
-  elements.autocomplete.style.left = `${Math.max(8, Math.min(left, elements.editor.clientWidth - 220))}px`;
+  elements.autocomplete.style.left = `${Math.max(8, Math.min(left, elements.editor.clientWidth - 196))}px`;
   elements.autocomplete.style.top = `${Math.max(8, top)}px`;
 }
 

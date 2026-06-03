@@ -75,6 +75,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a sixteenth visual refinement pass for location-hero cadence, task-list compaction, and DevLog drawer framing.
 - [x] Complete a seventeenth visual refinement pass for stage-dialogue balance, right-sidebar lower-region cadence, and richer DevLog comparison captures.
 - [x] Complete an eighteenth visual refinement pass for location-hero compression and tighter right-action docking.
+- [x] Complete a nineteenth visual refinement pass for editor-interaction density and runtime-halt toast compaction.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

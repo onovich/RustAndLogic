@@ -385,3 +385,19 @@
 - 本轮新增收边：
   - 继续压紧了左上地点插画里的文字块：缩小主标题字级、压低副文案行距、缩窄文案宽度，并把文字整体再往底色里压了一点，让地点识别区更接近参考稿那种“信息被场景吞进去”的感觉。
   - 轻微收窄了右下角动作按钮与抽屉区的底部留白，并把按钮高度再压细一档，让 `SETTINGS / LOCALIZATION / DEV_LOG / SAVE_STATE` 更接近参考稿里的细长终端条比例。
+
+## pass19 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass19-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass19-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass19-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass19-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass19-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass19-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass19-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass19-zh.png`
+- 本轮新增收边：
+  - 继续压紧了编辑器自动补全面板的宽度、条目内边距、副说明字号和底部快捷键提示，让它更接近参考稿里的轻薄终端下拉，而不是偏厚的菜单卡片。
+  - 收细了底部诊断区的高度、条目内边距、严重级别字号和正文行距，让报错列表更贴近参考稿里“低位终端问题栏”的密度。
+  - 将运行时中断 toast 再往左下角样张靠拢了一步：缩小宽度、减小内边距与字号、微调左下落点，让运行时报错更像参考稿里的紧凑红色告警片。
