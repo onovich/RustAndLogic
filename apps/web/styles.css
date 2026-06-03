@@ -868,38 +868,28 @@ textarea[data-invalid="true"] {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  padding: 18px;
+  width: 280px;
+  height: 200px;
 }
 
 .playfield-barrier::before {
-  content: "";
-  position: absolute;
-  inset: -14px;
-  border: 1px solid rgba(196, 116, 41, 0.26);
-  background:
-    linear-gradient(135deg, transparent 48%, rgba(196, 116, 41, 0.1) 48% 52%, transparent 52%),
-    linear-gradient(315deg, transparent 48%, rgba(196, 116, 41, 0.05) 48% 52%, transparent 52%);
-  opacity: 0.6;
+  content: none;
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier {
-  opacity: 0.14;
+  opacity: 1;
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier::before,
 .stage-panel[data-mode="story"] .grid,
 .stage-panel[data-mode="story"] .deposit,
 .stage-panel[data-mode="story"] .obstacle,
-.stage-panel[data-mode="story"] .base-marker {
-  opacity: 0.18;
-}
-
-.stage-panel[data-mode="story"] .cell::after {
+.stage-panel[data-mode="story"] .base-marker,
+.stage-panel[data-mode="story"] .robot {
   opacity: 0;
 }
 
 .stage-panel[data-mode="story"] .robot {
-  opacity: 0.84;
   box-shadow:
     0 0 20px rgba(255, 158, 67, 0.44),
     inset 0 -3px 0 rgba(77, 33, 9, 0.26);
@@ -907,38 +897,17 @@ textarea[data-invalid="true"] {
 
 .grid {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--cols, 7), 40px);
-  grid-template-rows: repeat(var(--rows, 5), 40px);
-  gap: 1px;
-  border: 1px solid rgba(196, 116, 41, 0.18);
-  background:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
-    rgba(9, 5, 3, 0.88);
-  background-size: 40px 40px, 40px 40px, auto;
-}
-
-.cell {
-  position: relative;
-  display: grid;
-  place-items: center;
-  background: rgba(8, 3, 2, 0.82);
-}
-
-.cell::after {
-  content: attr(data-coord);
-  position: absolute;
-  right: 2px;
-  bottom: 1px;
-  color: rgba(143, 106, 74, 0.24);
-  font-size: 0.46rem;
+  width: 280px;
+  height: 200px;
 }
 
 .robot,
 .deposit,
 .obstacle,
 .base-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
   pointer-events: none;
 }
 
@@ -972,8 +941,6 @@ textarea[data-invalid="true"] {
 }
 
 .deposit {
-  position: relative;
-  width: 54%;
   aspect-ratio: 1;
   border: 1px solid rgba(255, 173, 92, 0.42);
   background: rgba(34, 18, 10, 0.72);
@@ -996,8 +963,6 @@ textarea[data-invalid="true"] {
 }
 
 .obstacle {
-  width: 86%;
-  height: 86%;
   border: 1px solid rgba(143, 106, 74, 0.34);
   background:
     repeating-linear-gradient(45deg, rgba(143, 106, 74, 0.22) 0 4px, rgba(33, 18, 10, 0.2) 4px 8px),
@@ -1005,8 +970,6 @@ textarea[data-invalid="true"] {
 }
 
 .base-marker {
-  width: 58%;
-  height: 58%;
   border: 1px solid rgba(255, 174, 94, 0.5);
   background: rgba(255, 158, 67, 0.08);
 }

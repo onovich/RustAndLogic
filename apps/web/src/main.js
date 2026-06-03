@@ -27,6 +27,11 @@ let appData = null;
 let storyPages = [];
 let flow = {};
 let runtimeToast = null;
+const WORLD_CELL_SIZE = 40;
+const ROBOT_WORLD_SIZE = 24;
+const DEPOSIT_WORLD_SIZE = 22;
+const BASE_WORLD_SIZE = 22;
+const OBSTACLE_WORLD_SIZE = 36;
 const canvasState = {
   x: 0,
   y: 0,
@@ -638,26 +643,56 @@ function hideRuntimeToast() {
 }
 
 function summarizeRuntimeToast(state) {
+  const cause = detectRuntimeCause(state);
+  const runtimeToastKeys = {
+    boundary: ["runtime.blockedBoundary", "runtime.recodeBoundary"],
+    wall: ["runtime.blockedWall", "runtime.recodeWall"],
+    occupied: ["runtime.blockedOccupied", "runtime.recodeOccupied"],
+    empty: ["runtime.blockedEmpty", "runtime.recodeEmpty"],
+    logic: ["runtime.logicFault", "runtime.recodeLogic"],
+    compile: ["runtime.compileFault", "runtime.recodeCompile"],
+    generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
+  };
+  const [titleKey, bodyKey] = runtimeToastKeys[cause] ?? runtimeToastKeys.generic;
+  return { title: t(titleKey), body: t(bodyKey) };
+}
+
+function detectRuntimeCause(state) {
   const latestLog = state.logs[0] ?? "";
-  if (latestLog.includes("boundary")) {
-    return { title: t("runtime.blockedBoundary"), body: t("runtime.recodeBoundary") };
+  if (!state.program?.ok || latestLog.includes("No script deployed") || latestLog.includes("Deploy failed")) {
+    return "compile";
   }
-  if (latestLog.includes("wall")) {
-    return { title: t("runtime.blockedWall"), body: t("runtime.recodeWall") };
+  if (latestLog.includes("Blocked by boundary") || latestLog.includes("Drop blocked by boundary")) {
+    return "boundary";
+  }
+  if (latestLog.includes("Blocked by wall")) {
+    return "wall";
   }
   if (latestLog.includes("occupied") || latestLog.includes("Drop blocked")) {
-    return { title: t("runtime.blockedOccupied"), body: t("runtime.recodeOccupied") };
+    return "occupied";
   }
-  if (latestLog.includes("Nothing ahead") || latestLog.includes("No target lock")) {
-    return { title: t("runtime.blockedEmpty"), body: t("runtime.recodeEmpty") };
+  if (
+    latestLog.includes("Nothing ahead") ||
+    latestLog.includes("No target lock") ||
+    latestLog.includes("No cargo to drop") ||
+    latestLog.includes("No cargo to unload") ||
+    latestLog.includes("Unload requires")
+  ) {
+    return "empty";
   }
-  if (latestLog.includes("Logic Overload") || latestLog.includes("Program counter")) {
-    return { title: t("runtime.logicFault"), body: t("runtime.recodeLogic") };
+  if (
+    state.vm?.state === "Fault" ||
+    state.vm?.state === "Halted" ||
+    latestLog.includes("Logic Overload") ||
+    latestLog.includes("Program counter") ||
+    latestLog.includes("Cargo hold is full") ||
+    latestLog.includes("Repair blocked") ||
+    latestLog.includes("Already at home") ||
+    latestLog.includes("Unknown action")
+  ) {
+    return "logic";
   }
-  if (latestLog.includes("No script deployed") || !state.program?.ok) {
-    return { title: t("runtime.compileFault"), body: t("runtime.recodeCompile") };
-  }
-  return { title: t("runtime.haltGeneric"), body: t("runtime.recodeGeneric") };
+  return "generic";
 }
 
 function advanceStory() {
@@ -676,8 +711,7 @@ function advanceStory() {
     if (elements.storySpotlight) {
       elements.storySpotlight.hidden = true;
     }
-    applyCanvasTransform();
-    updateControls();
+    render(snapshot(game), { animate: false });
     return;
   }
   renderStoryDialogue();
@@ -730,28 +764,7 @@ function renderStoryPageDots() {
 }
 
 function shouldAutoPause(before, state) {
-  if (!state.program?.ok || state.vm?.state === "Fault" || state.vm?.state === "Halted") {
-    return true;
-  }
-  const latestLog = state.logs[0] ?? "";
-  if (
-    latestLog.includes("Blocked by boundary") ||
-    latestLog.includes("Blocked by wall") ||
-    latestLog.includes("Blocked by occupied") ||
-    latestLog.includes("Nothing ahead") ||
-    latestLog.includes("Cargo hold is full") ||
-    latestLog.includes("No cargo to drop") ||
-    latestLog.includes("Drop blocked") ||
-    latestLog.includes("Unload requires") ||
-    latestLog.includes("No cargo to unload") ||
-    latestLog.includes("No target lock") ||
-    latestLog.includes("Repair blocked") ||
-    latestLog.includes("Already at home") ||
-    latestLog.includes("No script deployed") ||
-    latestLog.includes("Unknown action") ||
-    latestLog.includes("Logic Overload") ||
-    latestLog.includes("Program counter left executable memory")
-  ) {
+  if (detectRuntimeCause(state) !== "generic") {
     return true;
   }
   return before.tick === state.tick && before.vm?.pc === state.vm?.pc;
@@ -837,7 +850,7 @@ function updateEditorTools(errors = null) {
 function renderScriptHighlight(errors) {
   const errorLines = new Set(errors.filter((error) => error.line > 0).map((error) => error.line));
   const lines = elements.editor.value.split("\n");
-  elements.lineNumbers.textContent = lines.map((_, index) => String(index + 1)).join("\n");
+  elements.lineNumbers.textContent = lines.map((_, index) => String(index + 1).padStart(2, "0")).join("\n");
   elements.highlight.innerHTML = lines
     .map((line, index) => {
       const className = errorLines.has(index + 1) ? "code-line has-error" : "code-line";
@@ -1325,42 +1338,26 @@ function renderGrid(state, beforeState, options = {}) {
     (deposit) => !state.deposits.some((item) => item.id === deposit.id),
   );
 
+  syncWorldBounds(state);
   elements.grid.replaceChildren();
-  elements.grid.style.setProperty("--cols", state.width);
-  elements.grid.style.setProperty("--rows", state.height);
-  for (let y = 0; y < state.height; y += 1) {
-    for (let x = 0; x < state.width; x += 1) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.dataset.coord = `${x},${y}`;
-      cell.dataset.testid = `cell-${x}-${y}`;
-
-      const obstacle = state.obstacles?.find((item) => item.x === x && item.y === y);
-      if (obstacle) {
-        const wall = document.createElement("div");
-        wall.className = "obstacle";
-        wall.title = "wall";
-        cell.append(wall);
-      }
-
-      if (state.base?.x === x && state.base?.y === y) {
-        const base = document.createElement("div");
-        base.className = "base-marker";
-        base.title = "home base";
-        cell.append(base);
-      }
-
-      const deposit = state.deposits.find((item) => item.x === x && item.y === y);
-      if (deposit) {
-        const marker = document.createElement("div");
-        marker.className = `deposit ${deposit.type}`;
-        marker.title = deposit.type;
-        cell.append(marker);
-      }
-
-      elements.grid.append(cell);
-    }
+  elements.grid.dataset.loaded = storyActive ? "false" : "true";
+  if (storyActive) {
+    setupCanvasCamera();
+    return;
   }
+
+  for (const obstacle of state.obstacles ?? []) {
+    elements.grid.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
+  }
+
+  if (state.base) {
+    elements.grid.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
+  }
+
+  for (const deposit of state.deposits) {
+    elements.grid.append(createWorldEntity(`deposit ${deposit.type}`, deposit.x, deposit.y, DEPOSIT_WORLD_SIZE, deposit.type));
+  }
+
   renderRobot(state, options);
   setupCanvasCamera();
   if (options.animate !== false) {
@@ -1385,7 +1382,7 @@ function renderRobot(state, options = {}) {
     return;
   }
 
-  const size = Math.min(position.width * 0.42, 24);
+  const size = ROBOT_WORLD_SIZE;
   robotNode.style.width = `${size}px`;
   robotNode.style.height = `${size}px`;
   robotNode.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px) rotate(${directionDegrees(state.robot.dir)}deg)`;
@@ -1406,7 +1403,7 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
     return;
   }
 
-  const size = Math.min(from.width * 0.4, 23);
+  const size = DEPOSIT_WORLD_SIZE;
   const ghost = document.createElement("div");
   ghost.className = `deposit pickup-ghost ${deposit.type}`;
   ghost.style.width = `${size}px`;
@@ -1423,16 +1420,41 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
 }
 
 function gridPositionFor(x, y) {
-  const cell = elements.grid.querySelector(`[data-coord="${x},${y}"]`);
-  if (!cell) {
+  if (x < 0 || y < 0) {
     return null;
   }
   return {
-    left: cell.offsetLeft,
-    top: cell.offsetTop,
-    width: cell.offsetWidth,
-    height: cell.offsetHeight,
+    left: x * WORLD_CELL_SIZE,
+    top: y * WORLD_CELL_SIZE,
+    width: WORLD_CELL_SIZE,
+    height: WORLD_CELL_SIZE,
   };
+}
+
+function syncWorldBounds(state) {
+  const width = state.width * WORLD_CELL_SIZE;
+  const height = state.height * WORLD_CELL_SIZE;
+  elements.grid.style.width = `${width}px`;
+  elements.grid.style.height = `${height}px`;
+  if (elements.playfieldBarrier) {
+    elements.playfieldBarrier.style.width = `${width}px`;
+    elements.playfieldBarrier.style.height = `${height}px`;
+  }
+}
+
+function createWorldEntity(className, x, y, size, title = "") {
+  const node = document.createElement("div");
+  node.className = className;
+  if (title) {
+    node.title = title;
+  }
+  const position = gridPositionFor(x, y);
+  if (position) {
+    node.style.width = `${size}px`;
+    node.style.height = `${size}px`;
+    node.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px)`;
+  }
+  return node;
 }
 
 function directionDegrees(direction) {

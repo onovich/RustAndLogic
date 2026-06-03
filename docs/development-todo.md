@@ -76,6 +76,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a seventeenth visual refinement pass for stage-dialogue balance, right-sidebar lower-region cadence, and richer DevLog comparison captures.
 - [x] Complete an eighteenth visual refinement pass for location-hero compression and tighter right-action docking.
 - [x] Complete a nineteenth visual refinement pass for editor-interaction density and runtime-halt toast compaction.
+- [x] Complete a twentieth visual refinement pass for localized runtime halts, two-digit line numbers, and story-gated stage entity loading.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

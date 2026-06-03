@@ -401,3 +401,20 @@
   - 继续压紧了编辑器自动补全面板的宽度、条目内边距、副说明字号和底部快捷键提示，让它更接近参考稿里的轻薄终端下拉，而不是偏厚的菜单卡片。
   - 收细了底部诊断区的高度、条目内边距、严重级别字号和正文行距，让报错列表更贴近参考稿里“低位终端问题栏”的密度。
   - 将运行时中断 toast 再往左下角样张靠拢了一步：缩小宽度、减小内边距与字号、微调左下落点，让运行时报错更像参考稿里的紧凑红色告警片。
+## pass20 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass20-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass20-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass20-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass20-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass20-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass20-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass20-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass20-zh.png`
+- 本轮新增收边：
+  - 运行时中断提示改为统一的本地化归类输出，避免暂停后仍出现未翻译的英文 halt 文案。
+  - 代码区行号补齐为两位数，和设计稿里的终端式编号口径保持一致。
+  - 舞台地图废除旧的格子 DOM 渲染方式，不再额外绘制边框、数字坐标和第二套背景网格，只保留贴着舞台背景网格的实体层。
+  - 剧情演出模式下不再提前加载真实地图实体；只有剧情结束回到挂机模式后，障碍、资源、基地和机器人本体才进入舞台。
+  - 机器人与地图实体的步进、摆放都改为基于 40px 世界网格的中心点对齐，避免逻辑格与显示格再出现半格错位。

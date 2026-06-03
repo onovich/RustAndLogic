@@ -42,6 +42,10 @@ try {
   if (!openingText.includes("satellite uplink") && !openingText.includes("卫星链路")) {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
+  const storyEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
+  if (storyEntityCount !== 0) {
+    throw new Error(`Expected stage entities to stay unloaded during story mode, got ${storyEntityCount}.`);
+  }
 
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("lang-zh-button").click();
@@ -59,12 +63,20 @@ try {
     await page.getByTestId("story-dialogue").click();
   }
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
+  const idleEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
+  if (idleEntityCount < 4) {
+    throw new Error(`Expected stage entities to load after story mode, got ${idleEntityCount}.`);
+  }
 
   await expectText(page, "compile-status", "");
   await expectText(page, "capacity-label", "Capacity 8");
   await expectText(page, "play-button", "Play");
   await expectText(page, "step-button", "Step");
   await expectText(page, "speed-button", "1X");
+  const lineNumbers = await page.getByTestId("script-line-numbers").innerText();
+  if (!lineNumbers.startsWith("01\n02\n03")) {
+    throw new Error(`Expected zero-padded line numbers, got: ${lineNumbers}`);
+  }
 
   const stageHeaderLayout = await page.evaluate(() => {
     const panel = document.querySelector(".stage-panel").getBoundingClientRect();
@@ -273,6 +285,22 @@ try {
 
   await page.getByTestId("step-button").click();
   await expectText(page, "robot-position", "R1 // 2,2 E");
+  const robotAlignment = await page.evaluate(() => {
+    const grid = document.querySelector('[data-testid="world-grid"]')?.getBoundingClientRect();
+    const robot = document.querySelector(".robot-avatar")?.getBoundingClientRect();
+    if (!grid || !robot) {
+      return null;
+    }
+    const cellWidth = grid.width / 7;
+    const cellHeight = grid.height / 5;
+    return {
+      deltaX: Math.abs(robot.left + robot.width / 2 - (grid.left + 2 * cellWidth + cellWidth / 2)),
+      deltaY: Math.abs(robot.top + robot.height / 2 - (grid.top + 2 * cellHeight + cellHeight / 2)),
+    };
+  });
+  if (!robotAlignment || robotAlignment.deltaX > 1 || robotAlignment.deltaY > 1) {
+    throw new Error(`Expected robot to stay centered on the stage grid, got ${JSON.stringify(robotAlignment)}.`);
+  }
 
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("upgrade-button").click();
