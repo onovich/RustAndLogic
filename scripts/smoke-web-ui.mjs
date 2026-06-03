@@ -227,7 +227,8 @@ try {
   await page.getByTestId("play-button").click();
   await expectText(page, "compile-status", "");
   const diagnosticText = await page.getByTestId("script-diagnostics").innerText();
-  if (!diagnosticText.includes("Line 8") || !diagnosticText.includes("Unknown instruction: Bogus")) {
+  const diagnosticUpper = diagnosticText.toUpperCase();
+  if (!diagnosticUpper.includes("LINE 8") || !diagnosticUpper.includes("UNKNOWN INSTRUCTION: BOGUS")) {
     throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
   }
   const unknownTokenCount = await page.locator(".tok-unknown").count();
@@ -286,7 +287,7 @@ try {
 
   await page.getByTestId("save-button").click();
   const savedSummary = await page.getByTestId("save-summary").innerText();
-  if (!savedSummary.includes("Saved tick")) {
+  if (!savedSummary.toUpperCase().includes("SAVED TICK")) {
     throw new Error(`Expected save summary, got: ${savedSummary}`);
   }
   await page.getByTestId("reset-button").click();
@@ -294,7 +295,7 @@ try {
   await ensureVisible(page, "load-button", "settings-toggle");
   await page.getByTestId("load-button").click();
   const loadedSummary = await page.getByTestId("save-summary").innerText();
-  if (!loadedSummary.includes("Loaded tick")) {
+  if (!loadedSummary.toUpperCase().includes("LOADED TICK")) {
     throw new Error(`Expected load summary, got: ${loadedSummary}`);
   }
 

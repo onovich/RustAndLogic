@@ -39,9 +39,13 @@ body {
   background:
     radial-gradient(circle at 18% 12%, rgba(255, 138, 38, 0.04), transparent 20rem),
     radial-gradient(circle at 82% 88%, rgba(255, 138, 38, 0.03), transparent 24rem),
-    linear-gradient(180deg, #040201, #080302 58%, #090302);
+  linear-gradient(180deg, #040201, #080302 58%, #090302);
   color: var(--text);
   font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: crosshair;
 }
 
 body::before {
@@ -57,6 +61,20 @@ body::before {
   opacity: 0.18;
 }
 
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.03) 0 2px,
+    rgba(0, 0, 0, 0.18) 2px 4px
+  );
+  opacity: 0.5;
+}
+
 button,
 textarea,
 pre,
@@ -68,10 +86,10 @@ summary {
 button {
   min-height: 28px;
   padding: 0 12px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(34, 18, 10, 0.95), rgba(15, 8, 5, 0.95));
-  color: var(--text);
-  cursor: pointer;
+  border: 1px solid #33261c;
+  background: transparent;
+  color: #d9c5b2;
+  cursor: crosshair;
   text-transform: uppercase;
   transition:
     border-color 140ms ease,
@@ -81,9 +99,9 @@ button {
 }
 
 button:hover {
-  border-color: rgba(255, 169, 88, 0.62);
-  color: var(--text-strong);
-  box-shadow: inset 0 0 0 1px rgba(255, 162, 79, 0.14);
+  border-color: #f28d35;
+  color: #f28d35;
+  box-shadow: none;
 }
 
 button:disabled {
@@ -94,9 +112,10 @@ button:disabled {
 
 button[data-active="true"],
 button[aria-pressed="true"] {
-  color: #201007;
-  border-color: rgba(255, 175, 94, 0.9);
-  background: linear-gradient(180deg, #ffb15d, #de7d31);
+  color: #0d0805;
+  border-color: #f28d35;
+  background: #f28d35;
+  box-shadow: inset 0 0 8px rgba(242, 141, 53, 0.42);
 }
 
 button:focus-visible,
@@ -153,9 +172,31 @@ h2 {
   min-height: calc(100vh - 4px);
   overflow: hidden;
   border: 1px solid rgba(120, 66, 26, 0.82);
-  border-radius: 10px;
+  border-radius: 0;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
   background: rgba(5, 2, 1, 0.86);
+}
+
+.app-shell::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    #37bfd7 0%,
+    #79c6ef 18%,
+    #7dc86a 38%,
+    #d4ca58 58%,
+    #de8b38 78%,
+    #b8563d 100%
+  );
+  filter: brightness(1.2) contrast(1.2);
+  box-shadow: 0 0 8px rgba(13, 8, 5, 0.78);
 }
 
 .location-sidebar,
@@ -297,14 +338,26 @@ h2 {
   object-fit: cover;
   object-position: center;
   display: block;
-  filter: saturate(0.88) brightness(0.92) contrast(1.06);
+  filter: saturate(0.84) brightness(0.78) contrast(1.08);
 }
 
 .location-art::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(13, 8, 5, 0.2), #0d0805);
+  z-index: 1;
+  background:
+    linear-gradient(to bottom, rgba(13, 8, 5, 0.24), rgba(13, 8, 5, 0.62) 52%, #0d0805 100%),
+    linear-gradient(90deg, rgba(13, 8, 5, 0.28), transparent 38%);
+}
+
+.location-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(13, 8, 5, 0.16) 38%, rgba(13, 8, 5, 0.82) 100%);
 }
 
 .location-copy {
@@ -314,7 +367,8 @@ h2 {
   bottom: 7px;
   display: grid;
   gap: 2px;
-  z-index: 1;
+  z-index: 2;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.68);
 }
 
 .location-copy span,
@@ -323,7 +377,7 @@ h2 {
 }
 
 .location-copy span {
-  color: var(--muted);
+  color: #8e7a6b;
   font-size: 0.56rem;
 }
 
@@ -333,7 +387,7 @@ h2 {
 }
 
 .location-copy p {
-  color: var(--muted);
+  color: #8e7a6b;
   font-size: 0.56rem;
   line-height: 1.18;
   max-width: 17ch;
@@ -420,8 +474,8 @@ h2 {
   min-width: 42px;
   min-height: 24px;
   padding: 0 9px;
-  font-size: 0.63rem;
-  letter-spacing: 0.06em;
+  font-size: 10px;
+  letter-spacing: 0.05em;
 }
 
 .editor-frame {
@@ -443,6 +497,8 @@ textarea {
   font-size: 0.89rem;
   white-space: pre;
   tab-size: 2;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .line-numbers {
