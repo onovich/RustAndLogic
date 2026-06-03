@@ -3,6 +3,7 @@ import { createStaticServer } from "./serve-web-ui.mjs";
 import { chromium } from "file:///C:/Users/Administrator/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright@1.60.0/node_modules/playwright/index.mjs";
 
 const artifactsDir = new URL("../.codex-artifacts/", import.meta.url);
+const suffix = process.argv[2] ?? "pass";
 
 await mkdir(artifactsDir, { recursive: true });
 
@@ -27,19 +28,19 @@ try {
   await page.getByTestId("world-grid").waitFor({ state: "visible", timeout: 10000 });
 
   await setLanguage(page, "zh");
-  await page.screenshot({ path: filePath("compare-default-pass3.png"), fullPage: true });
+  await page.screenshot({ path: filePath(`compare-default-${suffix}.png`), fullPage: true });
 
   await dismissStory(page);
   await page.getByTestId("script-editor").fill("Che");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible", timeout: 5000 });
-  await page.screenshot({ path: filePath("compare-editor-pass3.png"), fullPage: true });
+  await page.screenshot({ path: filePath(`compare-editor-${suffix}.png`), fullPage: true });
 
   await page.getByTestId("script-editor").fill("Drop()");
   await page.getByTestId("play-button").click();
   await page.getByTestId("runtime-toast").waitFor({ state: "visible", timeout: 6000 });
-  await page.screenshot({ path: filePath("compare-runtime-pass3.png"), fullPage: true });
+  await page.screenshot({ path: filePath(`compare-runtime-${suffix}.png`), fullPage: true });
 
-  console.log("Captured compare-default-pass3.png, compare-editor-pass3.png, compare-runtime-pass3.png");
+  console.log(`Captured compare-default-${suffix}.png, compare-editor-${suffix}.png, compare-runtime-${suffix}.png`);
 } finally {
   await browser.close();
   await new Promise((resolve) => server.close(resolve));

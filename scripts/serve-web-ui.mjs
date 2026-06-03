@@ -5,7 +5,8 @@ import { extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const port = Number(process.env.PORT ?? process.argv[2] ?? 4173);
+const argPort = Number.parseInt(process.argv[2] ?? "", 10);
+const port = Number(process.env.PORT ?? (Number.isFinite(argPort) ? argPort : 4173));
 
 export function createStaticServer() {
   return createServer(async (request, response) => {

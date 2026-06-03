@@ -137,7 +137,7 @@ h2 {
 .app-shell {
   position: relative;
   display: grid;
-  grid-template-columns: 228px minmax(338px, 396px) minmax(640px, 1fr) 240px;
+  grid-template-columns: 224px minmax(348px, 404px) minmax(640px, 1fr) 236px;
   min-height: calc(100vh - 4px);
   overflow: hidden;
   border: 1px solid rgba(120, 66, 26, 0.82);
@@ -692,7 +692,7 @@ textarea[data-invalid="true"] {
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier {
-  opacity: 0.34;
+  opacity: 0.22;
 }
 
 .stage-panel[data-mode="story"] .playfield-barrier::before,
@@ -700,10 +700,15 @@ textarea[data-invalid="true"] {
 .stage-panel[data-mode="story"] .deposit,
 .stage-panel[data-mode="story"] .obstacle,
 .stage-panel[data-mode="story"] .base-marker {
-  opacity: 0.58;
+  opacity: 0.34;
+}
+
+.stage-panel[data-mode="story"] .cell::after {
+  opacity: 0;
 }
 
 .stage-panel[data-mode="story"] .robot {
+  opacity: 0.84;
   box-shadow:
     0 0 20px rgba(255, 158, 67, 0.44),
     inset 0 -3px 0 rgba(77, 33, 9, 0.26);
@@ -860,9 +865,9 @@ textarea[data-invalid="true"] {
   bottom: 18px;
   z-index: 7;
   display: grid;
-  gap: 7px;
-  min-height: 96px;
-  padding: 13px 16px 12px;
+  gap: 6px;
+  min-height: 88px;
+  padding: 12px 15px 10px;
   border: 1px solid var(--accent-soft);
   background: rgba(13, 7, 3, 0.965);
   color: var(--text);
@@ -878,16 +883,16 @@ textarea[data-invalid="true"] {
 .story-speaker,
 .story-prompt {
   color: var(--accent);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .story-text {
   color: var(--text-strong);
-  font-size: 0.82rem;
-  line-height: 1.36;
-  max-width: 104ch;
+  font-size: 0.78rem;
+  line-height: 1.34;
+  max-width: 100ch;
 }
 
 .story-prompt {
@@ -922,7 +927,7 @@ textarea[data-invalid="true"] {
   justify-content: space-between;
   gap: 12px;
   color: var(--text);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
 }
 
@@ -981,7 +986,7 @@ textarea[data-invalid="true"] {
   grid-template-rows: minmax(0, auto) minmax(0, auto) auto;
   align-content: end;
   gap: 4px;
-  padding: 6px 12px 10px;
+  padding: 6px 10px 10px;
 }
 
 .settings-panel,
@@ -1057,6 +1062,8 @@ textarea[data-invalid="true"] {
 .action-stack {
   display: grid;
   gap: 4px;
+  padding-left: 2px;
+  padding-right: 2px;
   margin-top: auto;
 }
 
@@ -1069,15 +1076,15 @@ textarea[data-invalid="true"] {
 }
 
 body[data-objectives-collapsed="true"] .app-shell {
-  grid-template-columns: 34px minmax(338px, 396px) minmax(640px, 1fr) 240px;
+  grid-template-columns: 34px minmax(348px, 404px) minmax(640px, 1fr) 236px;
 }
 
 body[data-right-collapsed="true"] .app-shell {
-  grid-template-columns: 228px minmax(338px, 396px) minmax(640px, 1fr) 34px;
+  grid-template-columns: 224px minmax(348px, 404px) minmax(640px, 1fr) 34px;
 }
 
 body[data-objectives-collapsed="true"][data-right-collapsed="true"] .app-shell {
-  grid-template-columns: 34px minmax(338px, 396px) minmax(640px, 1fr) 34px;
+  grid-template-columns: 34px minmax(348px, 404px) minmax(640px, 1fr) 34px;
 }
 
 body[data-objectives-collapsed="true"] .location-column,
@@ -1101,7 +1108,7 @@ body[data-right-collapsed="true"] .right-sidebar .sidebar-handle {
 
 @media (max-width: 1320px) {
   .app-shell {
-    grid-template-columns: 196px minmax(320px, 390px) minmax(500px, 1fr) 216px;
+    grid-template-columns: 192px minmax(328px, 392px) minmax(500px, 1fr) 212px;
   }
 }
 
