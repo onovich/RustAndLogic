@@ -59,6 +59,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Record designer-provided UI implementation risk notes with applicability guidance in `docs/design-references/ui/README.md`.
 - [x] Deliver the first high-fidelity terminal-style Web UI pass and record unresolved design gaps in `docs/design-references/ui/pixel-replica-audit.md`.
 - [x] Tighten the terminal-style Web UI replica with a second visual refinement pass and refreshed local comparison screenshots.
+- [x] Add a reusable screenshot capture script and complete a third visual refinement pass for shell framing, dialogue density, and runtime halt styling.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

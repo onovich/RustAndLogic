@@ -1154,8 +1154,8 @@ function applyCanvasTransform() {
   if (!elements.canvasWorld) {
     return;
   }
-  const storyScale = storyActive ? 0.92 : 1;
-  const storyOffsetY = storyActive ? -44 : 0;
+  const storyScale = storyActive ? 0.9 : 1;
+  const storyOffsetY = storyActive ? -56 : 0;
   elements.canvasWorld.style.transform =
     `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y + storyOffsetY}px)) scale(${canvasState.scale * storyScale})`;
 }
