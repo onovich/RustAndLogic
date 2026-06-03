@@ -616,7 +616,7 @@ textarea[data-invalid="true"] {
 }
 
 .diagnostics-heading {
-  padding: 5px 10px 0;
+  padding: 6px 12px 0;
 }
 
 .diagnostics {
@@ -624,7 +624,7 @@ textarea[data-invalid="true"] {
   gap: 1px;
   min-height: 0;
   margin: 0;
-  padding: 8px 0 0;
+  padding: 7px 0 0;
   overflow: auto;
   list-style: none;
 }
@@ -634,16 +634,44 @@ textarea[data-invalid="true"] {
 }
 
 .diagnostics li {
-  padding: 7px 10px;
+  display: grid;
+  gap: 2px;
+  padding: 5px 12px;
   border-left: 2px solid var(--danger);
   background: var(--danger-bg);
   color: #ffc2b6;
-  font-size: 0.71rem;
-  line-height: 1.3;
+  font-size: 11px;
+  line-height: 1.22;
 }
 
 .diagnostics li[data-line]:not([data-line="0"]) {
   cursor: pointer;
+}
+
+.diagnostics li[data-severity="warning"] {
+  border-left-color: var(--accent);
+  background: rgba(242, 141, 53, 0.08);
+  color: #ffd7a2;
+}
+
+.diagnostic-topline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.diagnostic-severity {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: currentColor;
+}
+
+.diagnostic-location {
+  color: currentColor;
+}
+
+.diagnostic-message {
+  color: currentColor;
 }
 
 .autocomplete {
@@ -667,12 +695,12 @@ textarea[data-invalid="true"] {
   display: grid;
   gap: 2px;
   min-height: 0;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border: 0;
   background: transparent;
   color: var(--text);
   text-align: left;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .autocomplete-item:hover,
@@ -687,7 +715,8 @@ textarea[data-invalid="true"] {
 
 .autocomplete-item small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
+  line-height: 1.2;
 }
 
 .autocomplete-item:hover span,
@@ -1112,7 +1141,7 @@ textarea[data-invalid="true"] {
 }
 
 .terminal-section {
-  padding: 6px 11px 7px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1123,8 +1152,8 @@ textarea[data-invalid="true"] {
 .terminal-section dl,
 .status-panel dl {
   display: grid;
-  gap: 3px;
-  margin-top: 8px;
+  gap: 2px;
+  margin-top: 7px;
 }
 
 .terminal-section dl div,
@@ -1134,32 +1163,33 @@ textarea[data-invalid="true"] {
   justify-content: space-between;
   gap: 12px;
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  line-height: 1.18;
   text-transform: uppercase;
 }
 
 .terminal-section dt,
 .status-panel dt {
   color: var(--text);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
 }
 
 .terminal-section dd,
 .status-panel dd {
   margin: 0;
   color: var(--accent);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
 }
 
 .meter-stack {
   display: grid;
-  gap: 10px;
-  margin-top: 9px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .meter-row {
   display: grid;
-  gap: 4px;
+  gap: 3px;
 }
 
 .meter-labels {
@@ -1168,7 +1198,8 @@ textarea[data-invalid="true"] {
   justify-content: space-between;
   gap: 12px;
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: 0.64rem;
+  line-height: 1.18;
   text-transform: uppercase;
 }
 
@@ -1181,7 +1212,7 @@ textarea[data-invalid="true"] {
   height: 4px;
   overflow: hidden;
   background: var(--panel-surface);
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .meter-track span {

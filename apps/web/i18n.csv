@@ -78,6 +78,10 @@ action.devLogClosed,Dev_Log [+],开发日志 [+]
 diagnostic.title,Diagnostics,诊断
 diagnostic.line,Line {line},第 {line} 行
 diagnostic.general,Script,脚本
+diagnostic.issueCount.one,{count} issue,{count} 个问题
+diagnostic.issueCount.other,{count} issues,{count} 个问题
+diagnostic.severity.error,[ERR],[错误]
+diagnostic.severity.warning,[WARN],[警告]
 state.idle,Idle,空闲
 state.waiting,Waiting,等待中
 state.compileOk,Compile OK,编译通过

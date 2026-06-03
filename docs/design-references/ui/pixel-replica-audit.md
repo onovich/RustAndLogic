@@ -321,3 +321,18 @@
   - 将对话框底部提示改成更接近稿子的 bracket 口径，并压细了 speaker 与正文的主次关系。
   - 把右下动作按钮栈收回到更接近参考稿的满宽终端条比例，减少此前左右留白过多导致的按钮显瘦问题。
   - 给运行时 halt toast 补上了更贴近设计稿的横向扫线质感，让错误块从纯色警报条更靠近终端红色告警片。
+
+## pass15 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass15-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass15-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass15-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass15-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass15-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass15-zh.png`
+- 本轮新增收边：
+  - 将编辑器底部诊断从“纯文本行”收成更接近设计稿的二层结构：严重级别标签、定位信息、正文描述分层展示。
+  - 诊断计数从裸数字改为 `N issue(s)` 口径，更贴近参考稿的底栏反馈方式。
+  - 把补全面板的字号、内边距和副说明压紧一档，让候选词层级更接近参考稿里的终端密度。
+  - 继续压细右栏资源区、模块区和运行时区的字号、行高与间距，让字段节奏更像参考稿的紧凑工程面板。

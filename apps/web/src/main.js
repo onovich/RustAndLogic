@@ -850,7 +850,10 @@ function renderDiagnostics(errors) {
   elements.diagnostics.replaceChildren();
   elements.editor.dataset.invalid = String(errors.length > 0);
   if (elements.diagnosticCount) {
-    elements.diagnosticCount.textContent = String(errors.length);
+    elements.diagnosticCount.textContent = t(
+      errors.length === 1 ? "diagnostic.issueCount.one" : "diagnostic.issueCount.other",
+      { count: errors.length },
+    );
   }
   if (errors.length === 0) {
     return;
@@ -858,8 +861,22 @@ function renderDiagnostics(errors) {
   for (const error of errors) {
     const item = document.createElement("li");
     item.dataset.line = String(error.line);
+    const severity = classifyDiagnosticSeverity(error.message);
+    item.dataset.severity = severity;
     const location = error.line > 0 ? t("diagnostic.line", { line: error.line }) : t("diagnostic.general");
-    item.textContent = `${location}: ${error.message}`;
+    const topline = document.createElement("div");
+    topline.className = "diagnostic-topline";
+    const severityNode = document.createElement("span");
+    severityNode.className = "diagnostic-severity";
+    severityNode.textContent = severity === "warning" ? t("diagnostic.severity.warning") : t("diagnostic.severity.error");
+    const locationNode = document.createElement("span");
+    locationNode.className = "diagnostic-location";
+    locationNode.textContent = location;
+    topline.append(severityNode, locationNode);
+    const messageNode = document.createElement("span");
+    messageNode.className = "diagnostic-message";
+    messageNode.textContent = error.message;
+    item.append(topline, messageNode);
     if (error.line > 0) {
       item.tabIndex = 0;
       item.addEventListener("click", () => jumpToLine(error.line));
@@ -872,6 +889,10 @@ function renderDiagnostics(errors) {
     }
     elements.diagnostics.append(item);
   }
+}
+
+function classifyDiagnosticSeverity(message) {
+  return /unreachable|unused|redundant/i.test(message) ? "warning" : "error";
 }
 
 function highlightLine(line) {
