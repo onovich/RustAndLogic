@@ -30,6 +30,7 @@ let appData = null;
 let storyPages = [];
 let flow = {};
 let runtimeToast = null;
+let canvasModeTransitionTimer = 0;
 const WORLD_CELL_SIZE = 40;
 const ROBOT_WORLD_SIZE = 24;
 const DEPOSIT_WORLD_SIZE = 22;
@@ -703,6 +704,7 @@ function advanceStory() {
   }
   storyIndex += 1;
   if (storyIndex >= storyPages.length) {
+    animateCanvasModeShift();
     storyActive = false;
     if (elements.stage) {
       elements.stage.dataset.mode = "idle";
@@ -1224,6 +1226,24 @@ function applyCanvasTransform() {
   const storyOffsetY = storyActive ? 26 : 0;
   elements.canvasWorld.style.transform =
     `translate(calc(-50% + ${canvasState.x}px), calc(-50% + ${canvasState.y + storyOffsetY}px)) scale(${canvasState.scale * storyScale})`;
+}
+
+function animateCanvasModeShift() {
+  if (!elements.canvasWorld || canvasState.introActive) {
+    return;
+  }
+  if (canvasModeTransitionTimer) {
+    window.clearTimeout(canvasModeTransitionTimer);
+    canvasModeTransitionTimer = 0;
+  }
+  elements.canvasWorld.style.transition = "transform 420ms cubic-bezier(0.22, 1, 0.36, 1)";
+  canvasModeTransitionTimer = window.setTimeout(() => {
+    if (!elements.canvasWorld || canvasState.introActive) {
+      return;
+    }
+    elements.canvasWorld.style.transition = "";
+    canvasModeTransitionTimer = 0;
+  }, 460);
 }
 
 function setupCanvasCamera() {
