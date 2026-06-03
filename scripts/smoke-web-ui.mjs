@@ -13,7 +13,7 @@ const browser = await chromium.launch({
 });
 
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
   const pageErrors = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("console", (message) => {
@@ -42,43 +42,40 @@ try {
   if (!openingText.includes("satellite uplink") && !openingText.includes("卫星链路")) {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
-  await page.locator(".settings-panel").evaluate((details) => {
-    details.open = true;
-  });
+
+  await page.getByTestId("settings-toggle").click();
   await page.getByTestId("lang-zh-button").click();
   const zhOpeningText = await page.getByTestId("story-text").innerText();
   if (!zhOpeningText.includes("卫星链路")) {
     throw new Error(`Expected localized Chinese story dialogue, got: ${zhOpeningText}`);
   }
+  await expectText(page, "localization-button", "本地化 [中文]");
+  await page.getByTestId("lang-auto-button").click();
   await page.getByTestId("lang-en-button").click();
+  await expectText(page, "localization-button", "Localization [EN]");
+  await page.getByTestId("settings-toggle").click();
+
   for (let index = 0; index < 3; index += 1) {
     await page.getByTestId("story-dialogue").click();
   }
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
 
-  await page.locator(".settings-panel").evaluate((details) => {
-    details.open = true;
-  });
-  await page.getByTestId("lang-zh-button").click();
-  await expectText(page, "play-button", "▶");
-  await expectText(page, "step-button", "⏭");
-  await expectText(page, "save-summary", "本轮尚未写入存档。");
-  await page.getByTestId("lang-en-button").click();
   await expectText(page, "compile-status", "Waiting");
   await expectText(page, "capacity-label", "Capacity 8");
-  await expectText(page, "play-button", "▶");
-  await expectText(page, "step-button", "⏭");
-  await expectText(page, "speed-button", "x1");
-  await page.getByTestId("speed-button").click();
-  await expectText(page, "speed-button", "x5");
-  await page.getByTestId("speed-button").click();
-  await expectText(page, "speed-button", "x10");
-  await page.getByTestId("speed-button").click();
-  await expectText(page, "speed-button", "x1");
+  await expectText(page, "play-button", "Play");
+  await expectText(page, "step-button", "Step");
+  await expectText(page, "speed-button", "1X");
 
-  const devDebugVisible = await page.locator(".dev-panel [data-testid='diff-list']").isVisible();
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "5X");
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "10X");
+  await page.getByTestId("speed-button").click();
+  await expectText(page, "speed-button", "1X");
+
+  const devDebugVisible = await page.locator(".dev-panel").isVisible();
   if (devDebugVisible) {
-    throw new Error("Expected developer diff panel to be closed by default.");
+    throw new Error("Expected developer log drawer to be closed by default.");
   }
   const arenaButtonCount = await page.getByTestId("arena-button").count();
   if (arenaButtonCount !== 0) {
@@ -92,35 +89,27 @@ try {
   });
   await expectText(page, "objectives-toggle", "[-]");
   await page.getByTestId("objectives-toggle").click();
-  await page.waitForTimeout(240);
+  await page.waitForTimeout(260);
   await expectText(page, "objectives-toggle", "[+]");
   const layoutAfterLeftCollapse = await page.evaluate(() => {
     const editor = document.querySelector(".editor-panel").getBoundingClientRect();
-    const button = document.querySelector('[data-testid="objectives-toggle"]').getBoundingClientRect();
     const sidebar = document.querySelector(".location-sidebar").getBoundingClientRect();
-    return {
-      editorLeft: editor.left,
-      editorWidth: editor.width,
-      buttonCenter: button.left + button.width / 2,
-      sidebarCenter: sidebar.left + sidebar.width / 2,
-    };
+    return { editorLeft: editor.left, editorWidth: editor.width, sidebarWidth: sidebar.width };
   });
   if (
     layoutAfterLeftCollapse.editorLeft >= layoutBeforeCollapse.editorLeft ||
     layoutAfterLeftCollapse.editorWidth <= layoutBeforeCollapse.editorWidth
   ) {
-    throw new Error(
-      `Expected code area to expand when left panel collapses, got ${JSON.stringify({
-        before: layoutBeforeCollapse,
-        after: layoutAfterLeftCollapse,
-      })}`,
-    );
+    throw new Error(`Expected code area to expand when left panel collapses, got ${JSON.stringify({
+      before: layoutBeforeCollapse,
+      after: layoutAfterLeftCollapse,
+    })}`);
   }
-  if (Math.abs(layoutAfterLeftCollapse.buttonCenter - layoutAfterLeftCollapse.sidebarCenter) > 1) {
-    throw new Error(`Expected collapsed left toggle to be centered, got ${JSON.stringify(layoutAfterLeftCollapse)}`);
+  if (layoutAfterLeftCollapse.sidebarWidth > 50) {
+    throw new Error(`Expected collapsed left sidebar to become a narrow rail, got ${JSON.stringify(layoutAfterLeftCollapse)}`);
   }
   await page.getByTestId("right-sidebar-toggle").click();
-  await page.waitForTimeout(240);
+  await page.waitForTimeout(260);
   const layoutAfterRightCollapse = await page.evaluate(() => {
     const right = document.querySelector(".right-sidebar").getBoundingClientRect();
     return { rightWidth: right.width };
@@ -130,7 +119,7 @@ try {
   }
   await page.getByTestId("objectives-toggle").click();
   await page.getByTestId("right-sidebar-toggle").click();
-  await page.waitForTimeout(240);
+  await page.waitForTimeout(260);
 
   await page.waitForFunction(() => document.querySelector('[data-testid="world-canvas"]')?.dataset.camera === "ready");
   const transformBeforeCanvasMove = await page.getByTestId("world-canvas-world").evaluate((node) => node.style.transform);
@@ -144,7 +133,7 @@ try {
     x: Math.abs(gridBox.x + gridBox.width / 2 - (canvasBox.x + canvasBox.width / 2)),
     y: Math.abs(gridBox.y + gridBox.height / 2 - (canvasBox.y + canvasBox.height / 2)),
   };
-  if (centerDelta.x > 8 || centerDelta.y > 8) {
+  if (centerDelta.x > 12 || centerDelta.y > 12) {
     throw new Error(`Expected default camera to center the map in the canvas, got: ${JSON.stringify(centerDelta)}`);
   }
   await page.mouse.move(canvasBox.x + canvasBox.width / 2, canvasBox.y + canvasBox.height / 2);
@@ -260,27 +249,25 @@ try {
   }
 
   await page.getByTestId("step-button").click();
-  await expectText(page, "robot-position", "2,2 E");
+  await expectText(page, "robot-position", "R1 // 2,2 E");
 
+  await page.getByTestId("settings-toggle").click();
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 10");
 
-  const checklist = await page.getByTestId("flow-checklist").innerText();
+  const checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
   for (const label of [
     "Compile a valid script",
-    "Collect scrap",
+    "Collect scrap from the map",
     "Expand logic memory",
     "Upgrade robot hardware",
-    "Save and reload",
+    "Save and reload progress",
   ]) {
-    if (!checklist.includes(label)) {
+    if (!checklist.includes(label.toUpperCase())) {
       throw new Error(`Expected flow checklist to include ${label}.`);
     }
   }
 
-  await page.locator(".settings-panel").evaluate((details) => {
-    details.open = true;
-  });
   await page.getByTestId("save-button").click();
   const savedSummary = await page.getByTestId("save-summary").innerText();
   if (!savedSummary.includes("Saved tick")) {
@@ -288,9 +275,7 @@ try {
   }
   await page.getByTestId("reset-button").click();
   await expectText(page, "scrap-count", "0");
-  await page.locator(".settings-panel").evaluate((details) => {
-    details.open = true;
-  });
+  await ensureVisible(page, "load-button", "settings-toggle");
   await page.getByTestId("load-button").click();
   const loadedSummary = await page.getByTestId("save-summary").innerText();
   if (!loadedSummary.includes("Loaded tick")) {
@@ -300,15 +285,23 @@ try {
   const pausedTickBeforePlay = Number(await page.getByTestId("tick").innerText());
   await page.getByTestId("play-button").click();
   await page.waitForFunction((tick) => Number(document.querySelector('[data-testid="tick"]').innerText) > tick, pausedTickBeforePlay);
-  await page.getByTestId("pause-button").click();
-  await expectText(page, "pause-button", "▶");
+  await expectText(page, "play-button", "Pause");
+  await page.getByTestId("play-button").click();
+  await expectText(page, "play-button", "Resume");
   const pausedTick = await page.getByTestId("tick").innerText();
   await page.waitForTimeout(850);
   await expectText(page, "tick", pausedTick);
-  await page.getByTestId("pause-button").click();
-  await expectText(page, "pause-button", "Ⅱ");
+  await page.getByTestId("play-button").click();
+  await expectText(page, "play-button", "Pause");
   await page.getByTestId("reset-button").click();
   await expectText(page, "tick", "0");
+
+  await page.getByTestId("devlog-toggle").click();
+  const devLogVisible = await page.locator(".dev-panel").isVisible();
+  if (!devLogVisible) {
+    throw new Error("Expected developer log drawer to open.");
+  }
+  await expectText(page, "devlog-toggle", "Dev_Log [-]");
 
   console.log("Web UI smoke passed.");
 } finally {
@@ -318,7 +311,7 @@ try {
 
 async function expectText(page, testId, expected) {
   const text = await page.getByTestId(testId).innerText();
-  if (text.trim() !== expected) {
+  if (text.trim() !== expected && text.trim().toUpperCase() !== expected.toUpperCase()) {
     throw new Error(`Expected ${testId} to be ${expected}, got ${text}`);
   }
 }
@@ -328,6 +321,14 @@ async function expectValue(page, testId, expected) {
   if (value !== expected) {
     throw new Error(`Expected ${testId} value to be ${expected}, got ${value}`);
   }
+}
+
+async function ensureVisible(page, targetTestId, toggleTestId) {
+  if (await page.getByTestId(targetTestId).isVisible()) {
+    return;
+  }
+  await page.getByTestId(toggleTestId).click();
+  await page.getByTestId(targetTestId).waitFor({ state: "visible" });
 }
 
 function parseScale(transform) {

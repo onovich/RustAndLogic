@@ -5,41 +5,49 @@ status.tick,Tick,回合
 status.instructionUse,Instruction use,指令占用
 status.vm,VM,虚拟机
 language.aria,Language switch,语言切换
+language.auto,AUTO,自动
 language.en,EN,EN
 language.zh,Chinese,中文
+language.mode.auto,AUTO,自动
+language.mode.en,EN,英文
+language.mode.zh,ZH,中文
 workspace.aria,Game UI flow,游戏 UI 流程
 script.aria,Script editor,脚本编辑器
-script.fileName,Logic_Engine.sh,Logic_Engine.sh
+script.fileName,Logic_Core_v2.0,逻辑核心 v2.0
 script.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 script.title,Script,脚本
 script.controls,Run controls,运行控制
 world.aria,World map,世界地图
 world.canvas,Infinite map canvas,无限地图画布
 world.grid,Robot grid,机器人网格
-world.title,Scrapyard,垃圾场
-stage.link,Satellite_Link: Sector_07,卫星链路：07 区
+world.title,Waste-X Sector,废料 X 区域
+stage.renderTitle,Render_Out [Inf_Canvas],渲染输出 [无限画布]
+stage.link,859 Sync,859 同步
 stage.feed,Live_Feed,实时画面
 side.aria,Resources and modules,资源与模块
 side.title,Systems,系统
 location.aria,Current location,当前位置
 location.title,Location,地点
-location.kind,Scrapfield node,废料场节点
+location.kind,Wasteland recovery node,荒地回收节点
 location.description,"A rain-burned recovery site with a weak uplink and a short scavenger loop.",一处被酸雨灼烧的回收点，链路微弱，只能维持短循环拾荒。
 resources.title,Resources,资源
-resources.scrap,Scrap,废铁
-resources.cells,Batteries,电芯
-resources.memoryShards,Memory shards,记忆晶片
+resources.scrap,Scrap_Metal,废铁
+resources.cells,Power_Cells,电芯
+resources.memoryShards,Mem_Chips,记忆晶片
 modules.aria,Robot modules,机器人模块
 modules.title,Modules,模块
+modules.statusTitle,Module_Status,模块状态
 modules.armor,Armor,装甲
 modules.weapon,Weapon,武器
-modules.hp,HP,HP
+modules.hp,HP,生命值
+modules.armorIntegrity,Armor_Integrity,装甲完整度
+modules.energyLoad,Energy_Load,能量负载
 save.aria,Save,存档
 save.title,Save,存档
 settings.title,Settings,设置
-dev.title,Developer Debug,开发者调试
+dev.title,Developer Debug,开发调试
 flow.aria,Task checklist,任务清单
-flow.title,Tasks,任务
+flow.title,Objectives,目标
 flow.deploy,Compile a valid script,编译有效脚本
 flow.collect,Collect scrap from the map,从地图回收废铁
 flow.memory,Expand logic memory,扩展逻辑内存
@@ -55,14 +63,19 @@ action.deploy,Deploy,部署
 action.play,Play,播放
 action.pause,Pause,暂停
 action.resume,Resume,恢复
-action.frame,Frame,快进一帧
+action.frame,Step,步进
 action.speed,Speed {speed},速度 {speed}
 action.stop,Stop,停止
 action.expandMemory,Expand memory,扩展内存
 action.armorPlus,Armor +,装甲 +
 action.weaponPlus,Weapon +,武器 +
 action.save,Save,保存
+action.saveState,Save_State,保存状态
 action.load,Load,读取
+action.localizationMode,Localization [{mode}],本地化 [{mode}]
+action.devLogOpen,Dev_Log [-],开发日志 [-]
+action.devLogClosed,Dev_Log [+],开发日志 [+]
+diagnostic.title,Diagnostics,诊断
 diagnostic.line,Line {line},第 {line} 行
 diagnostic.general,Script,脚本
 state.idle,Idle,空闲
@@ -70,7 +83,7 @@ state.waiting,Waiting,等待中
 state.compileOk,Compile OK,编译通过
 state.compileError,Compile error,编译错误
 capacity,Capacity {value},容量 {value}
-capacity.short,Logic memory,逻辑内存
+capacity.short,Ops_Limit,操作上限
 diff.count,{count} {label},{count} 项
 diff.change,change,变化
 diff.changes,changes,变化
@@ -82,10 +95,11 @@ save.missing,No save found.,没有找到存档。
 save.reset,Reset local session state.,已重置本地会话状态。
 log.save.loaded,Loaded save from tick {tick}.,已从第 {tick} 回合读取存档。
 log.autoPaused,Auto-paused: robot could not continue safely.,已自动暂停：机器人无法安全继续。
+story.channel,Comm_Link // Unknown_Signal,通信链路 // 未知信号
 story.opening.1.speaker,K-6 Commander,K-6 指挥官
 story.opening.1.text,Rain is breaking the satellite uplink. Keep the scavenger on a short loop until we recover enough scrap.,酸雨正在撕裂卫星链路。先让拾荒机器人维持短循环，直到回收足够的废铁。
 story.opening.2.speaker,K-6 Commander,K-6 指挥官
-story.opening.2.text,The script on the left feeds the robot logic core. Press play or single-frame after this briefing; the system will compile it on demand.,左侧脚本会写入机器人的逻辑核心。简报结束后点击播放或快进一帧，系统会按需编译。
+story.opening.2.text,The script on the left feeds the robot logic core. Press play or single-frame after this briefing; the system will compile it on demand.,左侧脚本会写入机器人的逻辑核心。简报结束后点击播放或步进，系统会按需编译。
 story.opening.3.speaker,K-6 Commander,K-6 指挥官
 story.opening.3.text,"Recover the nearby scrap, expand logic memory, then we can route you toward the next unlocked site.",回收附近废铁，扩展逻辑内存，然后我们就能把路线指向下一个已解锁地点。
 story.prompt.continue,Click to continue,点击继续
@@ -124,6 +138,21 @@ completion.iftrue.goto,Go if last check is true,上次查询为真时跳转
 completion.iffalse.goto,Go if last check is false,上次查询为假时跳转
 completion.iftrue.pickup,Pick up if true,为真时拾取
 completion.iffalse.turn,Turn if false,为假时右转
+runtime.title,Runtime_Env,运行时环境
+runtime.haltGeneric,Halt_Reason: Runtime_Block,中断原因：运行受阻
+runtime.recodeGeneric,Re-code logic or clear debris,重写逻辑或先清理障碍
+runtime.blockedBoundary,Halt_Reason: Boundary_Block,中断原因：边界阻挡
+runtime.recodeBoundary,Turn back before the perimeter edge,在边界前先转向
+runtime.blockedWall,Halt_Reason: Physical_Block,中断原因：实体阻挡
+runtime.recodeWall,Re-code logic or clear debris,重写逻辑或先清理障碍
+runtime.blockedOccupied,Halt_Reason: Occupied_Cell,中断原因：目标格被占用
+runtime.recodeOccupied,Route around the obstruction,绕开障碍或先腾空目标格
+runtime.blockedEmpty,Halt_Reason: Empty_Target,中断原因：目标为空
+runtime.recodeEmpty,Check the forward cell before acting,执行动作前先检查前方
+runtime.logicFault,Halt_Reason: Logic_Fault,中断原因：逻辑故障
+runtime.recodeLogic,Simplify the loop or repair the branch,简化循环或修复分支
+runtime.compileFault,Halt_Reason: Compile_Fault,中断原因：编译故障
+runtime.recodeCompile,Fix diagnostics before redeploying,先修复诊断再重新部署
 vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止

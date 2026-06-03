@@ -57,6 +57,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Archive the editor diagnostics, autocomplete, and runtime halt UI reference images under `docs/design-references/ui/`.
 - [x] Document the placeholder location-art asset usage and overlay rules in `docs/design-references/ui/README.md`.
 - [x] Record designer-provided UI implementation risk notes with applicability guidance in `docs/design-references/ui/README.md`.
+- [x] Deliver the first high-fidelity terminal-style Web UI pass and record unresolved design gaps in `docs/design-references/ui/pixel-replica-audit.md`.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

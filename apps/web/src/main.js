@@ -26,6 +26,7 @@ let storyActive = true;
 let appData = null;
 let storyPages = [];
 let flow = {};
+let runtimeToast = null;
 const canvasState = {
   x: 0,
   y: 0,
@@ -44,7 +45,8 @@ const canvasState = {
 
 const saveKey = "rust-and-logic.save.v1";
 const languageKey = "rust-and-logic.language";
-let language = detectLanguage();
+let languageMode = detectLanguageMode();
+let language = resolveLanguage(languageMode);
 let speeds = [1];
 let speedProfiles = { 1: { interval: 720, duration: 420 } };
 let scriptActions = new Set();
@@ -61,7 +63,6 @@ const elements = {
   autocomplete: query("script-autocomplete"),
   deploy: query("deploy-button"),
   play: query("play-button"),
-  pause: query("pause-button"),
   step: query("step-button"),
   speed: query("speed-button"),
   reset: query("reset-button"),
@@ -85,20 +86,34 @@ const elements = {
   armor: query("armor-level"),
   weapon: query("weapon-level"),
   hp: query("hp-value"),
+  armorPercent: query("armor-percent"),
+  energyPercent: query("energy-percent"),
+  armorMeter: query("armor-meter"),
+  energyMeter: query("energy-meter"),
   compileStatus: query("compile-status"),
   consoleLog: query("console-log"),
   diffCount: query("diff-count"),
   diffList: query("diff-list"),
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
+  flowProgress: query("flow-progress"),
   languageSwitch: query("language-switch"),
+  localizationButton: query("localization-button"),
   objectivesToggle: query("objectives-toggle"),
   rightSidebarToggle: query("right-sidebar-toggle"),
+  settingsToggle: query("settings-toggle"),
+  devlogToggle: query("devlog-toggle"),
+  settingsPanel: document.querySelector(".settings-panel"),
+  devPanel: document.querySelector(".dev-panel"),
   stage: document.querySelector(".stage-panel"),
   storyDialogue: query("story-dialogue"),
   storySpeaker: query("story-speaker"),
   storyText: query("story-text"),
   storyPrompt: query("story-prompt"),
+  runtimeToast: query("runtime-toast"),
+  runtimeToastTitle: query("runtime-toast-title"),
+  runtimeToastBody: query("runtime-toast-body"),
+  diagnosticCount: query("diagnostic-count"),
 };
 
 let i18n = { en: {}, zh: {} };
@@ -198,16 +213,66 @@ function parseCsv(source) {
   return rows;
 }
 
-elements.languageSwitch.addEventListener("click", (event) => {
+function setLanguageMode(mode) {
+  languageMode = mode === "en" || mode === "zh" ? mode : "auto";
+  language = resolveLanguage(languageMode);
+  localStorage.setItem(languageKey, languageMode);
+  applyLanguage();
+  updateEditorTools();
+  render(snapshot(game));
+}
+
+function nextLanguageMode(mode) {
+  return mode === "auto" ? "en" : mode === "en" ? "zh" : "auto";
+}
+
+function resolveLanguage(mode) {
+  if (mode === "en" || mode === "zh") {
+    return mode;
+  }
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
+  return languages.some((item) => item?.toLowerCase().startsWith("zh")) ? "zh" : "en";
+}
+
+function detectLanguageMode() {
+  const saved = localStorage.getItem(languageKey);
+  if (saved === "auto" || saved === "zh" || saved === "en") {
+    return saved;
+  }
+  return "auto";
+}
+
+function updateSidebarToggles() {
+  if (elements.objectivesToggle) {
+    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "[+]" : "[-]";
+  }
+  if (elements.rightSidebarToggle) {
+    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "[+]" : "[-]";
+  }
+}
+
+function toggleDrawer(kind) {
+  const isSettings = kind === "settings";
+  if (elements.settingsPanel) {
+    const next = isSettings && elements.settingsPanel.dataset.open !== "true";
+    elements.settingsPanel.dataset.open = String(next);
+  }
+  if (elements.devPanel) {
+    const next = !isSettings && elements.devPanel.dataset.open !== "true";
+    elements.devPanel.dataset.open = String(next);
+  }
+  updateControls();
+}
+
+elements.languageSwitch?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-lang]");
   if (!button) {
     return;
   }
-  language = button.dataset.lang === "zh" ? "zh" : "en";
-  localStorage.setItem(languageKey, language);
-  applyLanguage();
-  updateEditorTools();
-  render(snapshot(game));
+  setLanguageMode(button.dataset.lang ?? "auto");
+});
+elements.localizationButton?.addEventListener("click", () => {
+  setLanguageMode(nextLanguageMode(languageMode));
 });
 elements.editor.addEventListener("input", () => {
   deployedSource = "";
@@ -252,16 +317,18 @@ if (elements.objectivesToggle) {
   elements.objectivesToggle.addEventListener("click", () => {
     document.body.dataset.objectivesCollapsed =
       document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
-    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "[+]" : "[-]";
+    updateSidebarToggles();
   });
 }
 if (elements.rightSidebarToggle) {
   elements.rightSidebarToggle.addEventListener("click", () => {
     document.body.dataset.rightCollapsed =
       document.body.dataset.rightCollapsed === "true" ? "false" : "true";
-    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "[+]" : "[-]";
+    updateSidebarToggles();
   });
 }
+elements.settingsToggle?.addEventListener("click", () => toggleDrawer("settings"));
+elements.devlogToggle?.addEventListener("click", () => toggleDrawer("dev"));
 if (elements.canvasViewport) {
   elements.canvasViewport.addEventListener("pointerdown", beginCanvasDrag);
   elements.canvasViewport.addEventListener("pointermove", dragCanvas);
@@ -281,7 +348,6 @@ if (elements.deploy) {
   });
 }
 elements.play.addEventListener("click", () => startPlayback());
-elements.pause.addEventListener("click", () => togglePause());
 elements.step.addEventListener("click", () => advanceFrame({ manual: true }));
 elements.speed.addEventListener("click", () => {
   speedIndex = (speedIndex + 1) % speeds.length;
@@ -338,10 +404,67 @@ elements.reset.addEventListener("click", () => {
   render(snapshot(game), { animate: false });
 });
 
+applyLanguage = function applyLanguagePatched() {
+  document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
+  for (const node of document.querySelectorAll("[data-i18n]")) {
+    node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of document.querySelectorAll("[data-i18n-attr]")) {
+    for (const pair of node.dataset.i18nAttr.split(";")) {
+      const [attr, key] = pair.split(":");
+      if (attr && key) {
+        node.setAttribute(attr, t(key));
+      }
+    }
+  }
+  for (const button of elements.languageSwitch?.querySelectorAll("[data-lang]") ?? []) {
+    const active = button.dataset.lang === languageMode;
+    button.setAttribute("aria-pressed", String(active));
+    button.dataset.active = String(active);
+  }
+  renderFlowList();
+  updateControls();
+};
+
+updateControls = function updateControlsPatched() {
+  elements.play.textContent =
+    playbackMode === "playing" ? t("action.pause") : playbackMode === "paused" ? t("action.resume") : t("action.play");
+  elements.step.textContent = t("action.frame");
+  elements.reset.textContent = t("action.stop");
+  elements.play.disabled = storyActive;
+  if (!storyActive && playbackMode !== "stopped") {
+    elements.play.disabled = false;
+  }
+  elements.step.disabled = storyActive;
+  elements.speed.disabled = storyActive;
+  elements.speed.textContent = `${speeds[speedIndex]}X`;
+  elements.play.title = t("action.play");
+  elements.step.title = t("action.frame");
+  elements.reset.title = t("action.stop");
+  elements.speed.title = t("action.speed", { speed: `${speeds[speedIndex]}X` });
+  elements.play.dataset.active = String(playbackMode === "playing");
+  elements.speed.dataset.active = String(playbackMode !== "stopped");
+  if (elements.settingsToggle) {
+    elements.settingsToggle.textContent = t("settings.title");
+    elements.settingsToggle.dataset.active = String(elements.settingsPanel?.dataset.open === "true");
+  }
+  if (elements.devlogToggle) {
+    const devOpen = elements.devPanel?.dataset.open === "true";
+    elements.devlogToggle.textContent = t(devOpen ? "action.devLogOpen" : "action.devLogClosed");
+    elements.devlogToggle.dataset.active = String(devOpen);
+  }
+  if (elements.localizationButton) {
+    elements.localizationButton.textContent = t("action.localizationMode", {
+      mode: t(`language.mode.${languageMode}`),
+    });
+  }
+};
+
 await loadI18n();
 await loadAppData();
 initializeAppData();
 applyLanguage();
+updateSidebarToggles();
 updateEditorTools();
 applyCanvasTransform();
 renderStoryDialogue();
@@ -358,13 +481,21 @@ function render(state, options = {}) {
     : `0/${state.instructionCapacity}`;
   elements.vmState.textContent = translateVmState(state.vm?.state);
   elements.capacityLabel.textContent = t("capacity", { value: state.instructionCapacity });
-  elements.robotPosition.textContent = `${state.robot.x},${state.robot.y} ${state.robot.dir}`;
+  elements.robotPosition.textContent = `R1 // ${state.robot.x},${state.robot.y} ${state.robot.dir}`;
   elements.scrap.textContent = state.resources.scrap;
   elements.cells.textContent = state.resources.cells;
   elements.memoryShards.textContent = state.resources.memoryShards;
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
+  const armorPercent = Math.max(0, Math.min(100, Math.round((state.robot.hp / 10) * 100)));
+  const energyPercent = state.program
+    ? Math.max(0, Math.min(100, Math.round((state.program.instructionUsed / state.instructionCapacity) * 100)))
+    : 0;
+  elements.armorPercent.textContent = `${armorPercent}%`;
+  elements.energyPercent.textContent = `${energyPercent}%`;
+  elements.armorMeter.style.width = `${armorPercent}%`;
+  elements.energyMeter.style.width = `${energyPercent}%`;
 
   if (!state.program) {
     elements.compileStatus.textContent = t("state.waiting");
@@ -375,17 +506,33 @@ function render(state, options = {}) {
   }
 
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
+  elements.flowProgress.textContent = `${Object.values(flow).filter(Boolean).length}/${Object.keys(flow).length}`;
 
   renderGrid(state, beforeState, options);
   renderLog(state.logs);
   renderDiff(diff);
   renderFlow();
   renderStoryDialogue();
+  if (playbackMode !== "paused") {
+    hideRuntimeToast();
+  }
   updateControls();
 }
 
 function startPlayback() {
   if (storyActive) {
+    return;
+  }
+  if (playbackMode === "playing") {
+    playbackMode = "paused";
+    clearPlaybackTimer();
+    updateControls();
+    return;
+  }
+  if (playbackMode === "paused") {
+    playbackMode = "playing";
+    updateControls();
+    schedulePlayback();
     return;
   }
   const deployed = ensureProgramDeployed();
@@ -394,26 +541,17 @@ function startPlayback() {
     stopPlayback(false);
     return;
   }
+  hideRuntimeToast();
   playbackMode = "playing";
   updateControls();
   schedulePlayback();
-}
-
-function togglePause() {
-  if (playbackMode === "playing") {
-    playbackMode = "paused";
-    clearPlaybackTimer();
-  } else if (playbackMode === "paused") {
-    playbackMode = "playing";
-    schedulePlayback();
-  }
-  updateControls();
 }
 
 function advanceFrame(options = {}) {
   if (storyActive) {
     return snapshot(game);
   }
+  hideRuntimeToast();
   if (options.manual) {
     clearPlaybackTimer();
     if (playbackMode === "playing") {
@@ -473,7 +611,48 @@ function pauseForBlock(state) {
     game.logs.unshift(message);
     render(snapshot(game), { animate: false });
   }
+  showRuntimeToast(state);
   updateControls();
+}
+
+function showRuntimeToast(state) {
+  if (!elements.runtimeToast || !elements.runtimeToastTitle || !elements.runtimeToastBody) {
+    return;
+  }
+  runtimeToast = summarizeRuntimeToast(state);
+  elements.runtimeToastTitle.textContent = runtimeToast.title;
+  elements.runtimeToastBody.textContent = runtimeToast.body;
+  elements.runtimeToast.hidden = false;
+}
+
+function hideRuntimeToast() {
+  runtimeToast = null;
+  if (elements.runtimeToast) {
+    elements.runtimeToast.hidden = true;
+  }
+}
+
+function summarizeRuntimeToast(state) {
+  const latestLog = state.logs[0] ?? "";
+  if (latestLog.includes("boundary")) {
+    return { title: t("runtime.blockedBoundary"), body: t("runtime.recodeBoundary") };
+  }
+  if (latestLog.includes("wall")) {
+    return { title: t("runtime.blockedWall"), body: t("runtime.recodeWall") };
+  }
+  if (latestLog.includes("occupied") || latestLog.includes("Drop blocked")) {
+    return { title: t("runtime.blockedOccupied"), body: t("runtime.recodeOccupied") };
+  }
+  if (latestLog.includes("Nothing ahead") || latestLog.includes("No target lock")) {
+    return { title: t("runtime.blockedEmpty"), body: t("runtime.recodeEmpty") };
+  }
+  if (latestLog.includes("Logic Overload") || latestLog.includes("Program counter")) {
+    return { title: t("runtime.logicFault"), body: t("runtime.recodeLogic") };
+  }
+  if (latestLog.includes("No script deployed") || !state.program?.ok) {
+    return { title: t("runtime.compileFault"), body: t("runtime.recodeCompile") };
+  }
+  return { title: t("runtime.haltGeneric"), body: t("runtime.recodeGeneric") };
 }
 
 function advanceStory() {
@@ -544,6 +723,7 @@ function shouldAutoPause(before, state) {
 function stopPlayback(resetMode = true) {
   playbackMode = "stopped";
   clearPlaybackTimer();
+  hideRuntimeToast();
   if (resetMode) {
     game = createGame();
     previousState = null;
@@ -626,6 +806,9 @@ function renderScriptHighlight(errors) {
 function renderDiagnostics(errors) {
   elements.diagnostics.replaceChildren();
   elements.editor.dataset.invalid = String(errors.length > 0);
+  if (elements.diagnosticCount) {
+    elements.diagnosticCount.textContent = String(errors.length);
+  }
   if (errors.length === 0) {
     return;
   }
