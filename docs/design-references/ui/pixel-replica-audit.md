@@ -336,3 +336,20 @@
   - 诊断计数从裸数字改为 `N issue(s)` 口径，更贴近参考稿的底栏反馈方式。
   - 把补全面板的字号、内边距和副说明压紧一档，让候选词层级更接近参考稿里的终端密度。
   - 继续压细右栏资源区、模块区和运行时区的字号、行高与间距，让字段节奏更像参考稿的紧凑工程面板。
+
+## pass16 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass16-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass16-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass16-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass16-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass16-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass16-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass16-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass16-zh.png`
+- 本轮新增收边：
+  - 继续压地点图区的遮罩、裁切和文案层级，让左上角插画与标题更接近参考稿里的“被底色吞进去”的状态。
+  - 收紧任务栏的顶部内边距、列表行距和条目密度，让左栏更接近参考稿的紧凑节奏。
+  - 收边 DevLog 抽屉的展开高度、标题区分隔和日志字号，让展开态更像参考稿里的低优先级调试面板。
+  - 将对照截图脚本补成默认也能产出 DevLog 展开态截图，避免这块后续继续微调时失去稳定对照基线。

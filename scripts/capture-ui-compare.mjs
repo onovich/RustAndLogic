@@ -32,6 +32,11 @@ try {
   await page.screenshot({ path: filePath(`compare-default-${suffix}.png`), fullPage: true });
 
   await dismissStory(page);
+  await page.getByTestId("devlog-toggle").click();
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: filePath(`compare-devlog-${suffix}.png`), fullPage: true });
+  await page.getByTestId("devlog-toggle").click();
+  await page.waitForTimeout(120);
   await page.getByTestId("script-editor").fill("Che");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible", timeout: 5000 });
   await page.screenshot({ path: filePath(`compare-editor-${suffix}.png`), fullPage: true });
@@ -42,7 +47,7 @@ try {
   await page.screenshot({ path: filePath(`compare-runtime-${suffix}.png`), fullPage: true });
 
   console.log(
-    `Captured compare-default-${suffix}.png, compare-editor-${suffix}.png, compare-runtime-${suffix}.png in ${language.toUpperCase()} mode`,
+    `Captured compare-default-${suffix}.png, compare-devlog-${suffix}.png, compare-editor-${suffix}.png, compare-runtime-${suffix}.png in ${language.toUpperCase()} mode`,
   );
 } finally {
   await browser.close();
