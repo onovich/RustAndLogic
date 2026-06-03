@@ -73,6 +73,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a fourteenth visual refinement pass for dialogue pagination affordances, runtime halt texture, and action-stack width alignment.
 - [x] Complete a fifteenth visual refinement pass for diagnostics severity treatment, autocomplete density, and tighter systems-field rhythm.
 - [x] Complete a sixteenth visual refinement pass for location-hero cadence, task-list compaction, and DevLog drawer framing.
+- [x] Complete a seventeenth visual refinement pass for stage-dialogue balance, right-sidebar lower-region cadence, and richer DevLog comparison captures.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

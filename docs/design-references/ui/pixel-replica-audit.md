@@ -353,3 +353,20 @@
   - 收紧任务栏的顶部内边距、列表行距和条目密度，让左栏更接近参考稿的紧凑节奏。
   - 收边 DevLog 抽屉的展开高度、标题区分隔和日志字号，让展开态更像参考稿里的低优先级调试面板。
   - 将对照截图脚本补成默认也能产出 DevLog 展开态截图，避免这块后续继续微调时失去稳定对照基线。
+
+## pass17 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass17-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass17-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass17-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass17-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass17-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass17-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass17-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass17-zh.png`
+- 本轮新增收边：
+  - 继续压缩了演出区底部对话框的左右留白、底边距、内边距与页脚间距，让剧情框和舞台的主次关系更接近参考稿里的低姿态终端块。
+  - 微调了对话正文的最大宽度、行距和提示层级，让底部对白在英文与中文模式下都更稳地贴近参考稿节奏。
+  - 继续压紧了右下角抽屉区的整体垂直节奏，包括 `sidebar-drawers` 间距、DevLog 展开态高度、日志字号与按钮栈间隔，让 DevLog 与动作按钮的上下关系更贴近参考稿。
+  - 将 DevLog 对照截图从“空抽屉展开态”改成“先跑出真实运行日志再展开”的状态，补强了右下角调试区域的像素级对照证据，避免后续收边时只盯着空态。

@@ -32,8 +32,9 @@ try {
   await page.screenshot({ path: filePath(`compare-default-${suffix}.png`), fullPage: true });
 
   await dismissStory(page);
+  await seedDevlogState(page);
   await page.getByTestId("devlog-toggle").click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(240);
   await page.screenshot({ path: filePath(`compare-devlog-${suffix}.png`), fullPage: true });
   await page.getByTestId("devlog-toggle").click();
   await page.waitForTimeout(120);
@@ -70,6 +71,17 @@ async function dismissStory(page) {
     await dialogue.click();
   }
   await dialogue.waitFor({ state: "hidden", timeout: 5000 });
+}
+
+async function seedDevlogState(page) {
+  await page.getByTestId("step-button").click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="tick"]')?.textContent?.trim() !== "0",
+    undefined,
+    { timeout: 5000 },
+  );
+  await page.getByTestId("step-button").click();
+  await page.waitForTimeout(160);
 }
 
 function filePath(name) {
