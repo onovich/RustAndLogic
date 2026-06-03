@@ -1,5 +1,21 @@
 # Pixel Replica Audit
 
+## pass22 补充
+
+- 新增截图：
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass22-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass22-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass22-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass22-en.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-default-pass22-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-devlog-pass22-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-editor-pass22-zh.png`
+  - `D:\LabProjects\RustAndLogic\.codex-artifacts\compare-runtime-pass22-zh.png`
+- 本轮新增收边：
+  - 按最新需求废除了“假图 / 真图”切换口径，页面启动即加载真实 world grid 和真实地图实体。
+  - 剧情模式下只保留对话覆盖，不再把地图回退成 viewport 背景网格，也不再隐藏真实实体。
+  - smoke 的开场断言同步改成“启动即存在真实地图实体与 world grid”，防止旧假设再次回流。
+
 ## pass21 补充
 
 - 新增截图：

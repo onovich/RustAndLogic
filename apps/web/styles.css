@@ -836,19 +836,6 @@ textarea[data-invalid="true"] {
   opacity: 1;
 }
 
-.stage-panel[data-mode="story"] .canvas-viewport {
-  background:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(255, 155, 61, 0.03), rgba(0, 0, 0, 0)),
-    var(--grid-bg);
-  background-size: 40px 40px, 40px 40px, auto, auto;
-}
-
-.stage-panel[data-mode="story"] .canvas-world::before {
-  opacity: 0;
-}
-
 .story-spotlight {
   position: absolute;
   left: 31.2%;
@@ -898,25 +885,6 @@ textarea[data-invalid="true"] {
 
 .playfield-barrier::before {
   content: none;
-}
-
-.stage-panel[data-mode="story"] .playfield-barrier {
-  opacity: 1;
-}
-
-.stage-panel[data-mode="story"] .playfield-barrier::before,
-.stage-panel[data-mode="story"] .grid,
-.stage-panel[data-mode="story"] .deposit,
-.stage-panel[data-mode="story"] .obstacle,
-.stage-panel[data-mode="story"] .base-marker,
-.stage-panel[data-mode="story"] .robot {
-  opacity: 0;
-}
-
-.stage-panel[data-mode="story"] .robot {
-  box-shadow:
-    0 0 20px rgba(255, 158, 67, 0.44),
-    inset 0 -3px 0 rgba(77, 33, 9, 0.26);
 }
 
 .grid {

@@ -43,8 +43,8 @@ try {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
   const storyEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
-  if (storyEntityCount !== 0) {
-    throw new Error(`Expected stage entities to stay unloaded during story mode, got ${storyEntityCount}.`);
+  if (storyEntityCount < 4) {
+    throw new Error(`Expected real stage entities to be loaded from startup, got ${storyEntityCount}.`);
   }
   const storyGridMode = await page.evaluate(() => {
     const viewport = document.querySelector(".canvas-viewport");
@@ -52,10 +52,15 @@ try {
     return {
       viewportBackgroundSize: getComputedStyle(viewport).backgroundSize,
       worldGridOpacity: getComputedStyle(world, "::before").opacity,
+      worldGridBackgroundSize: getComputedStyle(world, "::before").backgroundSize,
     };
   });
-  if (!storyGridMode.viewportBackgroundSize.includes("40px 40px") || storyGridMode.worldGridOpacity !== "0") {
-    throw new Error(`Expected story mode to use the fake viewport grid, got ${JSON.stringify(storyGridMode)}.`);
+  if (
+    storyGridMode.viewportBackgroundSize.includes("40px 40px") ||
+    storyGridMode.worldGridOpacity !== "1" ||
+    !storyGridMode.worldGridBackgroundSize.includes("40px 40px")
+  ) {
+    throw new Error(`Expected story mode to show the real world grid from startup, got ${JSON.stringify(storyGridMode)}.`);
   }
 
   await page.getByTestId("settings-toggle").click();

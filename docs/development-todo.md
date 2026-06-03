@@ -78,6 +78,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a nineteenth visual refinement pass for editor-interaction density and runtime-halt toast compaction.
 - [x] Complete a twentieth visual refinement pass for localized runtime halts, two-digit line numbers, and story-gated stage entity loading.
 - [x] Complete a twenty-first visual refinement pass for story-vs-idle map layering and camera-synced world grid movement.
+- [x] Complete a twenty-second visual refinement pass for immediate real-map loading from startup and removal of any fake-grid fallback.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

@@ -1340,11 +1340,7 @@ function renderGrid(state, beforeState, options = {}) {
 
   syncWorldBounds(state);
   elements.grid.replaceChildren();
-  elements.grid.dataset.loaded = storyActive ? "false" : "true";
-  if (storyActive) {
-    setupCanvasCamera();
-    return;
-  }
+  elements.grid.dataset.loaded = "true";
 
   for (const obstacle of state.obstacles ?? []) {
     elements.grid.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
