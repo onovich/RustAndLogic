@@ -105,6 +105,8 @@ try {
     memoryStageEnabled: document.querySelector('[data-testid="upgrade-button"]').dataset.stageEnabled,
     armorStageEnabled: document.querySelector('[data-testid="armor-upgrade-button"]').dataset.stageEnabled,
     weaponStageEnabled: document.querySelector('[data-testid="weapon-upgrade-button"]').dataset.stageEnabled,
+    scriptGuidance: document.querySelector('[data-testid="script-guidance"]').innerText,
+    sampleActions: document.querySelector('[data-testid="sample-actions"]').innerText.toUpperCase(),
   }));
   if (!startupRules.facilities.includes("CHARGER") || startupRules.facilities.includes("REPAIR_BAY") || startupRules.facilities.includes("FABRICATOR")) {
     throw new Error(`Expected M1 to expose only charger facility, got: ${JSON.stringify(startupRules)}`);
@@ -115,6 +117,12 @@ try {
     startupRules.weaponStageEnabled !== "false"
   ) {
     throw new Error(`Expected M1 upgrade availability to be memory-only, got: ${JSON.stringify(startupRules)}`);
+  }
+  if (!startupRules.scriptGuidance.toLowerCase().includes("wake script")) {
+    throw new Error(`Expected M1 script guidance, got: ${startupRules.scriptGuidance}`);
+  }
+  if (!startupRules.sampleActions.includes("M1 WAKE") || startupRules.sampleActions.includes("M2 HAUL LOOP")) {
+    throw new Error(`Expected M1 sample presets to stay M1-only, got: ${startupRules.sampleActions}`);
   }
   const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
   for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
@@ -144,6 +152,8 @@ try {
     armorStageEnabled: document.querySelector('[data-testid="armor-upgrade-button"]').dataset.stageEnabled,
     weaponStageEnabled: document.querySelector('[data-testid="weapon-upgrade-button"]').dataset.stageEnabled,
     flowSummary: document.querySelector('[data-testid="flow-summary"]').innerText,
+    scriptGuidance: document.querySelector('[data-testid="script-guidance"]').innerText,
+    sampleActions: document.querySelector('[data-testid="sample-actions"]').innerText.toUpperCase(),
   }));
   if (!m2Rules.facilities.includes("REPAIR_BAY") || m2Rules.facilities.includes("FABRICATOR")) {
     throw new Error(`Expected M2 facilities to stop before fabricator, got: ${JSON.stringify(m2Rules)}`);
@@ -153,6 +163,12 @@ try {
   }
   if (!m2Rules.flowSummary.toUpperCase().includes("COMPILE A VALID SCRIPT") && !m2Rules.flowSummary.includes("编译有效脚本")) {
     throw new Error(`Expected M2 flow summary to reset to the first completion task, got: ${m2Rules.flowSummary}`);
+  }
+  if (!m2Rules.scriptGuidance.toLowerCase().includes("energy check")) {
+    throw new Error(`Expected M2 script guidance, got: ${m2Rules.scriptGuidance}`);
+  }
+  if (!m2Rules.sampleActions.includes("M1 WAKE") || !m2Rules.sampleActions.includes("M2 HAUL LOOP") || m2Rules.sampleActions.includes("M3 BASE CYCLE")) {
+    throw new Error(`Expected M2 sample presets to expose M1+M2 only, got: ${m2Rules.sampleActions}`);
   }
   await page.locator('[data-testid="stage-actions"] [data-stage="m1"]').click();
   await expectText(page, "robot-position", "R1 // 1,2 E");
@@ -458,16 +474,43 @@ try {
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("sample-actions").waitFor({ state: "visible" });
   const sampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
-  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
-    if (!sampleActions.includes(label)) {
-      throw new Error(`Expected sample actions to include ${label}, got: ${sampleActions}`);
-    }
+  if (!sampleActions.includes("M1 WAKE") || sampleActions.includes("M2 HAUL LOOP")) {
+    throw new Error(`Expected M1 sample actions to stay scoped to M1, got: ${sampleActions}`);
   }
+  await page.locator('[data-testid="stage-actions"] [data-stage="m3"]').click();
+  const m3SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
+  if (!m3SampleActions.includes("M2 HAUL LOOP") || !m3SampleActions.includes("M3 BASE CYCLE") || m3SampleActions.includes("M1 WAKE")) {
+    throw new Error(`Expected M3 sample actions to expose M2+M3 only, got: ${m3SampleActions}`);
+  }
+  const m3Guidance = await page.getByTestId("script-guidance").innerText();
+  if (!m3Guidance.toLowerCase().includes("base cycle")) {
+    throw new Error(`Expected M3 script guidance, got: ${m3Guidance}`);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
   await page.locator('[data-testid="sample-actions"] [data-preset="m3"]').click();
   const presetScript = await page.getByTestId("script-editor").inputValue();
   if (!presetScript.includes("Craft(Home)")) {
     throw new Error(`Expected M3 preset to include Craft(Home), got: ${presetScript}`);
   }
+  const emptyTargetScript = "PickUp()";
+  await page.getByTestId("script-editor").fill(emptyTargetScript);
+  await page.getByTestId("play-button").click();
+  await page.getByTestId("runtime-toast").waitFor({ state: "visible" });
+  const runtimeToast = await page.evaluate(() => ({
+    title: document.querySelector('[data-testid="runtime-toast-title"]').innerText,
+    body: document.querySelector('[data-testid="runtime-toast-body"]').innerText,
+    playLabel: document.querySelector('[data-testid="play-button"]').innerText,
+  }));
+  if (!runtimeToast.body.toLowerCase().includes("forge yard") && !runtimeToast.body.includes("熔炉前场")) {
+    throw new Error(`Expected M3 runtime toast to include stage-specific hint, got: ${JSON.stringify(runtimeToast)}`);
+  }
+  if (!runtimeToast.playLabel.toUpperCase().includes("RESUME") && !runtimeToast.playLabel.includes("恢复")) {
+    throw new Error(`Expected runtime fault to pause playback, got: ${JSON.stringify(runtimeToast)}`);
+  }
+  await page.getByTestId("reset-button").click();
   await page.locator('[data-testid="sample-actions"] [data-preset="m2"]').click();
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 14");
@@ -489,7 +532,7 @@ try {
     throw new Error(`Expected save summary, got: ${savedSummary}`);
   }
   await page.getByTestId("reset-button").click();
-  await expectText(page, "scrap-count", "0");
+  await expectText(page, "scrap-count", "1");
   await ensureVisible(page, "load-button", "settings-toggle");
   await page.getByTestId("load-button").click();
   const loadedSummary = await page.getByTestId("save-summary").innerText();

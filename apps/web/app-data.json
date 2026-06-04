@@ -83,8 +83,12 @@
       "ui": {
         "recommendedSpeed": 1,
         "enabledUpgrades": ["memory"],
-        "visibleFacilities": ["charger"]
+        "visibleFacilities": ["charger"],
+        "samplePresetIds": ["m1"],
+        "recommendedPresetId": "m1"
       },
+      "scriptGuidanceKey": "script.guidance.m1",
+      "runtimeHintKey": "runtime.stageHint.m1",
       "resourceGuidanceKey": "stage.guidance.m1",
       "storyPages": [
         { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
@@ -120,8 +124,12 @@
       "ui": {
         "recommendedSpeed": 5,
         "enabledUpgrades": ["memory", "armor"],
-        "visibleFacilities": ["charger", "repairBay"]
+        "visibleFacilities": ["charger", "repairBay"],
+        "samplePresetIds": ["m1", "m2"],
+        "recommendedPresetId": "m2"
       },
+      "scriptGuidanceKey": "script.guidance.m2",
+      "runtimeHintKey": "runtime.stageHint.m2",
       "resourceGuidanceKey": "stage.guidance.m2",
       "storyPages": [
         { "speakerKey": "story.m2.1.speaker", "textKey": "story.m2.1.text" },
@@ -161,8 +169,12 @@
       "ui": {
         "recommendedSpeed": 5,
         "enabledUpgrades": ["memory", "armor", "weapon"],
-        "visibleFacilities": ["charger", "repairBay", "fabricator"]
+        "visibleFacilities": ["charger", "repairBay", "fabricator"],
+        "samplePresetIds": ["m2", "m3"],
+        "recommendedPresetId": "m3"
       },
+      "scriptGuidanceKey": "script.guidance.m3",
+      "runtimeHintKey": "runtime.stageHint.m3",
       "resourceGuidanceKey": "stage.guidance.m3",
       "storyPages": [
         { "speakerKey": "story.m3.1.speaker", "textKey": "story.m3.1.text" },

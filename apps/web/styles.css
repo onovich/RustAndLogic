@@ -520,9 +520,18 @@ h2 {
 }
 
 .code-label {
-  display: flex;
-  align-items: center;
+  display: grid;
+  gap: 4px;
   padding: 8px 12px;
+}
+
+.code-label p {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 8px;
+  line-height: 1.25;
+  text-transform: none;
 }
 
 .controls {

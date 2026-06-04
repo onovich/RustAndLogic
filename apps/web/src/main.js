@@ -24,6 +24,7 @@ let robotVisualTransform = "";
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
 let deployedSource = "";
+let currentPresetId = null;
 let storyIndex = 0;
 let storyActive = true;
 let appData = null;
@@ -119,6 +120,7 @@ const elements = {
   locationName: query("location-name"),
   locationDescription: query("location-description"),
   resourceGuidance: query("resource-guidance"),
+  scriptGuidance: query("script-guidance"),
   languageSwitch: query("language-switch"),
   localizationButton: query("localization-button"),
   objectivesToggle: query("objectives-toggle"),
@@ -220,6 +222,21 @@ function getStageCompletionTasks(stage = getStageDefinition()) {
     .filter(Boolean);
 }
 
+function getStageSamplePresets(stage = getStageDefinition()) {
+  const sampleIds = getStageUi(stage).samplePresetIds;
+  if (!Array.isArray(sampleIds) || sampleIds.length === 0) {
+    return scriptPresets;
+  }
+  return sampleIds
+    .map((presetId) => scriptPresets.find((preset) => preset.id === presetId))
+    .filter(Boolean);
+}
+
+function getStageRecommendedPreset(stage = getStageDefinition()) {
+  const recommendedId = getStageUi(stage).recommendedPresetId ?? stage?.presetId;
+  return scriptPresets.find((preset) => preset.id === recommendedId) ?? null;
+}
+
 function resetCameraIntro() {
   canvasState.x = 0;
   canvasState.y = 0;
@@ -258,12 +275,14 @@ function applyStageConfiguration(stageId, options = {}) {
     storyActive = true;
   }
 
-  const preset = scriptPresets.find((item) => item.id === stage.presetId);
+  const preset = getStageRecommendedPreset(stage);
+  currentPresetId = preset?.id ?? null;
   const sourceLines = preset?.lines ?? appData.script?.initialSource ?? [];
   elements.editor.value = sourceLines.join("\n");
   updateEditorTools();
   hideAutocomplete();
   renderStageCopy();
+  renderScriptGuidance();
   renderFlowList();
   renderStageActions();
   renderSampleActions();
@@ -586,6 +605,7 @@ applyLanguage = function applyLanguagePatched() {
     button.dataset.active = String(active);
   }
   renderStageCopy();
+  renderScriptGuidance();
   renderFlowList();
   renderStageActions();
   renderSampleActions();
@@ -831,7 +851,12 @@ function summarizeRuntimeToast(state) {
     generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
   };
   const [titleKey, bodyKey] = runtimeToastKeys[cause] ?? runtimeToastKeys.generic;
-  return { title: t(titleKey), body: t(bodyKey) };
+  const stage = getStageDefinition();
+  const stageHint = stage?.runtimeHintKey ? t(stage.runtimeHintKey) : "";
+  return {
+    title: t(titleKey),
+    body: stageHint ? `${t(bodyKey)} // ${stageHint}` : t(bodyKey),
+  };
 }
 
 function detectRuntimeCause(state) {
@@ -1042,6 +1067,14 @@ function renderStageCopy() {
   }
 }
 
+function renderScriptGuidance() {
+  if (!elements.scriptGuidance) {
+    return;
+  }
+  const stage = getStageDefinition();
+  elements.scriptGuidance.textContent = stage?.scriptGuidanceKey ? t(stage.scriptGuidanceKey) : "";
+}
+
 function renderStageActions() {
   if (!elements.stageActions) {
     return;
@@ -1062,10 +1095,11 @@ function renderSampleActions() {
     return;
   }
   elements.sampleActions.replaceChildren();
-  for (const preset of scriptPresets) {
+  for (const preset of getStageSamplePresets()) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.preset = preset.id;
+    button.dataset.active = String(preset.id === currentPresetId);
     button.textContent = t(preset.labelKey);
     button.addEventListener("click", () => loadScriptPreset(preset.id));
     elements.sampleActions.append(button);
@@ -1079,8 +1113,10 @@ function loadScriptPreset(presetId) {
   }
   stopPlayback(false);
   elements.editor.value = (preset.lines ?? []).join("\n");
+  currentPresetId = preset.id;
   deployedSource = "";
   updateEditorTools();
+  renderSampleActions();
   hideAutocomplete();
 }
 
@@ -1110,10 +1146,12 @@ function syncFlowState(beforeState, state) {
 }
 
 function updateEditorTools(errors = null) {
+  currentPresetId = scriptPresets.find((preset) => (preset.lines ?? []).join("\n") === elements.editor.value)?.id ?? null;
   const program = errors ? null : compileTapeScript(elements.editor.value, { instructionCapacity: game.instructionCapacity });
   const activeErrors = errors ?? program.errors;
   renderScriptHighlight(activeErrors);
   renderDiagnostics(activeErrors);
+  renderSampleActions();
   syncEditorScroll();
 }
 

@@ -14,6 +14,9 @@ language.mode.zh,ZH,中文
 workspace.aria,Game UI flow,游戏 UI 流程
 script.aria,Script editor,脚本编辑器
 script.fileName,Logic_Core_v2.0,逻辑核心 v2.0
+script.guidance.m1,Starter scaffold: use the wake script, confirm one pickup, then stop editing only after the unload loop is visible.,起步脚手架：先用唤醒脚本，确认能完成一次拾取，再继续改到能看见卸货循环。
+script.guidance.m2,Starter scaffold: start from the haul loop and add the energy check before trying to optimize path length.,起步脚手架：先从搬运循环开始，先补上电量检查，再考虑路径优化。
+script.guidance.m3,Starter scaffold: begin with the base cycle and keep home-facing branches readable before adding repair or fabrication tweaks.,起步脚手架：先从基地循环起步，先把朝向基地的分支写清楚，再加修理和合成细节。
 script.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 script.title,Script,脚本
 script.controls,Run controls,运行控制
@@ -181,6 +184,9 @@ runtime.logicFault,Halt_Reason: Logic_Fault,中断原因：逻辑故障
 runtime.recodeLogic,Simplify the loop or repair the branch,简化循环或修复分支
 runtime.compileFault,Halt_Reason: Compile_Fault,中断原因：编译故障
 runtime.recodeCompile,Fix diagnostics before redeploying,先修复诊断再重新部署
+runtime.stageHint.m1,For this site, a short pickup-to-home loop beats any exploratory path.,这一关先写短循环，拾取后尽快回家，比探索更重要。
+runtime.stageHint.m2,In this relay lane, every failure should make you re-check the battery return line first.,在这一关里，任何报错都先回头检查电量返航线。
+runtime.stageHint.m3,At Forge Yard, loop health matters more than greed: stabilize home actions before chasing more scrap.,在熔炉前场，循环健康比贪心重要：先稳住回家动作，再去追更多废铁。
 vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止
