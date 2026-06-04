@@ -185,6 +185,9 @@ vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止
 vm.Fault,Fault,故障
+flow.summary.pending,Stage target: {label},阶段目标：{label}
+flow.summary.complete,Stage target complete: {label},阶段目标已完成：{label}
+flow.summary.none,No active stage target.,当前没有阶段目标。
 stage.guidance.m1,Priority: recover nearby scrap first; ignore long loops until the uplink stabilizes.,优先事项：先回收附近废铁；在链路稳定前不要跑长循环。
 stage.guidance.m2,Priority: treat battery as the limiter; haul scrap only when the return path is still affordable.,优先事项：把电量当作硬约束；只有返航还划算时再继续搬运废铁。
 stage.guidance.m3,Priority: feed the base loop; batteries unlock fabrication and scrap keeps repair online.,优先事项：先养活基地循环；电池决定能否合成，废铁决定修理是否在线。

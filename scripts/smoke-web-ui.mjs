@@ -64,6 +64,10 @@ try {
   if (!initialGuidance.toLowerCase().includes("nearby scrap") && !initialGuidance.includes("附近废铁")) {
     throw new Error(`Expected M1 resource guidance, got: ${initialGuidance}`);
   }
+  const startupFlowSummary = await page.getByTestId("flow-summary").innerText();
+  if (!startupFlowSummary.toUpperCase().includes("COMPILE A VALID SCRIPT") && !startupFlowSummary.includes("编译有效脚本")) {
+    throw new Error(`Expected M1 stage target summary, got: ${startupFlowSummary}`);
+  }
   const storyEntityCount = await page.locator(".grid .deposit, .grid .obstacle, .grid .base-marker, .grid .robot-avatar").count();
   if (storyEntityCount < 4) {
     throw new Error(`Expected real stage entities to be loaded from startup, got ${storyEntityCount}.`);
@@ -96,6 +100,22 @@ try {
   await page.getByTestId("lang-en-button").click();
   await expectText(page, "localization-button", "Localization [EN]");
   await page.getByTestId("stage-actions").waitFor({ state: "visible" });
+  const startupRules = await page.evaluate(() => ({
+    facilities: document.querySelector('[data-testid="facility-list"]').innerText.toUpperCase(),
+    memoryStageEnabled: document.querySelector('[data-testid="upgrade-button"]').dataset.stageEnabled,
+    armorStageEnabled: document.querySelector('[data-testid="armor-upgrade-button"]').dataset.stageEnabled,
+    weaponStageEnabled: document.querySelector('[data-testid="weapon-upgrade-button"]').dataset.stageEnabled,
+  }));
+  if (!startupRules.facilities.includes("CHARGER") || startupRules.facilities.includes("REPAIR_BAY") || startupRules.facilities.includes("FABRICATOR")) {
+    throw new Error(`Expected M1 to expose only charger facility, got: ${JSON.stringify(startupRules)}`);
+  }
+  if (
+    startupRules.memoryStageEnabled !== "true" ||
+    startupRules.armorStageEnabled !== "false" ||
+    startupRules.weaponStageEnabled !== "false"
+  ) {
+    throw new Error(`Expected M1 upgrade availability to be memory-only, got: ${JSON.stringify(startupRules)}`);
+  }
   const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
   for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
     if (!stageActions.includes(label)) {
@@ -105,6 +125,7 @@ try {
   await page.locator('[data-testid="stage-actions"] [data-stage="m2"]').click();
   await expectText(page, "tick", "0");
   await expectText(page, "robot-position", "R1 // 2,4 N");
+  await expectText(page, "speed-button", "5X");
   await expectText(page, "location-name", "Relay Ladder");
   const m2Story = await page.getByTestId("story-text").innerText();
   if (!m2Story.toLowerCase().includes("range matters now")) {
@@ -118,9 +139,25 @@ try {
   if (!m2Checklist.includes("RECHARGE AT HOME")) {
     throw new Error(`Expected M2 checklist to include recharge objective, got: ${m2Checklist}`);
   }
+  const m2Rules = await page.evaluate(() => ({
+    facilities: document.querySelector('[data-testid="facility-list"]').innerText.toUpperCase(),
+    armorStageEnabled: document.querySelector('[data-testid="armor-upgrade-button"]').dataset.stageEnabled,
+    weaponStageEnabled: document.querySelector('[data-testid="weapon-upgrade-button"]').dataset.stageEnabled,
+    flowSummary: document.querySelector('[data-testid="flow-summary"]').innerText,
+  }));
+  if (!m2Rules.facilities.includes("REPAIR_BAY") || m2Rules.facilities.includes("FABRICATOR")) {
+    throw new Error(`Expected M2 facilities to stop before fabricator, got: ${JSON.stringify(m2Rules)}`);
+  }
+  if (m2Rules.armorStageEnabled !== "true" || m2Rules.weaponStageEnabled !== "false") {
+    throw new Error(`Expected M2 upgrade availability to enable armor but not weapon, got: ${JSON.stringify(m2Rules)}`);
+  }
+  if (!m2Rules.flowSummary.toUpperCase().includes("COMPILE A VALID SCRIPT") && !m2Rules.flowSummary.includes("编译有效脚本")) {
+    throw new Error(`Expected M2 flow summary to reset to the first completion task, got: ${m2Rules.flowSummary}`);
+  }
   await page.locator('[data-testid="stage-actions"] [data-stage="m1"]').click();
   await expectText(page, "robot-position", "R1 // 1,2 E");
   await expectText(page, "location-name", "Waste-X Sector");
+  await expectText(page, "speed-button", "1X");
   await page.getByTestId("settings-toggle").click();
 
   for (let index = 0; index < 3; index += 1) {
@@ -158,10 +195,8 @@ try {
     throw new Error(`Expected zero-padded line numbers, got: ${lineNumbers}`);
   }
   const facilitiesText = (await page.getByTestId("facility-list").innerText()).toUpperCase();
-  for (const label of ["CHARGER", "REPAIR_BAY", "FABRICATOR"]) {
-    if (!facilitiesText.includes(label)) {
-      throw new Error(`Expected facility list to include ${label}, got: ${facilitiesText}`);
-    }
+  if (!facilitiesText.includes("CHARGER") || facilitiesText.includes("REPAIR_BAY") || facilitiesText.includes("FABRICATOR")) {
+    throw new Error(`Expected M1 facility list to stay charger-only, got: ${facilitiesText}`);
   }
 
   const stageHeaderLayout = await page.evaluate(() => {
@@ -415,6 +450,10 @@ try {
   await page.getByTestId("step-button").click();
   await expectText(page, "scrap-count", "1");
   await expectText(page, "cargo-count", "0/3");
+  const completedSummary = await page.getByTestId("flow-summary").innerText();
+  if (!completedSummary.toUpperCase().includes("STAGE TARGET COMPLETE") && !completedSummary.includes("阶段目标已完成")) {
+    throw new Error(`Expected completed stage summary after M1 unload loop, got: ${completedSummary}`);
+  }
 
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("sample-actions").waitFor({ state: "visible" });

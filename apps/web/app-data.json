@@ -73,11 +73,17 @@
       "id": "m1",
       "labelKey": "samples.m1",
       "taskIds": ["deploy", "collect", "unload"],
+      "completionTaskIds": ["deploy", "collect", "unload"],
       "presetId": "m1",
       "location": {
         "kindKey": "location.kind",
         "nameKey": "world.title",
         "descriptionKey": "location.description"
+      },
+      "ui": {
+        "recommendedSpeed": 1,
+        "enabledUpgrades": ["memory"],
+        "visibleFacilities": ["charger"]
       },
       "resourceGuidanceKey": "stage.guidance.m1",
       "storyPages": [
@@ -104,11 +110,17 @@
       "id": "m2",
       "labelKey": "samples.m2",
       "taskIds": ["deploy", "collect", "unload", "recharge"],
+      "completionTaskIds": ["deploy", "collect", "unload", "recharge"],
       "presetId": "m2",
       "location": {
         "kindKey": "location.kind.m2",
         "nameKey": "location.name.m2",
         "descriptionKey": "location.description.m2"
+      },
+      "ui": {
+        "recommendedSpeed": 5,
+        "enabledUpgrades": ["memory", "armor"],
+        "visibleFacilities": ["charger", "repairBay"]
       },
       "resourceGuidanceKey": "stage.guidance.m2",
       "storyPages": [
@@ -139,11 +151,17 @@
       "id": "m3",
       "labelKey": "samples.m3",
       "taskIds": ["deploy", "collect", "unload", "recharge", "craft", "repair", "save"],
+      "completionTaskIds": ["collect", "unload", "recharge", "craft", "repair"],
       "presetId": "m3",
       "location": {
         "kindKey": "location.kind.m3",
         "nameKey": "location.name.m3",
         "descriptionKey": "location.description.m3"
+      },
+      "ui": {
+        "recommendedSpeed": 5,
+        "enabledUpgrades": ["memory", "armor", "weapon"],
+        "visibleFacilities": ["charger", "repairBay", "fabricator"]
       },
       "resourceGuidanceKey": "stage.guidance.m3",
       "storyPages": [

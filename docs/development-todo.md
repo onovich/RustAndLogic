@@ -93,6 +93,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add facility status readouts and curated M1/M2/M3 sample scripts to the Web UI settings flow.
 - [x] Bind M1/M2/M3 into explicit stage configurations so map state, objectives, and default scripts switch together.
 - [x] Bind each stage's location copy, opening briefing, and resource-priority guidance to stage configuration data.
+- [x] Bind each stage's recommended speed, available upgrades, visible facilities, and completion target summary to stage configuration data.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

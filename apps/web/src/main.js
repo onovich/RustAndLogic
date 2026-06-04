@@ -114,6 +114,7 @@ const elements = {
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
   flowProgress: query("flow-progress"),
+  flowSummary: query("flow-summary"),
   locationKind: query("location-kind"),
   locationName: query("location-name"),
   locationDescription: query("location-description"),
@@ -182,6 +183,43 @@ function createStageGame(stageId = currentStageId) {
   return createGame(stage?.game ?? {});
 }
 
+function getStageUi(stage = getStageDefinition()) {
+  return stage?.ui ?? {};
+}
+
+function getStageRecommendedSpeed(stage = getStageDefinition()) {
+  const recommended = Number(getStageUi(stage).recommendedSpeed);
+  return speeds.includes(recommended) ? recommended : speeds[0];
+}
+
+function setStageRecommendedSpeed(stage = getStageDefinition()) {
+  const recommended = getStageRecommendedSpeed(stage);
+  const nextIndex = speeds.indexOf(recommended);
+  speedIndex = nextIndex >= 0 ? nextIndex : 0;
+}
+
+function stageUpgradeEnabled(module, stage = getStageDefinition()) {
+  const enabled = getStageUi(stage).enabledUpgrades ?? [];
+  if (module === "memory") {
+    return enabled.includes("memory");
+  }
+  return enabled.includes(module);
+}
+
+function stageVisibleFacilities(stage = getStageDefinition()) {
+  const visible = getStageUi(stage).visibleFacilities;
+  return Array.isArray(visible) && visible.length > 0
+    ? new Set(visible)
+    : new Set(["charger", "repairBay", "fabricator"]);
+}
+
+function getStageCompletionTasks(stage = getStageDefinition()) {
+  const completionIds = stage?.completionTaskIds ?? [];
+  return completionIds
+    .map((taskId) => taskDefinitions.find((task) => task.id === taskId))
+    .filter(Boolean);
+}
+
 function resetCameraIntro() {
   canvasState.x = 0;
   canvasState.y = 0;
@@ -207,6 +245,7 @@ function applyStageConfiguration(stageId, options = {}) {
 
   currentStageId = stage.id;
   storyPages = stage.storyPages ?? appData.storyPages ?? [];
+  setStageRecommendedSpeed(stage);
   const nextFlow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
   flow = nextFlow;
   game = createStageGame(stage.id);
@@ -501,6 +540,7 @@ elements.load.addEventListener("click", () => {
   const loadedStage = getStageDefinition(parsed.stageId);
   currentStageId = loadedStage?.id ?? currentStageId;
   storyPages = loadedStage?.storyPages ?? appData.storyPages ?? [];
+  setStageRecommendedSpeed(loadedStage);
   flow = Object.fromEntries(getStageTaskDefinitions(loadedStage).map((task) => [task.id, false]));
   previousState = null;
   resetCameraIntro();
@@ -583,6 +623,18 @@ updateControls = function updateControlsPatched() {
     elements.localizationButton.textContent = t("action.localizationMode", {
       mode: t(`language.mode.${languageMode}`),
     });
+  }
+  if (elements.upgrade) {
+    elements.upgrade.dataset.stageEnabled = String(stageUpgradeEnabled("memory"));
+    elements.upgrade.disabled = storyActive || !stageUpgradeEnabled("memory");
+  }
+  if (elements.armorUpgrade) {
+    elements.armorUpgrade.dataset.stageEnabled = String(stageUpgradeEnabled("armor"));
+    elements.armorUpgrade.disabled = storyActive || !stageUpgradeEnabled("armor");
+  }
+  if (elements.weaponUpgrade) {
+    elements.weaponUpgrade.dataset.stageEnabled = String(stageUpgradeEnabled("weapon"));
+    elements.weaponUpgrade.disabled = storyActive || !stageUpgradeEnabled("weapon");
   }
 };
 
@@ -951,7 +1003,26 @@ function renderFlowList() {
     item.append(checkbox, copy);
     elements.flowChecklist.append(item);
   }
+  renderFlowSummary();
   renderFlow();
+}
+
+function renderFlowSummary() {
+  if (!elements.flowSummary) {
+    return;
+  }
+  const completionTasks = getStageCompletionTasks();
+  if (completionTasks.length === 0) {
+    elements.flowSummary.textContent = t("flow.summary.none");
+    return;
+  }
+  const firstPending = completionTasks.find((task) => !flow[task.id]);
+  if (!firstPending) {
+    const lastTask = completionTasks[completionTasks.length - 1];
+    elements.flowSummary.textContent = t("flow.summary.complete", { label: t(lastTask.labelKey) });
+    return;
+  }
+  elements.flowSummary.textContent = t("flow.summary.pending", { label: t(firstPending.labelKey) });
 }
 
 function renderStageCopy() {
@@ -1790,12 +1861,16 @@ function renderFacilities(facilities) {
     return;
   }
   elements.facilityList.replaceChildren();
+  const visibleFacilities = stageVisibleFacilities();
   const entries = [
     { key: "charger", labelKey: "facilities.charger" },
     { key: "repairBay", labelKey: "facilities.repairBay" },
     { key: "fabricator", labelKey: "facilities.fabricator" },
   ];
   for (const entry of entries) {
+    if (!visibleFacilities.has(entry.key)) {
+      continue;
+    }
     const facility = facilities?.[entry.key];
     if (!facility) {
       continue;
@@ -1869,6 +1944,7 @@ function translateVmState(state) {
 }
 
 function renderFlow() {
+  renderFlowSummary();
   const items = elements.flowChecklist.querySelectorAll("[data-flow]");
   let firstPendingAssigned = false;
   for (const item of items) {
