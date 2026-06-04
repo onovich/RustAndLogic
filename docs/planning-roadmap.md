@@ -453,14 +453,14 @@
 
 如果只看当前项目阶段，最值得立刻推进的不是大而全，而是下面三件事：
 
-1. 做一张“阶段 -> 编程主题 -> 解锁 API -> 旧脚本失效点”的总表  
-   这是后续所有关卡策划的总纲。
+1. [已完成] 做一张“阶段 -> 编程主题 -> 解锁 API -> 旧脚本失效点”的总表  
+   见 [docs/stage-design-matrix.md](/D:/LabProjects/RustAndLogic/docs/stage-design-matrix.md)。
 
-2. 做一张“资源分层与依赖链”的数值草表  
-   没这张表，后续危险区、黑市、角斗场都会失焦。
+2. [已完成] 做一张“资源分层与依赖链”的数值草表  
+   见 [docs/resource-economy-draft.md](/D:/LabProjects/RustAndLogic/docs/resource-economy-draft.md)。
 
-3. 做一版“Milestone 1~4”的最小可玩策划稿  
-   先把前中期立起来，再谈迷宫、多机器人和终局。
+3. [已完成] 做一版“Milestone 1~4”的最小可玩策划稿  
+   见 [docs/milestone-1-4-playable-spec.md](/D:/LabProjects/RustAndLogic/docs/milestone-1-4-playable-spec.md)。
 
 ## 7. 结论
 

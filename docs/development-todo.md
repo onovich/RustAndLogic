@@ -8,6 +8,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Establish the top-level architecture split between TapeScript and the game layer.
 - [x] Initialize git, remote, and Codex workflow configuration.
 - [x] Distill local design research into a reusable game design guide and planning roadmap.
+- [x] Convert the planning next steps into stage, economy, and early-playable design docs.
 - [x] Keep `docs/development-todo.md` current after each implementation slice.
 - [x] Keep validation commands in `.codex/project-ops-workflow.json` aligned with the current stack.
 
