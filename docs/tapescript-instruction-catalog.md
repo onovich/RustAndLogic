@@ -44,9 +44,10 @@ Goto @Loop
 | keep | 动作 | `PickUp(Forward)` / `PickUp()` | 拾取机器人正前方一格的资源。 | 如果正前方没有可拾取资源，或货舱已满，动作失败，自动播放应暂停。 | `PickUp()` |
 | keep | 动作 | `Drop(Forward)` / `Drop()` | 把最近携带的一份货物放到正前方一格。 | 如果没有货物、正前方在地图外，或正前方已被占用，动作失败，自动播放应暂停。 | `Drop()` |
 | keep | 动作 | `Unload(Home)` | 在基地卸下当前携带的全部货物。 | 如果不在基地，或没有携带货物，动作失败，自动播放应暂停。 | `Unload(Home)` |
+| keep | 动作 | `Craft(Home)` | 在基地合成一份记忆晶片。 | 如果不在基地，或基地库存不足 `2 Scrap + 1 Battery`，动作失败，自动播放应暂停。 | `Craft(Home)` |
 | keep | 动作 | `Fire(Forward)` / `Fire()` | 向前方开火。 | 如果当前没有目标锁定，动作失败，自动播放应暂停。 | `Fire()` |
 | keep | 动作 | `Wait()` | 消耗一个动作 tick，什么也不做。 | 通常总是成功。 | `Wait()` |
-| keep | 动作 | `Repair()` | 消耗 1 份废铁，恢复 2 点 HP，不超过 HP 上限。 | 如果 HP 已满或废铁不足，动作失败，自动播放应暂停。 | `Repair()` |
+| keep | 动作 | `Repair()` | 在基地维修台消耗 1 份废铁，恢复 2 点 HP，不超过 HP 上限。 | 如果不在基地、HP 已满或基地库存废铁不足，动作失败，自动播放应暂停。 | `Repair()` |
 | keep | 查询 | `Check(Forward).Has(Scrap)` / `Check().Has(Scrap)` | 检查正前方一格是否有废铁。 | 设置条件标志为 true 或 false；查询本身不消耗物理动作 tick。 | `Check().Has(Scrap)` |
 | keep | 查询 | `Check(Forward).Has(Battery)` / `Check().Has(Battery)` | 检查正前方一格是否有电池。 | 设置条件标志为 true 或 false。 | `Check().Has(Battery)` |
 | keep | 查询 | `Check(Forward).Has(Enemy)` / `Check().Has(Enemy)` | 检查当前是否有敌人目标信号。 | 设置条件标志为 true 或 false；当前原型使用确定性占位规则。 | `Check().Has(Enemy)` |

@@ -63,6 +63,7 @@ let scriptQueries = new Set();
 let scriptBranches = new Set();
 let scriptValues = new Set();
 let scriptCompletions = [];
+let scriptPresets = [];
 
 const elements = {
   editor: query("script-editor"),
@@ -94,6 +95,7 @@ const elements = {
   memoryShards: query("memory-shard-count"),
   cargoCount: query("cargo-count"),
   cargoManifest: query("cargo-manifest"),
+  facilityList: query("facility-list"),
   armor: query("armor-level"),
   weapon: query("weapon-level"),
   hp: query("hp-value"),
@@ -116,6 +118,7 @@ const elements = {
   settingsToggle: query("settings-toggle"),
   devlogToggle: query("devlog-toggle"),
   settingsPanel: document.querySelector(".settings-panel"),
+  sampleActions: query("sample-actions"),
   devPanel: document.querySelector(".dev-panel"),
   stage: document.querySelector(".stage-panel"),
   storyDialogue: query("story-dialogue"),
@@ -165,8 +168,10 @@ function initializeAppData() {
   scriptBranches = new Set(appData.script?.syntax?.branches ?? []);
   scriptValues = new Set(appData.script?.syntax?.values ?? []);
   scriptCompletions = appData.script?.completions ?? [];
+  scriptPresets = appData.scriptPresets ?? [];
   elements.editor.value = (appData.script?.initialSource ?? []).join("\n");
   renderFlowList();
+  renderSampleActions();
 }
 
 function parseI18nCsv(source) {
@@ -433,6 +438,7 @@ applyLanguage = function applyLanguagePatched() {
     button.dataset.active = String(active);
   }
   renderFlowList();
+  renderSampleActions();
   updateControls();
 };
 
@@ -498,6 +504,7 @@ function render(state, options = {}) {
   elements.memoryShards.textContent = state.resources.memoryShards;
   elements.cargoCount.textContent = `${state.robot.cargo.length}/${state.cargoCapacity}`;
   elements.cargoManifest.textContent = formatCargoManifest(state.robot.cargo);
+  renderFacilities(state.facilities);
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
@@ -838,6 +845,33 @@ function renderFlowList() {
     elements.flowChecklist.append(item);
   }
   renderFlow();
+}
+
+function renderSampleActions() {
+  if (!elements.sampleActions) {
+    return;
+  }
+  elements.sampleActions.replaceChildren();
+  for (const preset of scriptPresets) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.preset = preset.id;
+    button.textContent = t(preset.labelKey);
+    button.addEventListener("click", () => loadScriptPreset(preset.id));
+    elements.sampleActions.append(button);
+  }
+}
+
+function loadScriptPreset(presetId) {
+  const preset = scriptPresets.find((item) => item.id === presetId);
+  if (!preset) {
+    return;
+  }
+  stopPlayback(false);
+  elements.editor.value = (preset.lines ?? []).join("\n");
+  deployedSource = "";
+  updateEditorTools();
+  hideAutocomplete();
 }
 
 function syncFlowState(beforeState, state) {
@@ -1598,6 +1632,36 @@ function formatCargoManifest(cargo) {
   return Object.entries(counts)
     .map(([item, count]) => `${t(`resources.item.${item}`)} x${count}`)
     .join(", ");
+}
+
+function renderFacilities(facilities) {
+  if (!elements.facilityList) {
+    return;
+  }
+  elements.facilityList.replaceChildren();
+  const entries = [
+    { key: "charger", labelKey: "facilities.charger" },
+    { key: "repairBay", labelKey: "facilities.repairBay" },
+    { key: "fabricator", labelKey: "facilities.fabricator" },
+  ];
+  for (const entry of entries) {
+    const facility = facilities?.[entry.key];
+    if (!facility) {
+      continue;
+    }
+    const row = document.createElement("div");
+    const term = document.createElement("dt");
+    term.textContent = t(entry.labelKey);
+    const desc = document.createElement("dd");
+    const status = t(`facilities.status.${facility.status}`);
+    if (entry.key === "fabricator" && facility.recipe) {
+      desc.textContent = `${status} // 2 ${t("resources.item.scrap")} + 1 ${t("resources.item.battery")} -> 1 ${t("resources.memoryShards")}`;
+    } else {
+      desc.textContent = status;
+    }
+    row.append(term, desc);
+    elements.facilityList.append(row);
+  }
 }
 
 function storedInventoryTotal(resources) {

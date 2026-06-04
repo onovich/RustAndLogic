@@ -1,4 +1,4 @@
-const ACTION_NAMES = new Set(["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Fire", "Wait", "Repair"]);
+const ACTION_NAMES = new Set(["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"]);
 const DIRECTION_ARGS = new Set(["Forward", "Back"]);
 const TURN_ARGS = new Set(["Left", "Right", "Around"]);
 const ITEM_ARGS = new Set(["Scrap", "Battery"]);
@@ -264,6 +264,9 @@ function parseAction(source) {
   }
   if (call.name === "Unload") {
     return singleArgAction(call, "", new Set(["Home"]));
+  }
+  if (call.name === "Craft") {
+    return singleArgAction(call, "Home", new Set(["Home"]));
   }
   if (["Wait", "Repair"].includes(call.name)) {
     if (call.arg) {

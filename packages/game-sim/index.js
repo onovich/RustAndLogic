@@ -14,6 +14,7 @@ const ACTION_ENERGY_COST = {
   PickUp: 1,
   Drop: 1,
   Unload: 1,
+  Craft: 1,
   Fire: 2,
   Wait: 1,
   Repair: 1,
@@ -24,7 +25,7 @@ export function createGame() {
     width: 7,
     height: 5,
     tick: 0,
-    instructionCapacity: 8,
+    instructionCapacity: 12,
     resources: { scrap: 0, cells: 0, memoryShards: 1 },
     robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
     cargoCapacity: 3,
@@ -239,6 +240,7 @@ export function snapshot(game) {
     logs: game.logs,
     arena: game.arena,
     offline: game.offline,
+    facilities: snapshotFacilities(game),
   }));
 }
 
@@ -333,6 +335,9 @@ function makeHardware(game) {
       }
       if (instruction.op === "Unload") {
         return performPoweredAction(game, instruction.op, () => unloadCargo(game));
+      }
+      if (instruction.op === "Craft") {
+        return performPoweredAction(game, instruction.op, () => craftAtBase(game));
       }
       if (instruction.op === "Fire") {
         return performPoweredAction(game, instruction.op, () => fireWeapon(game));
@@ -485,10 +490,13 @@ function repairRobot(game) {
   if (game.robot.hp >= maxHp) {
     return { ok: false, message: "Repair blocked: HP is already full." };
   }
-  if (countCargoType(game.robot.cargo, "scrap") + game.resources.scrap < 1) {
+  if (!isHome(game, game.robot)) {
+    return { ok: false, message: "Repair requires home base." };
+  }
+  if (game.resources.scrap < 1) {
     return { ok: false, message: "Repair blocked: requires 1 scrap." };
   }
-  spendFieldResource(game, "scrap", 1);
+  spendResource(game, "scrap", 1);
   game.robot.hp = Math.min(maxHp, game.robot.hp + 2);
   game.lastDamageTick = null;
   return { ok: true, message: `Repaired to ${game.robot.hp} HP.` };
@@ -515,6 +523,19 @@ function spendFieldResource(game, type, amount) {
   if (remaining > 0) {
     game.resources[type] = Math.max(0, (game.resources[type] ?? 0) - remaining);
   }
+}
+
+function craftAtBase(game) {
+  if (!isHome(game, game.robot)) {
+    return { ok: false, message: "Craft requires home base." };
+  }
+  if (game.resources.scrap < 2 || game.resources.cells < 1) {
+    return { ok: false, message: "Craft blocked: requires 2 scrap and 1 battery." };
+  }
+  spendResource(game, "scrap", 2);
+  spendResource(game, "cells", 1);
+  game.resources.memoryShards += 1;
+  return { ok: true, message: "Fabricated 1 memory shard." };
 }
 
 function isHome(game, location) {
@@ -608,6 +629,33 @@ function formatCargoCounts(counts) {
 
 function countCargoType(items, type) {
   return items.filter((item) => item === type).length;
+}
+
+function snapshotFacilities(game) {
+  const home = isHome(game, game.robot);
+  return {
+    charger: {
+      id: "charger",
+      online: true,
+      ready: home && game.robot.energy < game.robot.maxEnergy,
+      status: home ? (game.robot.energy < game.robot.maxEnergy ? "charging" : "standby") : "remote",
+    },
+    repairBay: {
+      id: "repair-bay",
+      online: true,
+      ready: home && game.robot.hp < maxRobotHp(game) && game.resources.scrap > 0,
+      status: home
+        ? (game.robot.hp < maxRobotHp(game) ? (game.resources.scrap > 0 ? "ready" : "missing") : "standby")
+        : "remote",
+    },
+    fabricator: {
+      id: "fabricator",
+      online: true,
+      ready: home && game.resources.scrap >= 2 && game.resources.cells >= 1,
+      status: home ? (game.resources.scrap >= 2 && game.resources.cells >= 1 ? "ready" : "missing") : "remote",
+      recipe: { scrap: 2, cells: 1, memoryShards: 1 },
+    },
+  };
 }
 
 function compare(changes, path, before, after) {

@@ -31,6 +31,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add offline fast-forward simulation.
 - [x] Split robot cargo from base inventory and make `Unload(Home)` transfer delivered items into base stock.
 - [x] Add an early battery loop with home recharge and low-power blocking.
+- [x] Add minimal base-facility semantics for charging, repair, and crafting with a snapshot-visible facility model.
 - [x] Add tests for movement, pickup, resource collection, upgrades, snapshots, and arena preview.
 
 ## Milestone 3: Web UI Flow Slice
@@ -89,6 +90,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a twenty-fourth visual refinement pass for binding the UI to actually available mono/body/display font stacks.
 - [x] Document the current Web UI design system for future extension and reuse.
 - [x] Surface base inventory, robot cargo, and battery state in the Web UI task and status panels.
+- [x] Add facility status readouts and curated M1/M2/M3 sample scripts to the Web UI settings flow.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

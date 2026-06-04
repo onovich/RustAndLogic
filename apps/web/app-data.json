@@ -14,6 +14,53 @@
     { "id": "recharge", "labelKey": "flow.recharge" },
     { "id": "save", "labelKey": "flow.save" }
   ],
+  "scriptPresets": [
+    {
+      "id": "m1",
+      "labelKey": "samples.m1",
+      "lines": [
+        "@Wake",
+        "Move()",
+        "Turn(Right)",
+        "PickUp()"
+      ]
+    },
+    {
+      "id": "m2",
+      "labelKey": "samples.m2",
+      "lines": [
+        "@Loop",
+        "Check(Energy).Below(40)",
+        "IfTrue MoveToward(Home)",
+        "Check(Cargo).IsFull()",
+        "IfTrue MoveToward(Home)",
+        "Check().Has(Scrap)",
+        "IfTrue PickUp()",
+        "IfFalse Move()",
+        "Check(Here).Is(Home)",
+        "IfTrue Unload(Home)",
+        "Goto @Loop"
+      ]
+    },
+    {
+      "id": "m3",
+      "labelKey": "samples.m3",
+      "lines": [
+        "@Loop",
+        "Check(Here).Is(Home)",
+        "IfTrue Unload(Home)",
+        "IfTrue Craft(Home)",
+        "Check(HP).Below(60)",
+        "IfTrue Repair()",
+        "Check(Cargo).IsFull()",
+        "IfTrue MoveToward(Home)",
+        "Check().Has(Scrap)",
+        "IfTrue PickUp()",
+        "IfFalse Move()",
+        "Goto @Loop"
+      ]
+    }
+  ],
   "storyPages": [
     { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
     { "speakerKey": "story.opening.2.speaker", "textKey": "story.opening.2.text" },
@@ -22,15 +69,19 @@
   "script": {
     "initialSource": [
       "@Loop",
-      "PickUp()",
+      "Check(Energy).Below(40)",
+      "IfTrue MoveToward(Home)",
+      "Check(Cargo).IsFull()",
+      "IfTrue MoveToward(Home)",
       "Check().Has(Scrap)",
-      "IfTrue Goto @Loop",
+      "IfTrue PickUp()",
       "Move()",
-      "Turn(Right)",
+      "Check(Here).Is(Home)",
+      "IfTrue Unload(Home)",
       "Goto @Loop"
     ],
     "syntax": {
-      "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Fire", "Wait", "Repair"],
+      "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"],
       "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above"],
       "branches": ["Goto", "IfTrue", "IfFalse"],
       "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Enemy", "Wall", "Cargo", "HP", "Energy", "Damage"]
@@ -45,6 +96,7 @@
       { "value": "PickUp()", "kindKey": "completion.kind.action", "hintKey": "completion.pickup.forward" },
       { "value": "Drop()", "kindKey": "completion.kind.action", "hintKey": "completion.drop.forward" },
       { "value": "Unload(Home)", "kindKey": "completion.kind.action", "hintKey": "completion.unload.home" },
+      { "value": "Craft(Home)", "kindKey": "completion.kind.action", "hintKey": "completion.craft.home" },
       { "value": "Fire()", "kindKey": "completion.kind.action", "hintKey": "completion.fire.forward" },
       { "value": "Wait()", "kindKey": "completion.kind.action", "hintKey": "completion.wait" },
       { "value": "Repair()", "kindKey": "completion.kind.action", "hintKey": "completion.repair" },

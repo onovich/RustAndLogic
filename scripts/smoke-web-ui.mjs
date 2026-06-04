@@ -115,13 +115,19 @@ try {
   }
 
   await expectText(page, "compile-status", "");
-  await expectText(page, "capacity-label", "Capacity 8");
+  await expectText(page, "capacity-label", "Capacity 12");
   await expectText(page, "play-button", "Play");
   await expectText(page, "step-button", "Step");
   await expectText(page, "speed-button", "1X");
   const lineNumbers = await page.getByTestId("script-line-numbers").innerText();
   if (!lineNumbers.startsWith("01\n02\n03")) {
     throw new Error(`Expected zero-padded line numbers, got: ${lineNumbers}`);
+  }
+  const facilitiesText = (await page.getByTestId("facility-list").innerText()).toUpperCase();
+  for (const label of ["CHARGER", "REPAIR_BAY", "FABRICATOR"]) {
+    if (!facilitiesText.includes(label)) {
+      throw new Error(`Expected facility list to include ${label}, got: ${facilitiesText}`);
+    }
   }
 
   const stageHeaderLayout = await page.evaluate(() => {
@@ -292,7 +298,7 @@ try {
   await expectText(page, "compile-status", "");
   const diagnosticText = await page.getByTestId("script-diagnostics").innerText();
   const diagnosticUpper = diagnosticText.toUpperCase();
-  if (!diagnosticUpper.includes("LINE 8") || !diagnosticUpper.includes("UNKNOWN INSTRUCTION: BOGUS")) {
+  if (!diagnosticUpper.includes("LINE 12") || !diagnosticUpper.includes("UNKNOWN INSTRUCTION: BOGUS")) {
     throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
   }
   const unknownTokenCount = await page.locator(".tok-unknown").count();
@@ -372,8 +378,21 @@ try {
   await expectText(page, "cargo-count", "0/3");
 
   await page.getByTestId("settings-toggle").click();
+  await page.getByTestId("sample-actions").waitFor({ state: "visible" });
+  const sampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
+  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
+    if (!sampleActions.includes(label)) {
+      throw new Error(`Expected sample actions to include ${label}, got: ${sampleActions}`);
+    }
+  }
+  await page.locator('[data-testid="sample-actions"] [data-preset="m3"]').click();
+  const presetScript = await page.getByTestId("script-editor").inputValue();
+  if (!presetScript.includes("Craft(Home)")) {
+    throw new Error(`Expected M3 preset to include Craft(Home), got: ${presetScript}`);
+  }
+  await page.locator('[data-testid="sample-actions"] [data-preset="m2"]').click();
   await page.getByTestId("upgrade-button").click();
-  await expectText(page, "capacity-label", "Capacity 10");
+  await expectText(page, "capacity-label", "Capacity 14");
 
   const checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
   for (const label of [

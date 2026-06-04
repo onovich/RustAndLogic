@@ -42,6 +42,16 @@ resources.item.battery,Battery,电池
 modules.aria,Robot modules,机器人模块
 modules.title,Modules,模块
 modules.statusTitle,Module_Status,模块状态
+facilities.aria,Base facilities,基地设施
+facilities.title,Facilities,设施
+facilities.charger,Charger,充能桩
+facilities.repairBay,Repair_Bay,维修台
+facilities.fabricator,Fabricator,合成台
+facilities.status.remote,Remote,远端待机
+facilities.status.standby,Standby,待命
+facilities.status.charging,Charging,充能中
+facilities.status.ready,Ready,可用
+facilities.status.missing,Missing_Input,缺少材料
 modules.armor,Armor,装甲
 modules.weapon,Weapon,武器
 modules.battery,Battery,电量
@@ -59,6 +69,10 @@ flow.collect,Load cargo from the map,从地图装载货物
 flow.unload,Unload cargo at home,回家卸载货物
 flow.recharge,Recharge at home,回家补满电量
 flow.save,Save and reload progress,保存并读取进度
+samples.title,Field scripts,示例脚本
+samples.m1,M1 Wake,示例 M1
+samples.m2,M2 Haul Loop,示例 M2
+samples.m3,M3 Base Cycle,示例 M3
 console.aria,Runtime console,运行控制台
 console.title,Console,控制台
 diff.aria,State diff,状态差异
@@ -128,6 +142,7 @@ completion.turn.around,Turn around,转身
 completion.pickup.forward,Pick up from forward cell,拾取面前一格
 completion.drop.forward,Drop cargo to forward cell,把货物丢到面前一格
 completion.unload.home,Unload cargo at home,在基地卸货
+completion.craft.home,Craft at home,在基地合成
 completion.fire.forward,Fire forward,向前开火
 completion.wait,Spend one tick,等待一个回合
 completion.repair,Repair HP with scrap,消耗废铁修复 HP

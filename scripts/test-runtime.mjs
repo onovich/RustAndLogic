@@ -50,6 +50,9 @@ PickUp()
   const energyQuery = compileTapeScript("Check(Energy).Below(40)", { instructionCapacity: 1 });
   assert.equal(energyQuery.ok, true);
 
+  const craftCall = compileTapeScript("Craft(Home)", { instructionCapacity: 1 });
+  assert.equal(craftCall.ok, true);
+
   const missingLabel = compileTapeScript("Goto @Missing", { instructionCapacity: 3 });
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
@@ -126,7 +129,7 @@ Goto @Loop`;
   game.resources.scrap = 1;
   state = expandLogicMemory(game);
   assert.equal(state.resources.scrap, 0);
-  assert.equal(state.instructionCapacity, 10);
+  assert.equal(state.instructionCapacity, 14);
 
   state = runGame(game, 6);
   assert.equal(state.tick, 8);
@@ -281,12 +284,20 @@ Goto @Loop`;
   const repairGame = createGame();
   repairGame.robot.hp = 5;
   repairGame.resources.scrap = 1;
-  repairGame.robot.cargo = ["scrap"];
+  repairGame.robot.x = 0;
+  repairGame.robot.y = 0;
   state = deployProgram(repairGame, "Repair()");
   state = stepGame(repairGame);
   assert.equal(state.robot.hp, 7);
-  assert.equal(state.resources.scrap, 1);
-  assert.equal(state.robot.cargo.length, 0);
+  assert.equal(state.resources.scrap, 0);
+
+  const fieldRepairGame = createGame();
+  fieldRepairGame.robot.hp = 5;
+  fieldRepairGame.resources.scrap = 2;
+  state = deployProgram(fieldRepairGame, "Repair()");
+  state = stepGame(fieldRepairGame);
+  assert.equal(state.robot.hp, 5);
+  assert.equal(state.logs.includes("Repair(): Repair requires home base."), true);
 
   const unloadGame = createGame();
   unloadGame.robot.x = 0;
@@ -298,6 +309,38 @@ Goto @Loop`;
   assert.equal(state.resources.scrap, 1);
   assert.equal(state.resources.cells, 1);
   assert.equal(state.logs.some((line) => line.includes("Transferred 2 cargo to base")), true);
+
+  const craftGame = createGame();
+  craftGame.robot.x = 0;
+  craftGame.robot.y = 0;
+  craftGame.resources.scrap = 2;
+  craftGame.resources.cells = 1;
+  state = deployProgram(craftGame, "Craft(Home)");
+  state = stepGame(craftGame);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.resources.cells, 0);
+  assert.equal(state.resources.memoryShards, 2);
+  assert.equal(state.logs.includes("Craft(Home): Fabricated 1 memory shard. Home relay restored battery."), true);
+
+  const craftBlockedGame = createGame();
+  craftBlockedGame.robot.x = 0;
+  craftBlockedGame.robot.y = 0;
+  craftBlockedGame.resources.scrap = 1;
+  state = deployProgram(craftBlockedGame, "Craft(Home)");
+  state = stepGame(craftBlockedGame);
+  assert.equal(state.resources.memoryShards, 1);
+  assert.equal(state.logs.includes("Craft(Home): Craft blocked: requires 2 scrap and 1 battery."), true);
+
+  const facilityGame = createGame();
+  facilityGame.robot.x = 0;
+  facilityGame.robot.y = 0;
+  facilityGame.resources.scrap = 2;
+  facilityGame.resources.cells = 1;
+  facilityGame.robot.hp = 6;
+  state = snapshot(facilityGame);
+  assert.equal(state.facilities.charger.status, "standby");
+  assert.equal(state.facilities.repairBay.status, "ready");
+  assert.equal(state.facilities.fabricator.status, "ready");
 
   const rechargeGame = createGame();
   rechargeGame.robot.x = 1;
