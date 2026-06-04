@@ -31,6 +31,7 @@ let appData = null;
 let storyPages = [];
 let flow = {};
 let runtimeToast = null;
+let seenTeachingMoments = new Set();
 let canvasModeTransitionTimer = 0;
 let currentStageId = null;
 const WORLD_CELL_SIZE = 40;
@@ -237,6 +238,14 @@ function getStageRecommendedPreset(stage = getStageDefinition()) {
   return scriptPresets.find((preset) => preset.id === recommendedId) ?? null;
 }
 
+function getStageTeachingMoments(kind, stage = getStageDefinition()) {
+  return stage?.teachingMoments?.[kind] ?? [];
+}
+
+function teachingMomentKey(stageId, kind, momentId) {
+  return `${stageId}:${kind}:${momentId}`;
+}
+
 function resetCameraIntro() {
   canvasState.x = 0;
   canvasState.y = 0;
@@ -262,6 +271,7 @@ function applyStageConfiguration(stageId, options = {}) {
 
   currentStageId = stage.id;
   storyPages = stage.storyPages ?? appData.storyPages ?? [];
+  seenTeachingMoments = new Set();
   setStageRecommendedSpeed(stage);
   const nextFlow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
   flow = nextFlow;
@@ -670,6 +680,7 @@ render(snapshot(game), { animate: false });
 
 function render(state, options = {}) {
   const beforeState = previousState;
+  const flowBefore = { ...flow };
   const diff = beforeState ? diffSnapshots(beforeState, state) : [];
   previousState = state;
   syncFlowState(beforeState, state);
@@ -724,6 +735,7 @@ function render(state, options = {}) {
     hideRuntimeToast();
   }
   updateControls();
+  maybeShowSuccessTeachingMoment(flowBefore);
 }
 
 function startPlayback() {
@@ -817,7 +829,12 @@ function pauseForBlock(state) {
     game.logs.unshift(message);
     render(snapshot(game), { animate: false });
   }
-  showRuntimeToast(state);
+  const teachingMoment = consumeFailureTeachingMoment(detectRuntimeCause(state));
+  if (teachingMoment) {
+    showToast(teachingMoment, "guide");
+  } else {
+    showRuntimeToast(state);
+  }
   updateControls();
 }
 
@@ -825,17 +842,26 @@ function showRuntimeToast(state) {
   if (!elements.runtimeToast || !elements.runtimeToastTitle || !elements.runtimeToastBody) {
     return;
   }
-  runtimeToast = summarizeRuntimeToast(state);
-  elements.runtimeToastTitle.textContent = runtimeToast.title;
-  elements.runtimeToastBody.textContent = runtimeToast.body;
-  elements.runtimeToast.hidden = false;
+  showToast(summarizeRuntimeToast(state), "failure");
 }
 
 function hideRuntimeToast() {
   runtimeToast = null;
   if (elements.runtimeToast) {
     elements.runtimeToast.hidden = true;
+    elements.runtimeToast.dataset.kind = "";
   }
+}
+
+function showToast(toast, kind = "failure") {
+  if (!elements.runtimeToast || !elements.runtimeToastTitle || !elements.runtimeToastBody) {
+    return;
+  }
+  runtimeToast = toast;
+  elements.runtimeToast.dataset.kind = kind;
+  elements.runtimeToastTitle.textContent = toast.title;
+  elements.runtimeToastBody.textContent = toast.body;
+  elements.runtimeToast.hidden = false;
 }
 
 function summarizeRuntimeToast(state) {
@@ -898,6 +924,34 @@ function detectRuntimeCause(state) {
     return "logic";
   }
   return "generic";
+}
+
+function maybeShowSuccessTeachingMoment(flowBefore) {
+  const stage = getStageDefinition();
+  for (const moment of getStageTeachingMoments("success", stage)) {
+    const momentKey = teachingMomentKey(stage.id, "success", moment.id);
+    if (seenTeachingMoments.has(momentKey)) {
+      continue;
+    }
+    if (!flowBefore[moment.taskId] && flow[moment.taskId]) {
+      seenTeachingMoments.add(momentKey);
+      showToast({ title: t(moment.titleKey), body: t(moment.bodyKey) }, "success");
+      return;
+    }
+  }
+}
+
+function consumeFailureTeachingMoment(cause) {
+  const stage = getStageDefinition();
+  for (const moment of getStageTeachingMoments("failure", stage)) {
+    const momentKey = teachingMomentKey(stage.id, "failure", moment.id);
+    if (seenTeachingMoments.has(momentKey) || moment.cause !== cause) {
+      continue;
+    }
+    seenTeachingMoments.add(momentKey);
+    return { title: t(moment.titleKey), body: t(moment.bodyKey) };
+  }
+  return null;
 }
 
 function advanceStory() {

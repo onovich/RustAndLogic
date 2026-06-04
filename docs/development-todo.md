@@ -95,6 +95,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Bind each stage's location copy, opening briefing, and resource-priority guidance to stage configuration data.
 - [x] Bind each stage's recommended speed, available upgrades, visible facilities, and completion target summary to stage configuration data.
 - [x] Bind each stage's script scaffolds, recommended sample presets, and runtime recovery hints to stage configuration data.
+- [x] Bind each stage's one-time first-success and first-failure teaching prompts to stage configuration data.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

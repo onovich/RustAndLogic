@@ -1040,6 +1040,24 @@ textarea[data-invalid="true"] {
   box-shadow: 0 0 12px rgba(192, 57, 43, 0.3);
 }
 
+.runtime-toast[data-kind="success"] {
+  border-color: rgba(255, 238, 204, 0.9);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(144, 112, 48, 0.96), rgba(116, 84, 32, 0.96));
+  color: #fff0cf;
+  box-shadow: 0 0 12px rgba(166, 124, 41, 0.28);
+}
+
+.runtime-toast[data-kind="guide"] {
+  border-color: rgba(255, 230, 189, 0.9);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(122, 86, 39, 0.96), rgba(93, 63, 24, 0.96));
+  color: #ffe8c4;
+  box-shadow: 0 0 12px rgba(160, 112, 36, 0.26);
+}
+
 .runtime-toast strong {
   font-size: 9px;
   letter-spacing: 0.06em;

@@ -89,6 +89,15 @@
       },
       "scriptGuidanceKey": "script.guidance.m1",
       "runtimeHintKey": "runtime.stageHint.m1",
+      "teachingMoments": {
+        "success": [
+          { "id": "collect", "taskId": "collect", "titleKey": "teaching.m1.collect.title", "bodyKey": "teaching.m1.collect.body" },
+          { "id": "unload", "taskId": "unload", "titleKey": "teaching.m1.unload.title", "bodyKey": "teaching.m1.unload.body" }
+        ],
+        "failure": [
+          { "id": "empty", "cause": "logic", "titleKey": "teaching.m1.empty.title", "bodyKey": "teaching.m1.empty.body" }
+        ]
+      },
       "resourceGuidanceKey": "stage.guidance.m1",
       "storyPages": [
         { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
@@ -130,6 +139,14 @@
       },
       "scriptGuidanceKey": "script.guidance.m2",
       "runtimeHintKey": "runtime.stageHint.m2",
+      "teachingMoments": {
+        "success": [
+          { "id": "recharge", "taskId": "recharge", "titleKey": "teaching.m2.recharge.title", "bodyKey": "teaching.m2.recharge.body" }
+        ],
+        "failure": [
+          { "id": "power", "cause": "power", "titleKey": "teaching.m2.power.title", "bodyKey": "teaching.m2.power.body" }
+        ]
+      },
       "resourceGuidanceKey": "stage.guidance.m2",
       "storyPages": [
         { "speakerKey": "story.m2.1.speaker", "textKey": "story.m2.1.text" },
@@ -175,6 +192,14 @@
       },
       "scriptGuidanceKey": "script.guidance.m3",
       "runtimeHintKey": "runtime.stageHint.m3",
+      "teachingMoments": {
+        "success": [
+          { "id": "craft", "taskId": "craft", "titleKey": "teaching.m3.craft.title", "bodyKey": "teaching.m3.craft.body" }
+        ],
+        "failure": [
+          { "id": "logic", "cause": "logic", "titleKey": "teaching.m3.logic.title", "bodyKey": "teaching.m3.logic.body" }
+        ]
+      },
       "resourceGuidanceKey": "stage.guidance.m3",
       "storyPages": [
         { "speakerKey": "story.m3.1.speaker", "textKey": "story.m3.1.text" },
