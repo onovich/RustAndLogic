@@ -31,17 +31,23 @@ location.title,Location,地点
 location.kind,Wasteland recovery node,荒地回收节点
 location.description,"A rain-burned recovery site with a weak uplink and a short scavenger loop.",一处被酸雨灼烧的回收点，链路微弱，只能维持短循环拾荒。
 resources.title,Resources,资源
-resources.scrap,Scrap_Metal,废铁
-resources.cells,Power_Cells,电芯
+resources.scrap,Base_Scrap,基地废铁
+resources.cells,Base_Batteries,基地电池
 resources.memoryShards,Mem_Chips,记忆晶片
+resources.cargoCount,Cargo_Load,货舱装载
+resources.cargoManifest,Cargo_Manifest,货舱内容
+resources.cargoEmpty,Empty,空
+resources.item.scrap,Scrap,废铁
+resources.item.battery,Battery,电池
 modules.aria,Robot modules,机器人模块
 modules.title,Modules,模块
 modules.statusTitle,Module_Status,模块状态
 modules.armor,Armor,装甲
 modules.weapon,Weapon,武器
+modules.battery,Battery,电量
 modules.hp,HP,生命值
 modules.armorIntegrity,Armor_Integrity,装甲完整度
-modules.energyLoad,Energy_Load,能量负载
+modules.energyLoad,Battery_Charge,电池电量
 save.aria,Save,存档
 save.title,Save,存档
 settings.title,Settings,设置
@@ -49,9 +55,9 @@ dev.title,Developer Debug,开发调试
 flow.aria,Task checklist,任务清单
 flow.title,Objectives,目标
 flow.deploy,Compile a valid script,编译有效脚本
-flow.collect,Collect scrap from the map,从地图回收废铁
-flow.memory,Expand logic memory,扩展逻辑内存
-flow.hardware,Upgrade robot hardware,升级机器人硬件
+flow.collect,Load cargo from the map,从地图装载货物
+flow.unload,Unload cargo at home,回家卸载货物
+flow.recharge,Recharge at home,回家补满电量
 flow.save,Save and reload progress,保存并读取进度
 console.aria,Runtime console,运行控制台
 console.title,Console,控制台
@@ -136,6 +142,7 @@ completion.cargo.full,Cargo is full,货舱已满
 completion.cargo.scrap,Cargo has scrap,货舱里有废铁
 completion.cargo.battery,Cargo has battery,货舱里有电芯
 completion.hp.low,HP below threshold,HP 低于阈值
+completion.energy.low,Battery below threshold,电量低于阈值
 completion.damage.any,Damaged this tick,本回合受到伤害
 completion.goto.loop,Go to label,跳转到标签
 completion.iftrue.goto,Go if last check is true,上次查询为真时跳转
@@ -151,6 +158,8 @@ runtime.blockedWall,Halt_Reason: Physical_Block,中断原因：实体阻挡
 runtime.recodeWall,Re-code logic or clear debris,重写逻辑或先清理障碍
 runtime.blockedOccupied,Halt_Reason: Occupied_Cell,中断原因：目标格被占用
 runtime.recodeOccupied,Route around the obstruction,绕开障碍或先腾空目标格
+runtime.blockedPower,Halt_Reason: Battery_Depleted,中断原因：电量耗尽
+runtime.recodePower,Route home before the battery floor,在电量见底前先回家
 runtime.blockedEmpty,Halt_Reason: Empty_Target,中断原因：目标为空
 runtime.recodeEmpty,Check the forward cell before acting,执行动作前先检查前方
 runtime.logicFault,Halt_Reason: Logic_Fault,中断原因：逻辑故障

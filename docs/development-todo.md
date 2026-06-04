@@ -19,6 +19,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Implement a two-pass compiler for labels, actions, queries, jumps, and comments.
 - [x] Implement a deterministic VM state model with `pc`, `cf`, lifecycle state, and watchdog.
 - [x] Define a hardware boundary for game/world actions.
+- [x] Add the early `Check(Energy)` query path for low-power return logic.
 - [x] Add tests for compile errors, label resolution, action suspension, and watchdog faults.
 
 ## Milestone 2: Headless Game Simulation Slice
@@ -28,6 +29,8 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Produce serializable snapshots for UI rendering.
 - [x] Add explicit diff output for UI rendering.
 - [x] Add offline fast-forward simulation.
+- [x] Split robot cargo from base inventory and make `Unload(Home)` transfer delivered items into base stock.
+- [x] Add an early battery loop with home recharge and low-power blocking.
 - [x] Add tests for movement, pickup, resource collection, upgrades, snapshots, and arena preview.
 
 ## Milestone 3: Web UI Flow Slice
@@ -85,6 +88,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Complete a twenty-third visual refinement pass for removing the fixed spotlight duplicate from the stage layer.
 - [x] Complete a twenty-fourth visual refinement pass for binding the UI to actually available mono/body/display font stacks.
 - [x] Document the current Web UI design system for future extension and reuse.
+- [x] Surface base inventory, robot cargo, and battery state in the Web UI task and status panels.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

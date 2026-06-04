@@ -10,8 +10,8 @@
   "tasks": [
     { "id": "deploy", "labelKey": "flow.deploy" },
     { "id": "collect", "labelKey": "flow.collect" },
-    { "id": "memory", "labelKey": "flow.memory" },
-    { "id": "hardware", "labelKey": "flow.hardware" },
+    { "id": "unload", "labelKey": "flow.unload" },
+    { "id": "recharge", "labelKey": "flow.recharge" },
     { "id": "save", "labelKey": "flow.save" }
   ],
   "storyPages": [
@@ -33,7 +33,7 @@
       "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Fire", "Wait", "Repair"],
       "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above"],
       "branches": ["Goto", "IfTrue", "IfFalse"],
-      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Enemy", "Wall", "Cargo", "HP", "Damage"]
+      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Enemy", "Wall", "Cargo", "HP", "Energy", "Damage"]
     },
     "completions": [
       { "value": "Move()", "kindKey": "completion.kind.action", "hintKey": "completion.move.forward" },
@@ -59,6 +59,7 @@
       { "value": "Check(Cargo).Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.scrap" },
       { "value": "Check(Cargo).Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.battery" },
       { "value": "Check(HP).Below(30)", "kindKey": "completion.kind.query", "hintKey": "completion.hp.low" },
+      { "value": "Check(Energy).Below(40)", "kindKey": "completion.kind.query", "hintKey": "completion.energy.low" },
       { "value": "Check(Damage).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.damage.any" },
       { "value": "Goto @Loop", "kindKey": "completion.kind.branch", "hintKey": "completion.goto.loop" },
       { "value": "IfTrue Goto @Loop", "kindKey": "completion.kind.branch", "hintKey": "completion.iftrue.goto" },

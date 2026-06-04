@@ -7,6 +7,17 @@ const DELTAS = {
   S: { x: 0, y: 1 },
   W: { x: -1, y: 0 },
 };
+const ACTION_ENERGY_COST = {
+  Move: 1,
+  MoveToward: 1,
+  Turn: 1,
+  PickUp: 1,
+  Drop: 1,
+  Unload: 1,
+  Fire: 2,
+  Wait: 1,
+  Repair: 1,
+};
 
 export function createGame() {
   return {
@@ -15,7 +26,7 @@ export function createGame() {
     tick: 0,
     instructionCapacity: 8,
     resources: { scrap: 0, cells: 0, memoryShards: 1 },
-    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, cargo: [] },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
     cargoCapacity: 3,
     base: { x: 0, y: 0 },
     lastDamageTick: null,
@@ -245,6 +256,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "robot.hp", before?.robot?.hp, after?.robot?.hp);
   compare(changes, "robot.armor", before?.robot?.armor, after?.robot?.armor);
   compare(changes, "robot.weapon", before?.robot?.weapon, after?.robot?.weapon);
+  compare(changes, "robot.energy", before?.robot?.energy, after?.robot?.energy);
   compare(changes, "program.ok", before?.program?.ok, after?.program?.ok);
   compare(changes, "program.instructionUsed", before?.program?.instructionUsed, after?.program?.instructionUsed);
   compare(changes, "vm.pc", before?.vm?.pc, after?.vm?.pc);
@@ -274,6 +286,9 @@ function makeHardware(game) {
       if (instruction.target === "HP") {
         return compareNumber(game.robot.hp, instruction.predicate, instruction.value);
       }
+      if (instruction.target === "Energy") {
+        return compareNumber(energyPercent(game), instruction.predicate, instruction.value);
+      }
       if (instruction.target === "Damage") {
         const damage = game.lastDamageTick === game.tick ? 1 : 0;
         return compareNumber(damage, instruction.predicate, instruction.value);
@@ -301,32 +316,32 @@ function makeHardware(game) {
     },
     action(instruction) {
       if (instruction.op === "Move") {
-        return move(game, instruction.arg === "Back" ? -1 : 1);
+        return performPoweredAction(game, instruction.op, () => move(game, instruction.arg === "Back" ? -1 : 1));
       }
       if (instruction.op === "MoveToward") {
-        return moveTowardHome(game);
+        return performPoweredAction(game, instruction.op, () => moveTowardHome(game));
       }
       if (instruction.op === "Turn") {
         const delta = { Left: -1, Right: 1, Around: 2 }[instruction.arg];
-        return turn(game, delta);
+        return performPoweredAction(game, instruction.op, () => turn(game, delta));
       }
       if (instruction.op === "PickUp") {
-        return pickUp(game);
+        return performPoweredAction(game, instruction.op, () => pickUp(game));
       }
       if (instruction.op === "Drop") {
-        return dropCargo(game);
+        return performPoweredAction(game, instruction.op, () => dropCargo(game));
       }
       if (instruction.op === "Unload") {
-        return unloadCargo(game);
+        return performPoweredAction(game, instruction.op, () => unloadCargo(game));
       }
       if (instruction.op === "Fire") {
-        return fireWeapon(game);
+        return performPoweredAction(game, instruction.op, () => fireWeapon(game));
       }
       if (instruction.op === "Wait") {
-        return { ok: true, message: "Waited." };
+        return performPoweredAction(game, instruction.op, () => ({ ok: true, message: "Waited." }));
       }
       if (instruction.op === "Repair") {
-        return repairRobot(game);
+        return performPoweredAction(game, instruction.op, () => repairRobot(game));
       }
       return { ok: false, message: `Unknown action ${instruction.op}.` };
     },
@@ -407,9 +422,8 @@ function pickUp(game) {
     return { ok: false, message: "Cargo hold is full." };
   }
   game.deposits = game.deposits.filter((item) => item.id !== deposit.id);
-  game.resources[deposit.type] += 1;
   game.robot.cargo.push(deposit.type);
-  return { ok: true, message: `Collected ${deposit.type}.` };
+  return { ok: true, message: `Loaded ${deposit.type} into cargo.` };
 }
 
 function dropCargo(game) {
@@ -426,7 +440,6 @@ function dropCargo(game) {
     game.robot.cargo.push(cargo);
     return { ok: false, message: "Drop blocked by occupied cell." };
   }
-  game.resources[cargo] = Math.max(0, (game.resources[cargo] ?? 0) - 1);
   game.deposits.push({
     id: `dropped-${cargo}-${game.tick}-${game.deposits.length}`,
     type: cargo,
@@ -443,9 +456,17 @@ function unloadCargo(game) {
   if (game.robot.cargo.length === 0) {
     return { ok: false, message: "No cargo to unload." };
   }
+  const delivered = countCargo(game.robot.cargo);
   const count = game.robot.cargo.length;
+  for (const item of game.robot.cargo) {
+    if (item === "cell") {
+      game.resources.cells += 1;
+    } else {
+      game.resources[item] = (game.resources[item] ?? 0) + 1;
+    }
+  }
   game.robot.cargo = [];
-  return { ok: true, message: `Unloaded ${count} cargo.` };
+  return { ok: true, message: `Transferred ${count} cargo to base (${formatCargoCounts(delivered)}).` };
 }
 
 function fireWeapon(game) {
@@ -464,10 +485,10 @@ function repairRobot(game) {
   if (game.robot.hp >= maxHp) {
     return { ok: false, message: "Repair blocked: HP is already full." };
   }
-  if (game.resources.scrap < 1) {
+  if (countCargoType(game.robot.cargo, "scrap") + game.resources.scrap < 1) {
     return { ok: false, message: "Repair blocked: requires 1 scrap." };
   }
-  spendResource(game, "scrap", 1);
+  spendFieldResource(game, "scrap", 1);
   game.robot.hp = Math.min(maxHp, game.robot.hp + 2);
   game.lastDamageTick = null;
   return { ok: true, message: `Repaired to ${game.robot.hp} HP.` };
@@ -479,6 +500,9 @@ function maxRobotHp(game) {
 
 function spendResource(game, type, amount) {
   game.resources[type] = Math.max(0, (game.resources[type] ?? 0) - amount);
+}
+
+function spendFieldResource(game, type, amount) {
   const cargoType = type === "cells" ? "cell" : type;
   let remaining = amount;
   game.robot.cargo = game.robot.cargo.filter((item) => {
@@ -488,6 +512,9 @@ function spendResource(game, type, amount) {
     }
     return true;
   });
+  if (remaining > 0) {
+    game.resources[type] = Math.max(0, (game.resources[type] ?? 0) - remaining);
+  }
 }
 
 function isHome(game, location) {
@@ -532,6 +559,55 @@ function findDeposit(game, location, type = "") {
     const typeMatches = type ? deposit.type === type : true;
     return typeMatches && deposit.x === location.x && deposit.y === location.y;
   });
+}
+
+function performPoweredAction(game, op, run) {
+  let relayMessage = "";
+  if (isHome(game, game.robot) && game.robot.energy < game.robot.maxEnergy) {
+    game.robot.energy = game.robot.maxEnergy;
+    relayMessage = " Home relay restored battery.";
+  }
+
+  const cost = ACTION_ENERGY_COST[op] ?? 1;
+  if (game.robot.energy < cost) {
+    return { ok: false, message: "Battery depleted. Return home." };
+  }
+
+  const result = run();
+  if (result.ok) {
+    game.robot.energy = Math.max(0, game.robot.energy - cost);
+    if (isHome(game, game.robot) && game.robot.energy < game.robot.maxEnergy) {
+      game.robot.energy = game.robot.maxEnergy;
+      relayMessage = " Home relay restored battery.";
+    }
+  }
+
+  return relayMessage ? { ...result, message: `${result.message}${relayMessage}` } : result;
+}
+
+function energyPercent(game) {
+  if (!game.robot.maxEnergy) {
+    return 0;
+  }
+  return Math.round((game.robot.energy / game.robot.maxEnergy) * 100);
+}
+
+function countCargo(items) {
+  return items.reduce((counts, item) => {
+    const key = item === "cell" ? "battery" : item;
+    counts[key] = (counts[key] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function formatCargoCounts(counts) {
+  return Object.entries(counts)
+    .map(([type, amount]) => `${type} x${amount}`)
+    .join(", ");
+}
+
+function countCargoType(items, type) {
+  return items.filter((item) => item === type).length;
 }
 
 function compare(changes, path, before, after) {

@@ -59,6 +59,8 @@ Goto @Loop
 | keep | 查询 | `Check(Cargo).Has(Battery)` | 检查货舱里是否有电池。 | 设置条件标志为 true 或 false。 | `Check(Cargo).Has(Battery)` |
 | keep | 查询 | `Check(HP).Below(30)` | 检查 HP 是否低于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(HP).Below(30)` |
 | keep | 查询 | `Check(HP).Above(70)` | 检查 HP 是否高于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(HP).Above(70)` |
+| keep | 查询 | `Check(Energy).Below(40)` | 检查当前电量百分比是否低于指定阈值。 | 设置条件标志为 true 或 false；数值按 0~100 的电量百分比计算。 | `Check(Energy).Below(40)` |
+| keep | 查询 | `Check(Energy).Above(80)` | 检查当前电量百分比是否高于指定阈值。 | 设置条件标志为 true 或 false；数值按 0~100 的电量百分比计算。 | `Check(Energy).Above(80)` |
 | keep | 查询 | `Check(Damage).Above(0)` | 检查当前 tick 是否刚受到伤害。 | 设置条件标志为 true 或 false；当前由模拟状态的伤害标记决定。 | `Check(Damage).Above(0)` |
 | keep | 跳转 | `Goto @Label` | 无条件跳转到指定标签。 | 如果目标标签不存在，编译失败。 | `Goto @Loop` |
 | keep | 条件前缀 | `IfTrue Goto @Label` | 当上一次查询结果为 true 时跳转。 | 如果条件不满足，则跳过这一行继续向下执行。 | `IfTrue Goto @Grab` |
@@ -74,7 +76,7 @@ Goto @Loop
 | 物品 | `Scrap`、`Battery` |
 | 实体 | `Enemy` |
 | 地形 / 标记 | `Wall`、`Home` |
-| 状态量 | `Cargo`、`HP`、`Damage` |
+| 状态量 | `Cargo`、`HP`、`Energy`、`Damage` |
 
 ## 拟新增指令
 

@@ -47,6 +47,9 @@ PickUp()
   const moveBack = compileTapeScript("Move(Back)", { instructionCapacity: 1 });
   assert.equal(moveBack.ok, true);
 
+  const energyQuery = compileTapeScript("Check(Energy).Below(40)", { instructionCapacity: 1 });
+  assert.equal(energyQuery.ok, true);
+
   const missingLabel = compileTapeScript("Goto @Missing", { instructionCapacity: 3 });
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
@@ -107,11 +110,12 @@ Goto @Loop`;
 
   const beforeStep = state;
   state = stepGame(game);
-  assert.equal(state.resources.scrap, 1);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.robot.cargo.length, 1);
   assert.equal(state.deposits.some((deposit) => deposit.id === "scrap-a"), false);
   assert.equal(state.vm.state, "Suspended");
   const stepDiff = diffSnapshots(beforeStep, state);
-  assert.equal(stepDiff.some((change) => change.path === "resources.scrap" && change.after === 1), true);
+  assert.equal(stepDiff.some((change) => change.path === "robot.cargo.count" && change.after === 1), true);
   assert.equal(stepDiff.some((change) => change.path === "deposits.count" && change.after === 2), true);
 
   state = stepGame(game);
@@ -119,6 +123,7 @@ Goto @Loop`;
   assert.equal(state.robot.y, 2);
   assert.equal(state.vm.state, "Suspended");
 
+  game.resources.scrap = 1;
   state = expandLogicMemory(game);
   assert.equal(state.resources.scrap, 0);
   assert.equal(state.instructionCapacity, 10);
@@ -170,7 +175,7 @@ Goto @Loop`;
   const cargoGame = createGame();
   state = deployProgram(cargoGame, "PickUp()\nDrop()");
   state = stepGame(cargoGame);
-  assert.equal(state.resources.scrap, 1);
+  assert.equal(state.resources.scrap, 0);
   assert.equal(state.robot.cargo.length, 1);
   state = stepGame(cargoGame);
   assert.equal(state.resources.scrap, 0);
@@ -209,6 +214,13 @@ Goto @Loop`;
   queryGame.deposits = [{ id: "front-cell", type: "cell", x: 2, y: 2 }];
   state = deployProgram(queryGame, "Check().Has(Battery)");
   state = stepGame(queryGame);
+  assert.equal(state.vm.cf, true);
+
+  const energyQueryGame = createGame();
+  energyQueryGame.robot.energy = 2;
+  energyQueryGame.robot.maxEnergy = 6;
+  state = deployProgram(energyQueryGame, "Check(Energy).Below(40)");
+  state = stepGame(energyQueryGame);
   assert.equal(state.vm.cf, true);
 
   const wallGame = createGame();
@@ -273,7 +285,7 @@ Goto @Loop`;
   state = deployProgram(repairGame, "Repair()");
   state = stepGame(repairGame);
   assert.equal(state.robot.hp, 7);
-  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.resources.scrap, 1);
   assert.equal(state.robot.cargo.length, 0);
 
   const unloadGame = createGame();
@@ -283,5 +295,27 @@ Goto @Loop`;
   state = deployProgram(unloadGame, "Unload(Home)");
   state = stepGame(unloadGame);
   assert.equal(state.robot.cargo.length, 0);
-  assert.equal(state.logs.includes("Unload(Home): Unloaded 2 cargo."), true);
+  assert.equal(state.resources.scrap, 1);
+  assert.equal(state.resources.cells, 1);
+  assert.equal(state.logs.some((line) => line.includes("Transferred 2 cargo to base")), true);
+
+  const rechargeGame = createGame();
+  rechargeGame.robot.x = 1;
+  rechargeGame.robot.y = 0;
+  rechargeGame.robot.dir = "W";
+  rechargeGame.robot.energy = 1;
+  state = deployProgram(rechargeGame, "Move()");
+  state = stepGame(rechargeGame);
+  assert.equal(state.robot.x, 0);
+  assert.equal(state.robot.y, 0);
+  assert.equal(state.robot.energy, state.robot.maxEnergy);
+  assert.equal(state.logs.some((line) => line.includes("Home relay restored battery")), true);
+
+  const depletedGame = createGame();
+  depletedGame.robot.energy = 0;
+  state = deployProgram(depletedGame, "Move()");
+  state = stepGame(depletedGame);
+  assert.equal(state.robot.x, 1);
+  assert.equal(state.robot.y, 2);
+  assert.equal(state.logs.includes("Move(): Battery depleted. Return home."), true);
 }

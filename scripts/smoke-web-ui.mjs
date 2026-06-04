@@ -56,7 +56,7 @@ try {
   if (!openingText.includes("satellite uplink") && !openingText.includes("卫星链路")) {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
-  const storyEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
+  const storyEntityCount = await page.locator(".grid .deposit, .grid .obstacle, .grid .base-marker, .grid .robot-avatar").count();
   if (storyEntityCount < 4) {
     throw new Error(`Expected real stage entities to be loaded from startup, got ${storyEntityCount}.`);
   }
@@ -93,7 +93,7 @@ try {
     await page.getByTestId("story-dialogue").click();
   }
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
-  const idleEntityCount = await page.locator(".grid > .deposit, .grid > .obstacle, .grid > .base-marker, .grid > .robot-avatar").count();
+  const idleEntityCount = await page.locator(".grid .deposit, .grid .obstacle, .grid .base-marker, .grid .robot-avatar").count();
   if (idleEntityCount < 4) {
     throw new Error(`Expected stage entities to load after story mode, got ${idleEntityCount}.`);
   }
@@ -321,16 +321,35 @@ try {
     throw new Error(`Expected Ctrl-click label reference to select @Loop definition, got: ${jumpedLine}`);
   }
 
+  const deliveryScript = [
+    "PickUp()",
+    "MoveToward(Home)",
+    "MoveToward(Home)",
+    "MoveToward(Home)",
+    "Unload(Home)",
+  ].join("\n");
+  await page.getByTestId("script-editor").fill(deliveryScript);
+
   await page.getByTestId("step-button").click();
   await expectText(page, "compile-status", "");
-  await expectText(page, "scrap-count", "1");
+  await expectText(page, "scrap-count", "0");
+  await expectText(page, "cargo-count", "1/3");
+  await expectText(page, "battery-value", "5/6");
+  const cargoManifest = await page.getByTestId("cargo-manifest").innerText();
+  if (!cargoManifest.toUpperCase().includes("SCRAP")) {
+    throw new Error(`Expected cargo manifest to mention scrap, got: ${cargoManifest}`);
+  }
   const pickupGhosts = await page.locator(".pickup-ghost").count();
   if (pickupGhosts === 0) {
     throw new Error("Expected pickup to create a recovery animation ghost.");
   }
 
   await page.getByTestId("step-button").click();
-  await expectText(page, "robot-position", "R1 // 2,2 E");
+  await page.getByTestId("step-button").click();
+  await page.getByTestId("step-button").click();
+  await expectText(page, "robot-position", "R1 // 0,0 N");
+  await expectText(page, "battery-value", "6/6");
+  await page.waitForTimeout(520);
   const robotAlignment = await page.evaluate(() => {
     const grid = document.querySelector('[data-testid="world-grid"]')?.getBoundingClientRect();
     const robot = document.querySelector(".robot-avatar")?.getBoundingClientRect();
@@ -340,13 +359,17 @@ try {
     const cellWidth = grid.width / 7;
     const cellHeight = grid.height / 5;
     return {
-      deltaX: Math.abs(robot.left + robot.width / 2 - (grid.left + 2 * cellWidth + cellWidth / 2)),
-      deltaY: Math.abs(robot.top + robot.height / 2 - (grid.top + 2 * cellHeight + cellHeight / 2)),
+      deltaX: Math.abs(robot.left + robot.width / 2 - (grid.left + cellWidth / 2)),
+      deltaY: Math.abs(robot.top + robot.height / 2 - (grid.top + cellHeight / 2)),
     };
   });
   if (!robotAlignment || robotAlignment.deltaX > 1 || robotAlignment.deltaY > 1) {
     throw new Error(`Expected robot to stay centered on the stage grid, got ${JSON.stringify(robotAlignment)}.`);
   }
+
+  await page.getByTestId("step-button").click();
+  await expectText(page, "scrap-count", "1");
+  await expectText(page, "cargo-count", "0/3");
 
   await page.getByTestId("settings-toggle").click();
   await page.getByTestId("upgrade-button").click();
@@ -355,9 +378,9 @@ try {
   const checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
   for (const label of [
     "Compile a valid script",
-    "Collect scrap from the map",
-    "Expand logic memory",
-    "Upgrade robot hardware",
+    "Load cargo from the map",
+    "Unload cargo at home",
+    "Recharge at home",
     "Save and reload progress",
   ]) {
     if (!checklist.includes(label.toUpperCase())) {

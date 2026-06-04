@@ -92,9 +92,12 @@ const elements = {
   scrap: query("scrap-count"),
   cells: query("cell-count"),
   memoryShards: query("memory-shard-count"),
+  cargoCount: query("cargo-count"),
+  cargoManifest: query("cargo-manifest"),
   armor: query("armor-level"),
   weapon: query("weapon-level"),
   hp: query("hp-value"),
+  batteryValue: query("battery-value"),
   armorPercent: query("armor-percent"),
   energyPercent: query("energy-percent"),
   armorMeter: query("armor-meter"),
@@ -369,19 +372,16 @@ elements.speed.addEventListener("click", () => {
 elements.upgrade.addEventListener("click", () => {
   stopPlayback(false);
   const state = expandLogicMemory(game);
-  flow.memory = state.instructionCapacity > 8;
   render(state, { animate: false });
 });
 elements.armorUpgrade.addEventListener("click", () => {
   stopPlayback(false);
   const state = upgradeHardware(game, "armor");
-  flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
   render(state, { animate: false });
 });
 elements.weaponUpgrade.addEventListener("click", () => {
   stopPlayback(false);
   const state = upgradeHardware(game, "weapon");
-  flow.hardware = state.robot.armor > 1 || state.robot.weapon > 1;
   render(state, { animate: false });
 });
 elements.save.addEventListener("click", () => {
@@ -484,6 +484,7 @@ function render(state, options = {}) {
   const beforeState = previousState;
   const diff = beforeState ? diffSnapshots(beforeState, state) : [];
   previousState = state;
+  syncFlowState(beforeState, state);
 
   elements.tick.textContent = state.tick;
   elements.instructionUsage.textContent = state.program
@@ -495,12 +496,15 @@ function render(state, options = {}) {
   elements.scrap.textContent = state.resources.scrap;
   elements.cells.textContent = state.resources.cells;
   elements.memoryShards.textContent = state.resources.memoryShards;
+  elements.cargoCount.textContent = `${state.robot.cargo.length}/${state.cargoCapacity}`;
+  elements.cargoManifest.textContent = formatCargoManifest(state.robot.cargo);
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
-  const armorPercent = Math.max(0, Math.min(100, Math.round((state.robot.hp / 10) * 100)));
-  const energyPercent = state.program
-    ? Math.max(0, Math.min(100, Math.round((state.program.instructionUsed / state.instructionCapacity) * 100)))
+  elements.batteryValue.textContent = `${state.robot.energy}/${state.robot.maxEnergy}`;
+  const armorPercent = Math.max(0, Math.min(100, Math.round((state.robot.hp / (8 + state.robot.armor * 2)) * 100)));
+  const energyPercent = state.robot.maxEnergy
+    ? Math.max(0, Math.min(100, Math.round((state.robot.energy / state.robot.maxEnergy) * 100)))
     : 0;
   elements.armorPercent.textContent = `${armorPercent}%`;
   elements.energyPercent.textContent = `${energyPercent}%`;
@@ -578,7 +582,6 @@ function advanceFrame(options = {}) {
   }
   const before = snapshot(game);
   const state = stepGame(game);
-  flow.collect = state.resources.scrap > 0 || state.deposits.length < 3;
   render(state, {
     animate: true,
     animationDuration: currentSpeedProfile().duration,
@@ -652,6 +655,7 @@ function summarizeRuntimeToast(state) {
     wall: ["runtime.blockedWall", "runtime.recodeWall"],
     occupied: ["runtime.blockedOccupied", "runtime.recodeOccupied"],
     empty: ["runtime.blockedEmpty", "runtime.recodeEmpty"],
+    power: ["runtime.blockedPower", "runtime.recodePower"],
     logic: ["runtime.logicFault", "runtime.recodeLogic"],
     compile: ["runtime.compileFault", "runtime.recodeCompile"],
     generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
@@ -670,6 +674,9 @@ function detectRuntimeCause(state) {
   }
   if (latestLog.includes("Blocked by wall")) {
     return "wall";
+  }
+  if (latestLog.includes("Battery depleted")) {
+    return "power";
   }
   if (latestLog.includes("occupied") || latestLog.includes("Drop blocked")) {
     return "occupied";
@@ -831,6 +838,19 @@ function renderFlowList() {
     elements.flowChecklist.append(item);
   }
   renderFlow();
+}
+
+function syncFlowState(beforeState, state) {
+  flow.deploy = Boolean(state.program?.ok);
+  flow.collect = flow.collect || state.robot.cargo.length > 0;
+  flow.unload = flow.unload || storedInventoryTotal(state.resources) > 0;
+  if (!flow.recharge && beforeState?.robot) {
+    const recharged =
+      state.robot.energy === state.robot.maxEnergy &&
+      beforeState.robot.energy < beforeState.robot.maxEnergy &&
+      isRobotHome(state);
+    flow.recharge = recharged;
+  }
 }
 
 function updateEditorTools(errors = null) {
@@ -1564,6 +1584,28 @@ function formatValue(value) {
     return "-";
   }
   return String(value);
+}
+
+function formatCargoManifest(cargo) {
+  if (!cargo.length) {
+    return t("resources.cargoEmpty");
+  }
+  const counts = cargo.reduce((summary, item) => {
+    const key = item === "cell" ? "battery" : item;
+    summary[key] = (summary[key] ?? 0) + 1;
+    return summary;
+  }, {});
+  return Object.entries(counts)
+    .map(([item, count]) => `${t(`resources.item.${item}`)} x${count}`)
+    .join(", ");
+}
+
+function storedInventoryTotal(resources) {
+  return (resources.scrap ?? 0) + (resources.cells ?? 0);
+}
+
+function isRobotHome(state) {
+  return state.robot.x === state.base.x && state.robot.y === state.base.y;
 }
 
 function applyLanguage() {
