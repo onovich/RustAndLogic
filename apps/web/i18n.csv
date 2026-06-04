@@ -185,3 +185,24 @@ vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止
 vm.Fault,Fault,故障
+stage.guidance.m1,Priority: recover nearby scrap first; ignore long loops until the uplink stabilizes.,优先事项：先回收附近废铁；在链路稳定前不要跑长循环。
+stage.guidance.m2,Priority: treat battery as the limiter; haul scrap only when the return path is still affordable.,优先事项：把电量当作硬约束；只有返航还划算时再继续搬运废铁。
+stage.guidance.m3,Priority: feed the base loop; batteries unlock fabrication and scrap keeps repair online.,优先事项：先养活基地循环；电池决定能否合成，废铁决定修理是否在线。
+location.kind.m2,Relay haul corridor,中继搬运走廊
+location.name.m2,Relay Ladder,中继梯井
+location.description.m2,A longer salvage lane with sparse batteries and a punishing walk back home.,更长的回收通道，电池稀少，返航成本很高。
+location.kind.m3,Base maintenance basin,基地维护盆地
+location.name.m3,Forge Yard,熔炉前场
+location.description.m3,A compact service yard where scrap, damage, and fabrication all compete for the same loop.,紧凑的维修前场，废铁、损伤与合成都要争抢同一条循环。
+story.m2.1.speaker,K-6 Commander,K-6 指挥官
+story.m2.1.text,This relay ladder stretches farther than the first site. Range matters now; do not spend the last battery far from home.,这段中继梯井比第一处站点更长。现在航程就是约束，别把最后一格电浪费在离家太远的地方。
+story.m2.2.speaker,K-6 Commander,K-6 指挥官
+story.m2.2.text,Use energy checks before greed. A clean return loop is worth more than one extra piece of scrap.,先判断电量，再考虑贪心。稳定返航的循环，比多捡一块废铁更值钱。
+story.m2.3.speaker,K-6 Commander,K-6 指挥官
+story.m2.3.text,If the battery floor looks thin, route home early and let the charger carry the schedule.,如果电量余地太薄，就提早回家，让充能节奏接管整条时间线。
+story.m3.1.speaker,K-6 Commander,K-6 指挥官
+story.m3.1.text,Forge Yard is where field work turns into infrastructure. Scrap is no longer just score; it keeps the base alive.,熔炉前场是把野外回收变成基础设施的地方。废铁不再只是分数，它直接决定基地能不能运转。
+story.m3.2.speaker,K-6 Commander,K-6 指挥官
+story.m3.2.text,Bring cargo home, repair when the frame drops, and convert surplus into memory shards when batteries allow it.,把货带回家，机体掉血就修，电池允许时再把盈余转成记忆晶片。
+story.m3.3.speaker,K-6 Commander,K-6 指挥官
+story.m3.3.text,This is the first stage that wants a real base loop. Build one stable cycle and the rest of the map opens up.,这是第一关真正要求你写出基地循环。先做出一条稳定节奏，后面的地图才会真正打开。

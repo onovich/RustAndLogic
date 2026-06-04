@@ -74,6 +74,17 @@
       "labelKey": "samples.m1",
       "taskIds": ["deploy", "collect", "unload"],
       "presetId": "m1",
+      "location": {
+        "kindKey": "location.kind",
+        "nameKey": "world.title",
+        "descriptionKey": "location.description"
+      },
+      "resourceGuidanceKey": "stage.guidance.m1",
+      "storyPages": [
+        { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
+        { "speakerKey": "story.opening.2.speaker", "textKey": "story.opening.2.text" },
+        { "speakerKey": "story.opening.3.speaker", "textKey": "story.opening.3.text" }
+      ],
       "game": {
         "stageId": "m1",
         "width": 7,
@@ -94,6 +105,17 @@
       "labelKey": "samples.m2",
       "taskIds": ["deploy", "collect", "unload", "recharge"],
       "presetId": "m2",
+      "location": {
+        "kindKey": "location.kind.m2",
+        "nameKey": "location.name.m2",
+        "descriptionKey": "location.description.m2"
+      },
+      "resourceGuidanceKey": "stage.guidance.m2",
+      "storyPages": [
+        { "speakerKey": "story.m2.1.speaker", "textKey": "story.m2.1.text" },
+        { "speakerKey": "story.m2.2.speaker", "textKey": "story.m2.2.text" },
+        { "speakerKey": "story.m2.3.speaker", "textKey": "story.m2.3.text" }
+      ],
       "game": {
         "stageId": "m2",
         "width": 8,
@@ -118,6 +140,17 @@
       "labelKey": "samples.m3",
       "taskIds": ["deploy", "collect", "unload", "recharge", "craft", "repair", "save"],
       "presetId": "m3",
+      "location": {
+        "kindKey": "location.kind.m3",
+        "nameKey": "location.name.m3",
+        "descriptionKey": "location.description.m3"
+      },
+      "resourceGuidanceKey": "stage.guidance.m3",
+      "storyPages": [
+        { "speakerKey": "story.m3.1.speaker", "textKey": "story.m3.1.text" },
+        { "speakerKey": "story.m3.2.speaker", "textKey": "story.m3.2.text" },
+        { "speakerKey": "story.m3.3.speaker", "textKey": "story.m3.3.text" }
+      ],
       "game": {
         "stageId": "m3",
         "width": 9,

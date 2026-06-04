@@ -114,6 +114,10 @@ const elements = {
   saveSummary: query("save-summary"),
   flowChecklist: query("flow-checklist"),
   flowProgress: query("flow-progress"),
+  locationKind: query("location-kind"),
+  locationName: query("location-name"),
+  locationDescription: query("location-description"),
+  resourceGuidance: query("resource-guidance"),
   languageSwitch: query("language-switch"),
   localizationButton: query("localization-button"),
   objectivesToggle: query("objectives-toggle"),
@@ -202,6 +206,7 @@ function applyStageConfiguration(stageId, options = {}) {
   }
 
   currentStageId = stage.id;
+  storyPages = stage.storyPages ?? appData.storyPages ?? [];
   const nextFlow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
   flow = nextFlow;
   game = createStageGame(stage.id);
@@ -219,6 +224,7 @@ function applyStageConfiguration(stageId, options = {}) {
   elements.editor.value = sourceLines.join("\n");
   updateEditorTools();
   hideAutocomplete();
+  renderStageCopy();
   renderFlowList();
   renderStageActions();
   renderSampleActions();
@@ -372,7 +378,7 @@ elements.stageActions?.addEventListener("click", (event) => {
     return;
   }
   stopPlayback(false);
-  applyStageConfiguration(button.dataset.stage);
+  applyStageConfiguration(button.dataset.stage, { resetStory: true });
 });
 elements.localizationButton?.addEventListener("click", () => {
   setLanguageMode(nextLanguageMode(languageMode));
@@ -494,6 +500,7 @@ elements.load.addEventListener("click", () => {
   const parsed = JSON.parse(serialized);
   const loadedStage = getStageDefinition(parsed.stageId);
   currentStageId = loadedStage?.id ?? currentStageId;
+  storyPages = loadedStage?.storyPages ?? appData.storyPages ?? [];
   flow = Object.fromEntries(getStageTaskDefinitions(loadedStage).map((task) => [task.id, false]));
   previousState = null;
   resetCameraIntro();
@@ -538,6 +545,7 @@ applyLanguage = function applyLanguagePatched() {
     button.setAttribute("aria-pressed", String(active));
     button.dataset.active = String(active);
   }
+  renderStageCopy();
   renderFlowList();
   renderStageActions();
   renderSampleActions();
@@ -634,6 +642,7 @@ function render(state, options = {}) {
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
   elements.flowProgress.textContent = `${Object.values(flow).filter(Boolean).length}/${Object.keys(flow).length}`;
 
+  renderStageCopy();
   renderGrid(state, beforeState, options);
   renderLog(state.logs);
   renderDiff(diff);
@@ -943,6 +952,23 @@ function renderFlowList() {
     elements.flowChecklist.append(item);
   }
   renderFlow();
+}
+
+function renderStageCopy() {
+  const stage = getStageDefinition();
+  const location = stage?.location ?? {};
+  if (elements.locationKind) {
+    elements.locationKind.textContent = t(location.kindKey ?? "location.kind");
+  }
+  if (elements.locationName) {
+    elements.locationName.textContent = t(location.nameKey ?? "world.title");
+  }
+  if (elements.locationDescription) {
+    elements.locationDescription.textContent = t(location.descriptionKey ?? "location.description");
+  }
+  if (elements.resourceGuidance) {
+    elements.resourceGuidance.textContent = stage?.resourceGuidanceKey ? t(stage.resourceGuidanceKey) : "";
+  }
 }
 
 function renderStageActions() {

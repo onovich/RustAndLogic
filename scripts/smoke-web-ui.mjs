@@ -56,6 +56,14 @@ try {
   if (!openingText.includes("satellite uplink") && !openingText.includes("卫星链路")) {
     throw new Error(`Expected opening story dialogue, got: ${openingText}`);
   }
+  const startupLocation = await page.getByTestId("location-name").innerText();
+  if (!startupLocation.includes("Waste-X Sector") && !startupLocation.includes("废料 X 区域")) {
+    throw new Error(`Expected M1 location title at startup, got: ${startupLocation}`);
+  }
+  const initialGuidance = await page.getByTestId("resource-guidance").innerText();
+  if (!initialGuidance.toLowerCase().includes("nearby scrap") && !initialGuidance.includes("附近废铁")) {
+    throw new Error(`Expected M1 resource guidance, got: ${initialGuidance}`);
+  }
   const storyEntityCount = await page.locator(".grid .deposit, .grid .obstacle, .grid .base-marker, .grid .robot-avatar").count();
   if (storyEntityCount < 4) {
     throw new Error(`Expected real stage entities to be loaded from startup, got ${storyEntityCount}.`);
@@ -97,12 +105,22 @@ try {
   await page.locator('[data-testid="stage-actions"] [data-stage="m2"]').click();
   await expectText(page, "tick", "0");
   await expectText(page, "robot-position", "R1 // 2,4 N");
+  await expectText(page, "location-name", "Relay Ladder");
+  const m2Story = await page.getByTestId("story-text").innerText();
+  if (!m2Story.toLowerCase().includes("range matters now")) {
+    throw new Error(`Expected M2 story briefing after stage switch, got: ${m2Story}`);
+  }
+  const m2Guidance = await page.getByTestId("resource-guidance").innerText();
+  if (!m2Guidance.toLowerCase().includes("battery as the limiter")) {
+    throw new Error(`Expected M2 resource guidance after stage switch, got: ${m2Guidance}`);
+  }
   const m2Checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
   if (!m2Checklist.includes("RECHARGE AT HOME")) {
     throw new Error(`Expected M2 checklist to include recharge objective, got: ${m2Checklist}`);
   }
   await page.locator('[data-testid="stage-actions"] [data-stage="m1"]').click();
   await expectText(page, "robot-position", "R1 // 1,2 E");
+  await expectText(page, "location-name", "Waste-X Sector");
   await page.getByTestId("settings-toggle").click();
 
   for (let index = 0; index < 3; index += 1) {

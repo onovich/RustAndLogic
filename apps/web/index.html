@@ -16,9 +16,9 @@
           <section class="location-art">
             <img src="./imgs/sample2.avif" alt="" aria-hidden="true">
             <div class="location-copy">
-              <span data-i18n="location.kind"></span>
-              <strong data-i18n="world.title"></strong>
-              <p data-i18n="location.description"></p>
+              <span data-testid="location-kind" data-i18n="location.kind"></span>
+              <strong data-testid="location-name" data-i18n="world.title"></strong>
+              <p data-testid="location-description" data-i18n="location.description"></p>
             </div>
           </section>
           <section class="flow-panel" aria-label="Task checklist" data-i18n-attr="aria-label:flow.aria">
@@ -108,6 +108,7 @@
               <div><dt data-i18n="resources.cargoCount"></dt><dd data-testid="cargo-count">0/3</dd></div>
               <div><dt data-i18n="resources.cargoManifest"></dt><dd data-testid="cargo-manifest"></dd></div>
             </dl>
+            <p class="resource-guidance" data-testid="resource-guidance"></p>
           </section>
 
           <section class="module-panel terminal-section" aria-label="Robot modules" data-i18n-attr="aria-label:modules.aria">
