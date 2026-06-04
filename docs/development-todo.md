@@ -91,6 +91,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Document the current Web UI design system for future extension and reuse.
 - [x] Surface base inventory, robot cargo, and battery state in the Web UI task and status panels.
 - [x] Add facility status readouts and curated M1/M2/M3 sample scripts to the Web UI settings flow.
+- [x] Bind M1/M2/M3 into explicit stage configurations so map state, objectives, and default scripts switch together.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

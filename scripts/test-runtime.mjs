@@ -361,4 +361,36 @@ Goto @Loop`;
   assert.equal(state.robot.x, 1);
   assert.equal(state.robot.y, 2);
   assert.equal(state.logs.includes("Move(): Battery depleted. Return home."), true);
+
+  const stageGame = createGame({
+    stageId: "m2",
+    width: 8,
+    height: 6,
+    base: { x: 2, y: 1 },
+    robot: { x: 4, y: 5, dir: "N", cargo: ["scrap"] },
+    deposits: [{ id: "stage-cell", type: "cell", x: 6, y: 2 }],
+    obstacles: [{ id: "stage-wall", x: 3, y: 3 }],
+    resources: { scrap: 2, cells: 1, memoryShards: 3 },
+  });
+  assert.equal(stageGame.stageId, "m2");
+  assert.equal(stageGame.width, 8);
+  assert.equal(stageGame.height, 6);
+  assert.deepEqual(stageGame.base, { x: 2, y: 1 });
+  assert.equal(stageGame.robot.x, 4);
+  assert.equal(stageGame.robot.dir, "N");
+  assert.deepEqual(stageGame.robot.cargo, ["scrap"]);
+  assert.equal(stageGame.resources.memoryShards, 3);
+  assert.equal(stageGame.deposits[0].id, "stage-cell");
+  assert.equal(stageGame.obstacles[0].id, "stage-wall");
+
+  const stageRestored = restoreGame(serializeGame(stageGame), {
+    stageId: "fallback",
+    width: 4,
+    height: 4,
+    robot: { x: 0, y: 0, dir: "E" },
+  });
+  assert.equal(stageRestored.stageId, "m2");
+  assert.equal(stageRestored.width, 8);
+  assert.equal(stageRestored.robot.x, 4);
+  assert.deepEqual(stageRestored.robot.cargo, ["scrap"]);
 }

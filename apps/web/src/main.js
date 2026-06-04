@@ -31,6 +31,7 @@ let storyPages = [];
 let flow = {};
 let runtimeToast = null;
 let canvasModeTransitionTimer = 0;
+let currentStageId = null;
 const WORLD_CELL_SIZE = 40;
 const ROBOT_WORLD_SIZE = 24;
 const DEPOSIT_WORLD_SIZE = 22;
@@ -64,6 +65,8 @@ let scriptBranches = new Set();
 let scriptValues = new Set();
 let scriptCompletions = [];
 let scriptPresets = [];
+let taskDefinitions = [];
+let stageDefinitions = [];
 
 const elements = {
   editor: query("script-editor"),
@@ -118,6 +121,7 @@ const elements = {
   settingsToggle: query("settings-toggle"),
   devlogToggle: query("devlog-toggle"),
   settingsPanel: document.querySelector(".settings-panel"),
+  stageActions: query("stage-actions"),
   sampleActions: query("sample-actions"),
   devPanel: document.querySelector(".dev-panel"),
   stage: document.querySelector(".stage-panel"),
@@ -158,19 +162,92 @@ async function loadTextAsset(paths) {
   throw new Error(`Failed to load asset. Tried ${failures.join("; ")}`);
 }
 
+function getStageDefinition(stageId = currentStageId) {
+  return stageDefinitions.find((stage) => stage.id === stageId) ?? stageDefinitions[0] ?? null;
+}
+
+function getStageTaskDefinitions(stage = getStageDefinition()) {
+  const taskIds = stage?.taskIds ?? [];
+  return taskIds
+    .map((taskId) => taskDefinitions.find((task) => task.id === taskId))
+    .filter(Boolean);
+}
+
+function createStageGame(stageId = currentStageId) {
+  const stage = getStageDefinition(stageId);
+  return createGame(stage?.game ?? {});
+}
+
+function resetCameraIntro() {
+  canvasState.x = 0;
+  canvasState.y = 0;
+  canvasState.scale = 1;
+  canvasState.targetScale = 1;
+  canvasState.introPlayed = false;
+  canvasState.introActive = false;
+  canvasState.pointerId = null;
+  if (elements.canvasViewport) {
+    elements.canvasViewport.dataset.camera = "ready";
+    elements.canvasViewport.dataset.dragging = "false";
+  }
+  if (elements.canvasWorld) {
+    elements.canvasWorld.style.transition = "";
+  }
+}
+
+function applyStageConfiguration(stageId, options = {}) {
+  const stage = getStageDefinition(stageId);
+  if (!stage) {
+    return snapshot(game);
+  }
+
+  currentStageId = stage.id;
+  const nextFlow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
+  flow = nextFlow;
+  game = createStageGame(stage.id);
+  previousState = null;
+  deployedSource = "";
+  hideRuntimeToast();
+  resetCameraIntro();
+  if (options.resetStory) {
+    storyIndex = 0;
+    storyActive = true;
+  }
+
+  const preset = scriptPresets.find((item) => item.id === stage.presetId);
+  const sourceLines = preset?.lines ?? appData.script?.initialSource ?? [];
+  elements.editor.value = sourceLines.join("\n");
+  updateEditorTools();
+  hideAutocomplete();
+  renderFlowList();
+  renderStageActions();
+  renderSampleActions();
+  if (options.resetSaveStatus !== false) {
+    saveStatus = { key: "save.reset", values: {} };
+  }
+  const state = snapshot(game);
+  if (options.renderNow !== false) {
+    render(state, { animate: false });
+  }
+  return state;
+}
+
 function initializeAppData() {
   storyPages = appData.storyPages ?? [];
   speeds = appData.playback?.speeds ?? [1];
   speedProfiles = appData.playback?.profiles ?? { 1: { interval: 720, duration: 420 } };
-  flow = Object.fromEntries((appData.tasks ?? []).map((task) => [task.id, false]));
+  taskDefinitions = appData.taskDefinitions ?? appData.tasks ?? [];
+  stageDefinitions = appData.stages ?? [];
+  currentStageId = stageDefinitions[0]?.id ?? null;
+  flow = {};
   scriptActions = new Set(appData.script?.syntax?.actions ?? []);
   scriptQueries = new Set(appData.script?.syntax?.queries ?? []);
   scriptBranches = new Set(appData.script?.syntax?.branches ?? []);
   scriptValues = new Set(appData.script?.syntax?.values ?? []);
   scriptCompletions = appData.script?.completions ?? [];
   scriptPresets = appData.scriptPresets ?? [];
-  elements.editor.value = (appData.script?.initialSource ?? []).join("\n");
-  renderFlowList();
+  applyStageConfiguration(currentStageId, { renderNow: false, resetStory: false });
+  renderStageActions();
   renderSampleActions();
 }
 
@@ -289,6 +366,14 @@ elements.languageSwitch?.addEventListener("click", (event) => {
   }
   setLanguageMode(button.dataset.lang ?? "auto");
 });
+elements.stageActions?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-stage]");
+  if (!button) {
+    return;
+  }
+  stopPlayback(false);
+  applyStageConfiguration(button.dataset.stage);
+});
 elements.localizationButton?.addEventListener("click", () => {
   setLanguageMode(nextLanguageMode(languageMode));
 });
@@ -392,7 +477,9 @@ elements.weaponUpgrade.addEventListener("click", () => {
 elements.save.addEventListener("click", () => {
   stopPlayback(false);
   localStorage.setItem(saveKey, serializeGame(game));
-  flow.save = true;
+  if ("save" in flow) {
+    flow.save = true;
+  }
   saveStatus = { key: "save.saved", values: { tick: game.tick } };
   render(snapshot(game), { animate: false });
 });
@@ -404,19 +491,33 @@ elements.load.addEventListener("click", () => {
     render(snapshot(game), { animate: false });
     return;
   }
-  game = restoreGame(serialized);
+  const parsed = JSON.parse(serialized);
+  const loadedStage = getStageDefinition(parsed.stageId);
+  currentStageId = loadedStage?.id ?? currentStageId;
+  flow = Object.fromEntries(getStageTaskDefinitions(loadedStage).map((task) => [task.id, false]));
+  previousState = null;
+  resetCameraIntro();
+  renderFlowList();
+  renderStageActions();
+  if (loadedStage?.presetId) {
+    const preset = scriptPresets.find((item) => item.id === loadedStage.presetId);
+    if (preset) {
+      elements.editor.value = (preset.lines ?? []).join("\n");
+      deployedSource = "";
+      updateEditorTools();
+    }
+  }
+  game = restoreGame(parsed, loadedStage?.game ?? {});
   game.logs.unshift(t("log.save.loaded", { tick: game.tick }));
-  flow.save = true;
+  if ("save" in flow) {
+    flow.save = true;
+  }
   saveStatus = { key: "save.loaded", values: { tick: game.tick } };
   render(snapshot(game), { animate: false });
 });
 elements.reset.addEventListener("click", () => {
   stopPlayback(false);
-  game = createGame();
-  deployedSource = "";
-  saveStatus = { key: "save.reset", values: {} };
-  resetFlow();
-  render(snapshot(game), { animate: false });
+  applyStageConfiguration(currentStageId);
 });
 
 applyLanguage = function applyLanguagePatched() {
@@ -438,6 +539,7 @@ applyLanguage = function applyLanguagePatched() {
     button.dataset.active = String(active);
   }
   renderFlowList();
+  renderStageActions();
   renderSampleActions();
   updateControls();
 };
@@ -783,11 +885,7 @@ function stopPlayback(resetMode = true) {
   clearPlaybackTimer();
   hideRuntimeToast();
   if (resetMode) {
-    game = createGame();
-    previousState = null;
-    resetFlow();
-    saveStatus = { key: "save.reset", values: {} };
-    render(snapshot(game), { animate: false });
+    applyStageConfiguration(currentStageId);
   } else {
     updateControls();
   }
@@ -831,7 +929,7 @@ function resetFlow() {
 
 function renderFlowList() {
   elements.flowChecklist.replaceChildren();
-  for (const task of appData.tasks ?? []) {
+  for (const task of getStageTaskDefinitions()) {
     const item = document.createElement("li");
     item.dataset.flow = task.id;
     const checkbox = document.createElement("span");
@@ -845,6 +943,21 @@ function renderFlowList() {
     elements.flowChecklist.append(item);
   }
   renderFlow();
+}
+
+function renderStageActions() {
+  if (!elements.stageActions) {
+    return;
+  }
+  elements.stageActions.replaceChildren();
+  for (const stage of stageDefinitions) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.stage = stage.id;
+    button.dataset.active = String(stage.id === currentStageId);
+    button.textContent = t(stage.labelKey);
+    elements.stageActions.append(button);
+  }
 }
 
 function renderSampleActions() {
@@ -875,10 +988,22 @@ function loadScriptPreset(presetId) {
 }
 
 function syncFlowState(beforeState, state) {
-  flow.deploy = Boolean(state.program?.ok);
-  flow.collect = flow.collect || state.robot.cargo.length > 0;
-  flow.unload = flow.unload || storedInventoryTotal(state.resources) > 0;
-  if (!flow.recharge && beforeState?.robot) {
+  if ("deploy" in flow) {
+    flow.deploy = Boolean(state.program?.ok);
+  }
+  if ("collect" in flow) {
+    flow.collect = flow.collect || state.robot.cargo.length > 0;
+  }
+  if ("unload" in flow) {
+    flow.unload = flow.unload || storedInventoryTotal(state.resources) > 0;
+  }
+  if ("craft" in flow) {
+    flow.craft = flow.craft || (beforeState ? state.resources.memoryShards > beforeState.resources.memoryShards : state.resources.memoryShards > 1);
+  }
+  if ("repair" in flow) {
+    flow.repair = flow.repair || Boolean(beforeState && state.robot.hp > beforeState.robot.hp);
+  }
+  if ("recharge" in flow && !flow.recharge && beforeState?.robot) {
     const recharged =
       state.robot.energy === state.robot.maxEnergy &&
       beforeState.robot.energy < beforeState.robot.maxEnergy &&

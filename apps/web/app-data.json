@@ -7,11 +7,13 @@
       "10": { "interval": 90, "duration": 70 }
     }
   },
-  "tasks": [
+  "taskDefinitions": [
     { "id": "deploy", "labelKey": "flow.deploy" },
     { "id": "collect", "labelKey": "flow.collect" },
     { "id": "unload", "labelKey": "flow.unload" },
     { "id": "recharge", "labelKey": "flow.recharge" },
+    { "id": "craft", "labelKey": "completion.craft.home" },
+    { "id": "repair", "labelKey": "completion.repair" },
     { "id": "save", "labelKey": "flow.save" }
   ],
   "scriptPresets": [
@@ -65,6 +67,77 @@
     { "speakerKey": "story.opening.1.speaker", "textKey": "story.opening.1.text" },
     { "speakerKey": "story.opening.2.speaker", "textKey": "story.opening.2.text" },
     { "speakerKey": "story.opening.3.speaker", "textKey": "story.opening.3.text" }
+  ],
+  "stages": [
+    {
+      "id": "m1",
+      "labelKey": "samples.m1",
+      "taskIds": ["deploy", "collect", "unload"],
+      "presetId": "m1",
+      "game": {
+        "stageId": "m1",
+        "width": 7,
+        "height": 5,
+        "base": { "x": 0, "y": 0 },
+        "robot": { "x": 1, "y": 2, "dir": "E", "hp": 10, "armor": 1, "weapon": 1, "energy": 6, "maxEnergy": 6, "cargo": [] },
+        "resources": { "scrap": 0, "cells": 0, "memoryShards": 1 },
+        "obstacles": [{ "id": "wall-a", "x": 3, "y": 1 }],
+        "deposits": [
+          { "id": "scrap-a", "type": "scrap", "x": 2, "y": 2 },
+          { "id": "cell-a", "type": "cell", "x": 4, "y": 1 },
+          { "id": "scrap-b", "type": "scrap", "x": 5, "y": 3 }
+        ]
+      }
+    },
+    {
+      "id": "m2",
+      "labelKey": "samples.m2",
+      "taskIds": ["deploy", "collect", "unload", "recharge"],
+      "presetId": "m2",
+      "game": {
+        "stageId": "m2",
+        "width": 8,
+        "height": 6,
+        "base": { "x": 0, "y": 0 },
+        "robot": { "x": 2, "y": 4, "dir": "N", "hp": 10, "armor": 1, "weapon": 1, "energy": 5, "maxEnergy": 6, "cargo": [] },
+        "resources": { "scrap": 0, "cells": 0, "memoryShards": 1 },
+        "obstacles": [
+          { "id": "wall-a", "x": 3, "y": 2 },
+          { "id": "wall-b", "x": 3, "y": 3 },
+          { "id": "wall-c", "x": 5, "y": 1 }
+        ],
+        "deposits": [
+          { "id": "scrap-a", "type": "scrap", "x": 2, "y": 3 },
+          { "id": "scrap-b", "type": "scrap", "x": 6, "y": 4 },
+          { "id": "cell-a", "type": "cell", "x": 6, "y": 1 }
+        ]
+      }
+    },
+    {
+      "id": "m3",
+      "labelKey": "samples.m3",
+      "taskIds": ["deploy", "collect", "unload", "recharge", "craft", "repair", "save"],
+      "presetId": "m3",
+      "game": {
+        "stageId": "m3",
+        "width": 9,
+        "height": 6,
+        "base": { "x": 0, "y": 0 },
+        "robot": { "x": 1, "y": 4, "dir": "E", "hp": 5, "armor": 1, "weapon": 1, "energy": 6, "maxEnergy": 6, "cargo": [] },
+        "resources": { "scrap": 1, "cells": 0, "memoryShards": 1 },
+        "obstacles": [
+          { "id": "wall-a", "x": 4, "y": 1 },
+          { "id": "wall-b", "x": 4, "y": 2 },
+          { "id": "wall-c", "x": 4, "y": 3 },
+          { "id": "wall-d", "x": 6, "y": 4 }
+        ],
+        "deposits": [
+          { "id": "scrap-a", "type": "scrap", "x": 2, "y": 4 },
+          { "id": "scrap-b", "type": "scrap", "x": 6, "y": 2 },
+          { "id": "cell-a", "type": "cell", "x": 2, "y": 2 }
+        ]
+      }
+    }
   ],
   "script": {
     "initialSource": [

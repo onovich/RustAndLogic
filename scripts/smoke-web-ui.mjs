@@ -87,6 +87,22 @@ try {
   await page.getByTestId("lang-auto-button").click();
   await page.getByTestId("lang-en-button").click();
   await expectText(page, "localization-button", "Localization [EN]");
+  await page.getByTestId("stage-actions").waitFor({ state: "visible" });
+  const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
+  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
+    if (!stageActions.includes(label)) {
+      throw new Error(`Expected stage actions to include ${label}, got: ${stageActions}`);
+    }
+  }
+  await page.locator('[data-testid="stage-actions"] [data-stage="m2"]').click();
+  await expectText(page, "tick", "0");
+  await expectText(page, "robot-position", "R1 // 2,4 N");
+  const m2Checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
+  if (!m2Checklist.includes("RECHARGE AT HOME")) {
+    throw new Error(`Expected M2 checklist to include recharge objective, got: ${m2Checklist}`);
+  }
+  await page.locator('[data-testid="stage-actions"] [data-stage="m1"]').click();
+  await expectText(page, "robot-position", "R1 // 1,2 E");
   await page.getByTestId("settings-toggle").click();
 
   for (let index = 0; index < 3; index += 1) {
@@ -298,7 +314,7 @@ try {
   await expectText(page, "compile-status", "");
   const diagnosticText = await page.getByTestId("script-diagnostics").innerText();
   const diagnosticUpper = diagnosticText.toUpperCase();
-  if (!diagnosticUpper.includes("LINE 12") || !diagnosticUpper.includes("UNKNOWN INSTRUCTION: BOGUS")) {
+  if (!diagnosticUpper.includes("LINE 5") || !diagnosticUpper.includes("UNKNOWN INSTRUCTION: BOGUS")) {
     throw new Error(`Expected editor diagnostics for Bogus instruction, got: ${diagnosticText}`);
   }
   const unknownTokenCount = await page.locator(".tok-unknown").count();
@@ -313,7 +329,12 @@ try {
     throw new Error(`Expected diagnostic click to select the bad line, got: ${selectedLine}`);
   }
 
-  await page.getByTestId("script-editor").fill(originalScript);
+  const jumpScript = [
+    "@Loop",
+    "Check().Has(Scrap)",
+    "IfTrue Goto @Loop",
+  ].join("\n");
+  await page.getByTestId("script-editor").fill(jumpScript);
   await page.getByTestId("script-editor").evaluate((editor) => {
     const offset = editor.value.indexOf("@Loop", editor.value.indexOf("IfTrue"));
     editor.focus();
@@ -399,8 +420,6 @@ try {
     "Compile a valid script",
     "Load cargo from the map",
     "Unload cargo at home",
-    "Recharge at home",
-    "Save and reload progress",
   ]) {
     if (!checklist.includes(label.toUpperCase())) {
       throw new Error(`Expected flow checklist to include ${label}.`);

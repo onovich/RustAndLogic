@@ -20,51 +20,59 @@ const ACTION_ENERGY_COST = {
   Repair: 1,
 };
 
-export function createGame() {
-  return {
-    width: 7,
-    height: 5,
-    tick: 0,
-    instructionCapacity: 12,
-    resources: { scrap: 0, cells: 0, memoryShards: 1 },
-    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
-    cargoCapacity: 3,
-    base: { x: 0, y: 0 },
-    lastDamageTick: null,
-    obstacles: [{ id: "wall-a", x: 3, y: 1 }],
-    deposits: [
-      { id: "scrap-a", type: "scrap", x: 2, y: 2 },
-      { id: "cell-a", type: "cell", x: 4, y: 1 },
-      { id: "scrap-b", type: "scrap", x: 5, y: 3 },
-    ],
-    program: null,
-    vm: null,
-    logs: ["System ready. Load a script and press play."],
-    arena: null,
-    offline: null,
-  };
+const DEFAULT_GAME_CONFIG = {
+  stageId: "default",
+  width: 7,
+  height: 5,
+  tick: 0,
+  instructionCapacity: 12,
+  resources: { scrap: 0, cells: 0, memoryShards: 1 },
+  robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
+  cargoCapacity: 3,
+  base: { x: 0, y: 0 },
+  lastDamageTick: null,
+  obstacles: [{ id: "wall-a", x: 3, y: 1 }],
+  deposits: [
+    { id: "scrap-a", type: "scrap", x: 2, y: 2 },
+    { id: "cell-a", type: "cell", x: 4, y: 1 },
+    { id: "scrap-b", type: "scrap", x: 5, y: 3 },
+  ],
+  program: null,
+  vm: null,
+  logs: ["System ready. Load a script and press play."],
+  arena: null,
+  offline: null,
+};
+
+export function createGame(config = {}) {
+  return mergeGameConfig(DEFAULT_GAME_CONFIG, config);
 }
 
 export function serializeGame(game) {
   return JSON.stringify(snapshot(game));
 }
 
-export function restoreGame(serialized) {
+export function restoreGame(serialized, config = {}) {
   const parsed = typeof serialized === "string" ? JSON.parse(serialized) : serialized;
-  const base = createGame();
+  const base = createGame({ ...config, stageId: parsed.stageId ?? config.stageId });
   return {
     ...base,
     ...parsed,
+    stageId: parsed.stageId ?? base.stageId,
     resources: {
       ...base.resources,
       ...parsed.resources,
       memoryShards: parsed.resources?.memoryShards ?? base.resources.memoryShards,
     },
-    robot: { ...base.robot, ...parsed.robot },
-    deposits: Array.isArray(parsed.deposits) ? parsed.deposits : base.deposits,
-    obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles : base.obstacles,
+    robot: {
+      ...base.robot,
+      ...parsed.robot,
+      cargo: Array.isArray(parsed.robot?.cargo) ? [...parsed.robot.cargo] : [...base.robot.cargo],
+    },
+    deposits: Array.isArray(parsed.deposits) ? parsed.deposits.map((item) => ({ ...item })) : base.deposits,
+    obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles.map((item) => ({ ...item })) : base.obstacles,
     base: { ...base.base, ...parsed.base },
-    logs: Array.isArray(parsed.logs) ? parsed.logs : base.logs,
+    logs: Array.isArray(parsed.logs) ? [...parsed.logs] : base.logs,
   };
 }
 
@@ -215,6 +223,7 @@ export function fastForwardOffline(game, ticks = 24) {
 
 export function snapshot(game) {
   return JSON.parse(JSON.stringify({
+    stageId: game.stageId,
     width: game.width,
     height: game.height,
     tick: game.tick,
@@ -242,6 +251,32 @@ export function snapshot(game) {
     offline: game.offline,
     facilities: snapshotFacilities(game),
   }));
+}
+
+function mergeGameConfig(base, config = {}) {
+  return {
+    stageId: config.stageId ?? base.stageId,
+    width: Number.isFinite(config.width) ? config.width : base.width,
+    height: Number.isFinite(config.height) ? config.height : base.height,
+    tick: Number.isFinite(config.tick) ? config.tick : base.tick,
+    instructionCapacity: Number.isFinite(config.instructionCapacity) ? config.instructionCapacity : base.instructionCapacity,
+    resources: { ...base.resources, ...config.resources },
+    robot: {
+      ...base.robot,
+      ...config.robot,
+      cargo: Array.isArray(config.robot?.cargo) ? [...config.robot.cargo] : [...base.robot.cargo],
+    },
+    cargoCapacity: Number.isFinite(config.cargoCapacity) ? config.cargoCapacity : base.cargoCapacity,
+    base: { ...base.base, ...config.base },
+    lastDamageTick: config.lastDamageTick ?? base.lastDamageTick,
+    obstacles: Array.isArray(config.obstacles) ? config.obstacles.map((item) => ({ ...item })) : base.obstacles.map((item) => ({ ...item })),
+    deposits: Array.isArray(config.deposits) ? config.deposits.map((item) => ({ ...item })) : base.deposits.map((item) => ({ ...item })),
+    program: config.program ?? base.program,
+    vm: config.vm ?? base.vm,
+    logs: Array.isArray(config.logs) ? [...config.logs] : [...base.logs],
+    arena: config.arena ?? base.arena,
+    offline: config.offline ?? base.offline,
+  };
 }
 
 export function diffSnapshots(before, after) {
