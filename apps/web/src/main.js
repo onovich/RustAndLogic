@@ -69,6 +69,7 @@ let scriptCompletions = [];
 let scriptPresets = [];
 let taskDefinitions = [];
 let stageDefinitions = [];
+let graphicsEditorConfig = defaultGraphicsEditorConfig();
 let defaultEntityVisualCatalog = { version: 1, entities: {} };
 let entityVisualCatalog = { version: 1, entities: {} };
 let selectedVisualEntityKey = "";
@@ -167,6 +168,8 @@ const elements = {
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
   graphicsPresets: query("graphics-presets"),
+  graphicsFillSwatches: query("graphics-fill-swatches"),
+  graphicsTextureSwatches: query("graphics-texture-swatches"),
   graphicsEntityIo: query("graphics-entity-io"),
   graphicsExport: query("graphics-export"),
 };
@@ -357,6 +360,7 @@ function initializeAppData() {
   speedProfiles = appData.playback?.profiles ?? { 1: { interval: 720, duration: 420 } };
   taskDefinitions = appData.taskDefinitions ?? appData.tasks ?? [];
   stageDefinitions = appData.stages ?? [];
+  graphicsEditorConfig = normalizeGraphicsEditorConfig(appData.graphicsEditor);
   currentStageId = stageDefinitions[0]?.id ?? null;
   flow = {};
   scriptActions = new Set(appData.script?.syntax?.actions ?? []);
@@ -626,6 +630,15 @@ function initializeGraphicsEditor() {
     }
     applyShapePreset(button.dataset.preset ?? "");
   });
+  const handleGraphicsSwatchClick = (event) => {
+    const button = event.target.closest("[data-swatch-kind]");
+    if (!button) {
+      return;
+    }
+    applyGraphicsSwatch(button.dataset.swatchKind ?? "", button.dataset.swatchValue ?? "");
+  };
+  elements.graphicsFillSwatches?.addEventListener("click", handleGraphicsSwatchClick);
+  elements.graphicsTextureSwatches?.addEventListener("click", handleGraphicsSwatchClick);
 }
 
 function setGraphicsStudioOpen(isOpen) {
@@ -698,6 +711,7 @@ function renderGraphicsEditor() {
   renderGraphicsLayerList();
   renderGraphicsForm();
   renderGraphicsPresets();
+  renderGraphicsSwatches();
 
   const visual = getSelectedEntityVisual();
   const previewUrl = visual ? buildEntityVisualDataUrl(selectedVisualEntityKey, visual) : "";
@@ -812,20 +826,69 @@ function renderGraphicsPresets() {
     return;
   }
   elements.graphicsPresets.replaceChildren();
+  const group = elements.graphicsPresets.closest(".visual-preset-group");
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
   if (!layer || layer.type !== "shape") {
     elements.graphicsPresets.hidden = true;
+    if (group) {
+      group.hidden = true;
+    }
     return;
   }
   elements.graphicsPresets.hidden = false;
-  for (const preset of shapePresets()) {
+  if (group) {
+    group.hidden = false;
+  }
+  for (const preset of graphicsEditorConfig.shapePresets ?? []) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.preset = preset.id;
     button.textContent = t(preset.labelKey);
     button.disabled = Boolean(layer.locked);
     elements.graphicsPresets.append(button);
+  }
+}
+
+function renderGraphicsSwatches() {
+  renderGraphicsSwatchStrip(elements.graphicsFillSwatches, buildFillSwatchesForSelection());
+  renderGraphicsSwatchStrip(elements.graphicsTextureSwatches, buildTextureSwatchesForSelection());
+}
+
+function renderGraphicsSwatchStrip(container, swatches) {
+  if (!container) {
+    return;
+  }
+  container.replaceChildren();
+  const group = container.closest(".visual-preset-group");
+  if (!swatches.length) {
+    container.hidden = true;
+    if (group) {
+      group.hidden = true;
+    }
+    return;
+  }
+  container.hidden = false;
+  if (group) {
+    group.hidden = false;
+  }
+  for (const swatch of swatches) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "visual-swatch";
+    button.dataset.swatchKind = swatch.kind;
+    button.dataset.swatchValue = swatch.value;
+    button.dataset.selected = String(Boolean(swatch.selected));
+    button.disabled = Boolean(swatch.disabled);
+    button.title = swatch.title;
+    button.setAttribute("aria-label", swatch.title);
+    button.style.setProperty("--swatch-color", swatch.value);
+    if (swatch.preview) {
+      button.style.setProperty("--swatch-preview", swatch.preview);
+    } else {
+      button.style.removeProperty("--swatch-preview");
+    }
+    container.append(button);
   }
 }
 
@@ -1307,6 +1370,123 @@ function getGraphicsEntityLabel(entityKey) {
   return getEntityVisual(entityKey)?.label ?? entityKey;
 }
 
+function defaultGraphicsEditorConfig() {
+  return {
+    shapePresets: [
+      {
+        id: "panel",
+        labelKey: "graphics.preset.panel",
+        patch: {
+          shape: "rectangle",
+          x: { kind: "center" },
+          y: { kind: "center" },
+          width: { scale: 0.82, min: 10 },
+          height: { scale: 0.62, min: 10 },
+          radius: { scale: 0.08, min: 1 },
+          rotation: 0,
+          fillOpacity: 0.92,
+          textureType: "stripes",
+          textureVariant: "checker",
+          stripeWidth: 1,
+          stripeAngle: 0,
+          stripeGap: 5,
+        },
+      },
+      {
+        id: "token",
+        labelKey: "graphics.preset.token",
+        patch: {
+          shape: "circle",
+          x: { kind: "center" },
+          y: { kind: "center" },
+          width: { scale: 0.76, min: 10 },
+          height: { scale: 0.76, min: 10 },
+          radius: 0,
+          rotation: 0,
+          fillOpacity: 0.94,
+          textureType: "dither",
+          textureVariant: "checker",
+          textureScale: 3,
+        },
+      },
+      {
+        id: "shard",
+        labelKey: "graphics.preset.shard",
+        patch: {
+          shape: "polygon",
+          x: { kind: "center" },
+          y: { kind: "center" },
+          width: { scale: 0.7, min: 10 },
+          height: { scale: 0.8, min: 10 },
+          radius: 0,
+          rotation: 45,
+          sides: 4,
+          fillOpacity: 0.9,
+          textureType: "stripes",
+          textureVariant: "checker",
+          stripeWidth: 1,
+          stripeAngle: 45,
+          stripeGap: 4,
+        },
+      },
+      {
+        id: "beacon",
+        labelKey: "graphics.preset.beacon",
+        patch: {
+          shape: "star",
+          x: { kind: "center" },
+          y: { kind: "center" },
+          width: { scale: 0.72, min: 10 },
+          height: { scale: 0.72, min: 10 },
+          radius: 0,
+          rotation: 0,
+          points: 5,
+          outerRadius: { scale: 0.36, min: 5 },
+          innerRadius: { scale: 0.18, min: 3 },
+          fillOpacity: 0.94,
+          textureType: "dither",
+          textureVariant: "cross",
+          textureScale: 3,
+        },
+      },
+    ],
+    fillSwatches: [
+      { id: "accent", value: "#f28d35" },
+      { id: "sand", value: "#ffd8ad" },
+      { id: "iron", value: "#8f6a4a" },
+      { id: "ash", value: "#33261c" },
+      { id: "signal", value: "#00ff88" },
+      { id: "hazard", value: "#db5a42" },
+    ],
+    textureSwatches: [
+      { id: "char", value: "#33261c" },
+      { id: "rust", value: "#a64f21" },
+      { id: "sand", value: "#ffd8ad" },
+      { id: "teal", value: "#4fa3a5" },
+      { id: "violet", value: "#7a5ed1" },
+      { id: "ember", value: "#f28d35" },
+    ],
+  };
+}
+
+function normalizeGraphicsEditorConfig(config = {}) {
+  const fallback = defaultGraphicsEditorConfig();
+  return {
+    shapePresets:
+      Array.isArray(config.shapePresets) && config.shapePresets.length > 0
+        ? cloneJson(config.shapePresets)
+        : fallback.shapePresets,
+    fillSwatches:
+      Array.isArray(config.fillSwatches) && config.fillSwatches.length > 0
+        ? cloneJson(config.fillSwatches)
+        : fallback.fillSwatches,
+    textureSwatches:
+      Array.isArray(config.textureSwatches) && config.textureSwatches.length > 0
+        ? cloneJson(config.textureSwatches)
+        : fallback.textureSwatches,
+  };
+}
+
 function createDefaultShapeLayer(visual) {
   const canvasSize = Number(visual.canvasSize ?? 24);
   const outerSize = Math.max(8, Math.round(canvasSize * 0.72));
@@ -1517,15 +1697,6 @@ function importSelectedEntityVisual(source) {
   }
 }
 
-function shapePresets() {
-  return [
-    { id: "panel", labelKey: "graphics.preset.panel" },
-    { id: "token", labelKey: "graphics.preset.token" },
-    { id: "shard", labelKey: "graphics.preset.shard" },
-    { id: "beacon", labelKey: "graphics.preset.beacon" },
-  ];
-}
-
 function applyShapePreset(presetId) {
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
@@ -1533,75 +1704,115 @@ function applyShapePreset(presetId) {
     return;
   }
   const canvasSize = Number(visual.canvasSize ?? 24);
-  const presets = {
-    panel: {
-      shape: "rectangle",
-      x: canvasSize / 2,
-      y: canvasSize / 2,
-      width: Math.max(10, canvasSize * 0.82),
-      height: Math.max(10, canvasSize * 0.62),
-      radius: Math.max(1, canvasSize * 0.08),
-      rotation: 0,
-      fillOpacity: 0.92,
-      textureType: "stripes",
-      textureVariant: "checker",
-      stripeWidth: 1,
-      stripeAngle: 0,
-      stripeGap: 5,
-    },
-    token: {
-      shape: "circle",
-      x: canvasSize / 2,
-      y: canvasSize / 2,
-      width: Math.max(10, canvasSize * 0.76),
-      height: Math.max(10, canvasSize * 0.76),
-      radius: 0,
-      rotation: 0,
-      fillOpacity: 0.94,
-      textureType: "dither",
-      textureVariant: "checker",
-      textureScale: 3,
-    },
-    shard: {
-      shape: "polygon",
-      x: canvasSize / 2,
-      y: canvasSize / 2,
-      width: Math.max(10, canvasSize * 0.7),
-      height: Math.max(10, canvasSize * 0.8),
-      radius: 0,
-      rotation: 45,
-      sides: 4,
-      fillOpacity: 0.9,
-      textureType: "stripes",
-      textureVariant: "checker",
-      stripeWidth: 1,
-      stripeAngle: 45,
-      stripeGap: 4,
-    },
-    beacon: {
-      shape: "star",
-      x: canvasSize / 2,
-      y: canvasSize / 2,
-      width: Math.max(10, canvasSize * 0.72),
-      height: Math.max(10, canvasSize * 0.72),
-      radius: 0,
-      rotation: 0,
-      points: 5,
-      outerRadius: Math.max(5, canvasSize * 0.36),
-      innerRadius: Math.max(3, canvasSize * 0.18),
-      fillOpacity: 0.94,
-      textureType: "dither",
-      textureVariant: "cross",
-      textureScale: 3,
-    },
-  };
-  const preset = presets[presetId];
+  const preset = (graphicsEditorConfig.shapePresets ?? []).find((item) => item.id === presetId);
   if (!preset) {
     return;
   }
-  Object.assign(layer, preset);
+  Object.assign(layer, resolveGraphicsPresetPatch(preset.patch ?? {}, canvasSize));
   normalizeShapeLayer(layer, visual);
   persistEntityVisualCatalog();
+}
+
+function resolveGraphicsPresetPatch(patch, canvasSize) {
+  return Object.fromEntries(
+    Object.entries(patch).map(([key, value]) => [key, resolveGraphicsPresetValue(value, canvasSize)]),
+  );
+}
+
+function resolveGraphicsPresetValue(value, canvasSize) {
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveGraphicsPresetValue(item, canvasSize));
+  }
+  if (value === null || value === undefined || typeof value !== "object") {
+    return value;
+  }
+  if (value.kind === "center") {
+    return canvasSize / 2;
+  }
+  if ("scale" in value) {
+    let resolved = canvasSize * Number(value.scale ?? 0);
+    if (value.round === "integer") {
+      resolved = Math.round(resolved);
+    }
+    if (Number.isFinite(Number(value.min))) {
+      resolved = Math.max(resolved, Number(value.min));
+    }
+    if (Number.isFinite(Number(value.max))) {
+      resolved = Math.min(resolved, Number(value.max));
+    }
+    return resolved;
+  }
+  return cloneJson(value);
+}
+
+function buildFillSwatchesForSelection() {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!layer) {
+    return [];
+  }
+  const field = layer.type === "glyph" ? "glyphColor" : "fill";
+  const currentValue = normalizeColorValue(layer[field], field === "glyphColor" ? "#f0d8bb" : "#f28d35").toLowerCase();
+  return (graphicsEditorConfig.fillSwatches ?? []).map((swatch) => ({
+    kind: "fill",
+    value: normalizeColorValue(swatch.value, "#f28d35"),
+    selected: normalizeColorValue(swatch.value, "#f28d35").toLowerCase() === currentValue,
+    disabled: Boolean(layer.locked),
+    title: `${t("graphics.fillSwatches")} // ${swatch.id ?? swatch.value}`,
+    preview: buildGraphicsColorPreview(normalizeColorValue(swatch.value, "#f28d35")),
+  }));
+}
+
+function buildTextureSwatchesForSelection() {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!layer || layer.type !== "shape" || (layer.textureType ?? "none") === "none") {
+    return [];
+  }
+  const currentValue = normalizeColorValue(layer.textureColor, "#33261c").toLowerCase();
+  return (graphicsEditorConfig.textureSwatches ?? []).map((swatch) => {
+    const color = normalizeColorValue(swatch.value, "#33261c");
+    return {
+      kind: "texture",
+      value: color,
+      selected: color.toLowerCase() === currentValue,
+      disabled: Boolean(layer.locked),
+      title: `${t("graphics.textureSwatches")} // ${swatch.id ?? swatch.value}`,
+      preview: buildGraphicsTexturePreview(color, layer.textureType),
+    };
+  });
+}
+
+function buildGraphicsColorPreview(color) {
+  return `linear-gradient(180deg, ${color}, ${color})`;
+}
+
+function buildGraphicsTexturePreview(color, textureType) {
+  if (textureType === "stripes") {
+    return `repeating-linear-gradient(135deg, ${color} 0 2px, transparent 2px 5px), linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01))`;
+  }
+  return `radial-gradient(circle at 25% 25%, ${color} 0 1px, transparent 1px 100%), radial-gradient(circle at 75% 75%, ${color} 0 1px, transparent 1px 100%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))`;
+}
+
+function applyGraphicsSwatch(kind, value) {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!visual || !layer || layer.locked) {
+    return;
+  }
+  if (kind === "fill") {
+    if (layer.type === "glyph") {
+      layer.glyphColor = value;
+    } else {
+      layer.fill = value;
+    }
+    persistEntityVisualCatalog();
+    return;
+  }
+  if (kind === "texture" && layer.type === "shape" && (layer.textureType ?? "none") !== "none") {
+    layer.textureColor = value;
+    persistEntityVisualCatalog();
+  }
 }
 
 function renderGlyphLayer(layer) {

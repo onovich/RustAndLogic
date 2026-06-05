@@ -840,6 +840,32 @@ try {
   if (!wallEntityIoAfterPreset.includes('"shape": "star"')) {
     throw new Error(`Expected shape preset to update selected wall layer, got: ${wallEntityIoAfterPreset}`);
   }
+  const fillSwatchCount = await page.locator('[data-testid="graphics-fill-swatches"] .visual-swatch').count();
+  const textureSwatchCount = await page.locator('[data-testid="graphics-texture-swatches"] .visual-swatch').count();
+  if (fillSwatchCount < 4 || textureSwatchCount < 4) {
+    throw new Error(`Expected graphics swatch strips to render from config, got fill=${fillSwatchCount} texture=${textureSwatchCount}.`);
+  }
+  await page.locator('[data-testid="graphics-fill-swatches"] .visual-swatch').nth(4).click();
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="graphics-export"]').value.includes('"fill": "#00ff88"'),
+  );
+  await page.locator('[data-testid="graphics-texture-swatches"] .visual-swatch').nth(1).click();
+  await page.waitForFunction(() =>
+    document.querySelector('[data-testid="graphics-export"]').value.includes('"textureColor": "#a64f21"'),
+  );
+  const swatchState = await page.evaluate(() => ({
+    exportValue: document.querySelector('[data-testid="graphics-export"]')?.value ?? "",
+    fillVisible: !document.querySelector('[data-testid="graphics-fill-swatches"]')?.hidden,
+    textureVisible: !document.querySelector('[data-testid="graphics-texture-swatches"]')?.hidden,
+  }));
+  if (
+    !swatchState.fillVisible ||
+    !swatchState.textureVisible ||
+    !swatchState.exportValue.includes('"fill": "#00ff88"') ||
+    !swatchState.exportValue.includes('"textureColor": "#a64f21"')
+  ) {
+    throw new Error(`Expected graphics swatches to update selected layer colors, got ${JSON.stringify(swatchState)}.`);
+  }
   await page.getByTestId("graphics-studio-button").click();
   const studioState = await page.evaluate(() => {
     const panel = document.querySelector(".dev-panel");

@@ -7,6 +7,102 @@
       "10": { "interval": 90, "duration": 70 }
     }
   },
+  "graphicsEditor": {
+    "shapePresets": [
+      {
+        "id": "panel",
+        "labelKey": "graphics.preset.panel",
+        "patch": {
+          "shape": "rectangle",
+          "x": { "kind": "center" },
+          "y": { "kind": "center" },
+          "width": { "scale": 0.82, "min": 10 },
+          "height": { "scale": 0.62, "min": 10 },
+          "radius": { "scale": 0.08, "min": 1 },
+          "rotation": 0,
+          "fillOpacity": 0.92,
+          "textureType": "stripes",
+          "textureVariant": "checker",
+          "stripeWidth": 1,
+          "stripeAngle": 0,
+          "stripeGap": 5
+        }
+      },
+      {
+        "id": "token",
+        "labelKey": "graphics.preset.token",
+        "patch": {
+          "shape": "circle",
+          "x": { "kind": "center" },
+          "y": { "kind": "center" },
+          "width": { "scale": 0.76, "min": 10 },
+          "height": { "scale": 0.76, "min": 10 },
+          "radius": 0,
+          "rotation": 0,
+          "fillOpacity": 0.94,
+          "textureType": "dither",
+          "textureVariant": "checker",
+          "textureScale": 3
+        }
+      },
+      {
+        "id": "shard",
+        "labelKey": "graphics.preset.shard",
+        "patch": {
+          "shape": "polygon",
+          "x": { "kind": "center" },
+          "y": { "kind": "center" },
+          "width": { "scale": 0.7, "min": 10 },
+          "height": { "scale": 0.8, "min": 10 },
+          "radius": 0,
+          "rotation": 45,
+          "sides": 4,
+          "fillOpacity": 0.9,
+          "textureType": "stripes",
+          "textureVariant": "checker",
+          "stripeWidth": 1,
+          "stripeAngle": 45,
+          "stripeGap": 4
+        }
+      },
+      {
+        "id": "beacon",
+        "labelKey": "graphics.preset.beacon",
+        "patch": {
+          "shape": "star",
+          "x": { "kind": "center" },
+          "y": { "kind": "center" },
+          "width": { "scale": 0.72, "min": 10 },
+          "height": { "scale": 0.72, "min": 10 },
+          "radius": 0,
+          "rotation": 0,
+          "points": 5,
+          "outerRadius": { "scale": 0.36, "min": 5 },
+          "innerRadius": { "scale": 0.18, "min": 3 },
+          "fillOpacity": 0.94,
+          "textureType": "dither",
+          "textureVariant": "cross",
+          "textureScale": 3
+        }
+      }
+    ],
+    "fillSwatches": [
+      { "id": "accent", "value": "#f28d35" },
+      { "id": "sand", "value": "#ffd8ad" },
+      { "id": "iron", "value": "#8f6a4a" },
+      { "id": "ash", "value": "#33261c" },
+      { "id": "signal", "value": "#00ff88" },
+      { "id": "hazard", "value": "#db5a42" }
+    ],
+    "textureSwatches": [
+      { "id": "char", "value": "#33261c" },
+      { "id": "rust", "value": "#a64f21" },
+      { "id": "sand", "value": "#ffd8ad" },
+      { "id": "teal", "value": "#4fa3a5" },
+      { "id": "violet", "value": "#7a5ed1" },
+      { "id": "ember", "value": "#f28d35" }
+    ]
+  },
   "taskDefinitions": [
     { "id": "deploy", "labelKey": "flow.deploy" },
     { "id": "collect", "labelKey": "flow.collect" },

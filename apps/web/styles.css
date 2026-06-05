@@ -1592,11 +1592,51 @@ textarea[data-invalid="true"] {
   gap: 6px;
 }
 
+.visual-assist-grid,
+.visual-preset-group {
+  display: grid;
+  gap: 6px;
+}
+
 .visual-preset-strip button {
   min-height: 22px;
   padding: 0 7px;
   font-size: 0.58rem;
   letter-spacing: 0.05em;
+}
+
+.visual-swatch-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.visual-swatch {
+  position: relative;
+  min-height: 24px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(51, 38, 28, 0.9);
+  background: rgba(10, 5, 3, 0.94);
+}
+
+.visual-swatch::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(255, 216, 173, 0.14);
+  background: var(--swatch-preview, var(--swatch-color, transparent));
+}
+
+.visual-swatch:hover {
+  border-color: var(--accent);
+}
+
+.visual-swatch[data-selected="true"] {
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 0 0 1px rgba(242, 141, 53, 0.18),
+    0 0 8px rgba(242, 141, 53, 0.16);
 }
 
 .visual-field input,

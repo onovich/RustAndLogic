@@ -308,6 +308,8 @@ graphics.layerHidden,Hidden,隐藏
 graphics.layerLocked,Locked,锁定
 graphics.layerUnlocked,Editable,可编辑
 graphics.presets,Shape presets,形状预设
+graphics.fillSwatches,Fill swatches,填充色板
+graphics.textureSwatches,Texture swatches,纹理色板
 graphics.preset.panel,Panel,面板
 graphics.preset.token,Token,标记
 graphics.preset.shard,Shard,碎片
