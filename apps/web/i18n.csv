@@ -18,7 +18,7 @@ script.guidance.m1,Starter scaffold: use the wake script, confirm one pickup, th
 script.guidance.m2,Starter scaffold: start from the haul loop and add the energy check before trying to optimize path length.,起步脚手架：先从搬运循环开始，先补上电量检查，再考虑路径优化。
 script.guidance.m3,Starter scaffold: begin with the base cycle and keep home-facing branches readable before adding repair or fabrication tweaks.,起步脚手架：先从基地循环起步，先把朝向基地的分支写清楚，再加修理和合成细节。
 script.guidance.m4,Starter scaffold: treat the hot zone as a health cost. Read the hazard first, decide whether to enter, then service at home before the next run.,起步脚手架：把危险区当成生命值成本。先读取危险，再决定要不要进去，回家维护后再开下一趟。
-script.guidance.m5,Starter scaffold: read base stock before every run. Pull only the ingredient the fabricator is still missing, then stop once the first shard is made.,起步脚手架：每次出门前先读取基地库存。只去补合成台当前还缺的那种材料，做出第一枚记忆晶片后就先停住。
+script.guidance.m5,Starter scaffold: read the current craft cost before every run. Pull only the ingredient the fabricator is still missing, then stop once the second shard is made.,起步脚手架：每次出门前先读取当前合成成本。只去补合成台这一轮还缺的那种材料，做出第二枚记忆晶片后就先停住。
 teaching.m1.collect.title,First recovery confirmed,首次回收已确认
 teaching.m1.collect.body,Good. The robot can now pull cargo off the map. Next, make that pickup lead back home instead of wandering.,很好。机器人已经能把货从地图上取下来。下一步，把这次拾取稳定接回基地，而不是继续乱走。
 teaching.m1.unload.title,Loop closed,循环闭合
@@ -38,7 +38,7 @@ teaching.m4.chip.body,Good. You brought a chip back alive. That is the first pro
 teaching.m4.hazard.title,Service before greed,先维护，再贪收益
 teaching.m4.hazard.body,The hot zone punishes scripts that try to repair only after they are already stranded. Route home before service work is needed, not after.,危险区会惩罚那种“等到搁浅后才想维修”的脚本。要在需要维护之前就规划返航，而不是之后。
 teaching.m5.craft.title,Stock-aware crafting confirmed,库存感知合成已确认
-teaching.m5.craft.body,Good. The script is finally reading the base stock instead of hauling blindly. That is the first step from survival loops into real scheduling.,很好。脚本终于开始读取基地库存，而不是盲目搬运了。这是从生存循环迈向真正调度的第一步。
+teaching.m5.craft.body,Good. The script is finally reading the live craft cost instead of hauling blindly. That is the first step from survival loops into real scheduling.,很好。脚本终于开始读取实时合成成本，而不是盲目搬运了。这是从生存循环迈向真正调度的第一步。
 script.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 script.title,Script,脚本
 script.controls,Run controls,运行控制
@@ -96,6 +96,7 @@ flow.collect,Load cargo from the map,从地图装载货物
 flow.chip,Recover a hot-zone chip,回收危险区芯片
 flow.unload,Unload cargo at home,回家卸载货物
 flow.recharge,Recharge at home,回家补满电量
+flow.stockBalance,Complete two cost-aware fabrications,完成两次成本感知合成
 flow.save,Save and reload progress,保存并读取进度
 samples.title,Field scripts,示例脚本
 samples.m1,M1 Wake,示例 M1
@@ -192,6 +193,9 @@ completion.cargo.chip,Cargo has a chip,货舱里有芯片
 completion.resource.scrap.low,Base scrap below threshold,基地废铁低于阈值
 completion.resource.battery.low,Base battery below threshold,基地电池低于阈值
 completion.resource.chip.any,Base has recovered chips,基地已有回收芯片
+completion.resource.memory.enough,Memory shards above target,记忆晶片高于目标值
+completion.resource.scrap.cost,Base scrap is below current craft cost,基地废铁低于当前合成成本
+completion.resource.battery.cost,Base battery is below current craft cost,基地电池低于当前合成成本
 completion.hp.low,HP below threshold,HP 低于阈值
 completion.energy.low,Battery below threshold,电量低于阈值
 completion.damage.any,Damaged this tick,本回合受到伤害

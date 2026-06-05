@@ -591,7 +591,7 @@ try {
     throw new Error(`Expected M5 sample actions to expose M4+M5 only, got: ${m5SampleActions}`);
   }
   const m5Guidance = await page.getByTestId("script-guidance").innerText();
-  if (!m5Guidance.toLowerCase().includes("base stock")) {
+  if (!m5Guidance.toLowerCase().includes("current craft cost")) {
     throw new Error(`Expected M5 script guidance, got: ${m5Guidance}`);
   }
   for (let index = 0; index < 3; index += 1) {
@@ -600,28 +600,37 @@ try {
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
   await page.locator('[data-testid="sample-actions"] [data-preset="m5"]').click();
   const m5PresetScript = await page.getByTestId("script-editor").inputValue();
-  if (!m5PresetScript.includes("Check(Battery).Below(1)") || !m5PresetScript.includes("Craft(Home)")) {
+  if (!m5PresetScript.includes("Check(Scrap).BelowCost(Craft)") || !m5PresetScript.includes("Check(Memory).Above(2)")) {
     throw new Error(`Expected M5 preset to include stock query and craft call, got: ${m5PresetScript}`);
   }
-  await page.getByTestId("script-editor").fill("Check(Scrap).Below(2)");
+  await page.getByTestId("script-editor").fill("Check(Scrap).BelowCost(Craft)");
   await page.getByTestId("step-button").click();
   const stockLog = (await page.getByTestId("console-log").innerText()).toUpperCase();
-  if (!stockLog.includes("CHECK(SCRAP).BELOW(2) -> TRUE")) {
+  if (!stockLog.includes("CHECK(SCRAP).BELOWCOST(CRAFT) -> TRUE")) {
     throw new Error(`Expected M5 stock query to evaluate against base resources, got: ${stockLog}`);
   }
   await page.getByTestId("reset-button").click();
   await page.locator('[data-testid="sample-actions"] [data-preset="m5"]').click();
-  await page.getByTestId("play-button").click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="memory-shard-count"]').innerText.trim() === "2");
+  for (let index = 0; index < 80; index += 1) {
+    await page.getByTestId("step-button").click();
+  }
+  await page.waitForFunction(() => document.querySelector('[data-testid="memory-shard-count"]').innerText.trim() === "3");
   const m5Toast = await page.evaluate(() => ({
     kind: document.querySelector('[data-testid="runtime-toast"]')?.dataset.kind ?? "",
     title: document.querySelector('[data-testid="runtime-toast-title"]')?.innerText ?? "",
   }));
-  if (m5Toast.kind !== "success" || !m5Toast.title.toUpperCase().includes("STOCK-AWARE CRAFTING CONFIRMED")) {
+  if (
+    !m5Toast.title.toUpperCase().includes("STOCK-AWARE CRAFTING CONFIRMED") ||
+    (m5Toast.kind && m5Toast.kind !== "success")
+  ) {
     throw new Error(`Expected first M5 success teaching toast, got: ${JSON.stringify(m5Toast)}.`);
   }
+  const m5FlowSummary = (await page.getByTestId("flow-summary").innerText()).toUpperCase();
+  if (!m5FlowSummary.includes("STAGE TARGET COMPLETE")) {
+    throw new Error(`Expected M5 stage summary to complete after the second adaptive craft, got: ${m5FlowSummary}`);
+  }
   const m5FacilityText = (await page.getByTestId("facility-list").innerText()).toUpperCase();
-  if (!m5FacilityText.includes("3 SCRAP") || !m5FacilityText.includes("1 BATTERY")) {
+  if (!m5FacilityText.includes("4 SCRAP") || !m5FacilityText.includes("1 BATTERY")) {
     throw new Error(`Expected M5 fabricator readout to refresh dynamic recipe, got: ${m5FacilityText}`);
   }
   await page.getByTestId("reset-button").click();

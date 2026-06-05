@@ -14,6 +14,7 @@
     { "id": "unload", "labelKey": "flow.unload" },
     { "id": "recharge", "labelKey": "flow.recharge" },
     { "id": "craft", "labelKey": "completion.craft.home" },
+    { "id": "stockBalance", "labelKey": "flow.stockBalance" },
     { "id": "repair", "labelKey": "completion.repair" },
     { "id": "save", "labelKey": "flow.save" }
   ],
@@ -88,29 +89,42 @@
       "labelKey": "samples.m5",
       "lines": [
         "@Loop",
+        "Check(Memory).Above(2)",
+        "IfTrue Goto @Done",
         "Check(Cargo).Any()",
         "IfTrue Unload(Home)",
-        "Check(Battery).Below(1)",
-        "IfTrue Goto @BatteryRun",
-        "Check(Scrap).Below(2)",
+        "Check(Scrap).BelowCost(Craft)",
         "IfTrue Goto @ScrapRun",
+        "Check(Battery).BelowCost(Craft)",
+        "IfTrue Goto @BatteryRun",
         "Craft(Home)",
-        "Goto @Done",
+        "Goto @Loop",
         "@ScrapRun",
         "Turn(Around)",
         "Move()",
+        "@ScrapSeek",
         "Turn(Left)",
-        "PickUp()",
-        "Turn(Around)",
-        "MoveToward(Home)",
-        "Goto @Loop",
+        "Check().Has(Scrap)",
+        "IfTrue PickUp()",
+        "IfTrue Goto @Return",
+        "Turn(Right)",
+        "Move()",
+        "Goto @ScrapSeek",
         "@BatteryRun",
         "Turn(Around)",
         "Move()",
+        "@BatterySeek",
         "Turn(Right)",
-        "PickUp()",
-        "Turn(Around)",
-        "MoveToward(Home)",
+        "Check().Has(Battery)",
+        "IfTrue PickUp()",
+        "IfTrue Goto @Return",
+        "Turn(Left)",
+        "Move()",
+        "Goto @BatterySeek",
+        "@Return",
+        "Check(Here).Is(Home)",
+        "IfFalse MoveToward(Home)",
+        "IfFalse Goto @Return",
         "Goto @Loop",
         "@Done",
         "Wait()",
@@ -340,8 +354,8 @@
     {
       "id": "m5",
       "labelKey": "samples.m5",
-      "taskIds": ["deploy", "collect", "unload", "craft"],
-      "completionTaskIds": ["collect", "unload", "craft"],
+      "taskIds": ["deploy", "collect", "unload", "craft", "stockBalance"],
+      "completionTaskIds": ["stockBalance"],
       "presetId": "m5",
       "location": {
         "kindKey": "location.kind.m5",
@@ -359,7 +373,7 @@
       "runtimeHintKey": "runtime.stageHint.m5",
       "teachingMoments": {
         "success": [
-          { "id": "craft", "taskId": "craft", "titleKey": "teaching.m5.craft.title", "bodyKey": "teaching.m5.craft.body" }
+          { "id": "stockBalance", "taskId": "stockBalance", "titleKey": "teaching.m5.craft.title", "bodyKey": "teaching.m5.craft.body" }
         ],
         "failure": []
       },
@@ -371,19 +385,20 @@
       ],
       "game": {
         "stageId": "m5",
-        "instructionCapacity": 30,
+        "instructionCapacity": 41,
         "width": 6,
         "height": 5,
         "base": { "x": 0, "y": 2 },
-        "robot": { "x": 0, "y": 2, "dir": "W", "hp": 8, "armor": 1, "weapon": 1, "energy": 6, "maxEnergy": 6, "cargo": [] },
+        "robot": { "x": 0, "y": 2, "dir": "W", "hp": 8, "armor": 1, "weapon": 1, "energy": 16, "maxEnergy": 16, "cargo": [] },
         "resources": { "scrap": 1, "cells": 0, "chips": 0, "memoryShards": 1 },
-        "obstacles": [
-          { "id": "wall-a", "x": 3, "y": 1 },
-          { "id": "wall-b", "x": 3, "y": 3 }
-        ],
+        "obstacles": [],
         "deposits": [
-          { "id": "scrap-a", "type": "scrap", "x": 1, "y": 1 },
-          { "id": "cell-a", "type": "cell", "x": 1, "y": 3 }
+          { "id": "scrap-b", "type": "scrap", "x": 1, "y": 1 },
+          { "id": "scrap-c", "type": "scrap", "x": 2, "y": 1 },
+          { "id": "scrap-d", "type": "scrap", "x": 3, "y": 1 },
+          { "id": "scrap-e", "type": "scrap", "x": 4, "y": 1 },
+          { "id": "cell-b", "type": "cell", "x": 1, "y": 3 },
+          { "id": "cell-c", "type": "cell", "x": 2, "y": 3 }
         ]
       }
     }
@@ -404,9 +419,9 @@
     ],
     "syntax": {
       "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"],
-      "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above"],
+      "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above", "BelowCost"],
       "branches": ["Goto", "IfTrue", "IfFalse"],
-      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Chip", "Enemy", "Wall", "Hazard", "Cargo", "HP", "Energy", "Damage"]
+      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Chip", "Memory", "Enemy", "Wall", "Hazard", "Cargo", "HP", "Energy", "Damage", "Craft"]
     },
     "completions": [
       { "value": "Move()", "kindKey": "completion.kind.action", "hintKey": "completion.move.forward" },
@@ -438,6 +453,9 @@
       { "value": "Check(Scrap).Below(2)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.scrap.low" },
       { "value": "Check(Battery).Below(1)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.battery.low" },
       { "value": "Check(Chip).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.chip.any" },
+      { "value": "Check(Memory).Above(2)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.memory.enough" },
+      { "value": "Check(Scrap).BelowCost(Craft)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.scrap.cost" },
+      { "value": "Check(Battery).BelowCost(Craft)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.battery.cost" },
       { "value": "Check(HP).Below(30)", "kindKey": "completion.kind.query", "hintKey": "completion.hp.low" },
       { "value": "Check(Energy).Below(40)", "kindKey": "completion.kind.query", "hintKey": "completion.energy.low" },
       { "value": "Check(Damage).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.damage.any" },

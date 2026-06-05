@@ -336,7 +336,10 @@ function makeHardware(game) {
         const damage = game.lastDamageTick === game.tick ? 1 : 0;
         return compareNumber(damage, instruction.predicate, instruction.value);
       }
-      if (["Scrap", "Battery", "Chip"].includes(instruction.target)) {
+      if (instruction.predicate === "BelowCost" && ["Scrap", "Battery", "Chip", "Memory"].includes(instruction.target)) {
+        return resourceCountForTarget(game, instruction.target) < resourceCostForIntent(game, instruction.target, instruction.value);
+      }
+      if (["Scrap", "Battery", "Chip", "Memory"].includes(instruction.target)) {
         return compareNumber(resourceCountForTarget(game, instruction.target), instruction.predicate, instruction.value);
       }
 
@@ -433,6 +436,28 @@ function resourceCountForTarget(game, target) {
   }
   if (target === "Chip") {
     return game.resources.chips ?? 0;
+  }
+  if (target === "Memory") {
+    return game.resources.memoryShards ?? 0;
+  }
+  return 0;
+}
+
+function resourceCostForIntent(game, target, intent) {
+  if (intent === "Craft") {
+    const recipe = currentFabricatorRecipe(game);
+    if (target === "Scrap") {
+      return recipe.scrap ?? 0;
+    }
+    if (target === "Battery") {
+      return recipe.cells ?? 0;
+    }
+    if (target === "Chip") {
+      return recipe.chips ?? 0;
+    }
+    if (target === "Memory") {
+      return recipe.memoryShards ?? 0;
+    }
   }
   return 0;
 }

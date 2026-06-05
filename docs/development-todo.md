@@ -98,6 +98,8 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Bind each stage's one-time first-success and first-failure teaching prompts to stage configuration data.
 - [x] Add the first M4 hot-zone slice with hazard tiles, chip recovery, and a hazard-aware retreat/repair script path.
 - [x] Add the first M5 stock-balancing slice with base resource queries, a stock-aware sample script, and dynamic fabricator recipe readouts.
+- [x] Add the second M5 dynamic-cost slice with `BelowCost(Craft)` queries and a two-shard stock-balancing objective.
+- [x] Tune the M5 recovery lane energy budget so the cost-aware sample can complete the farthest scrap return and finish the second craft.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

@@ -59,6 +59,12 @@ PickUp()
   const stockQuery = compileTapeScript("Check(Scrap).Below(2)", { instructionCapacity: 1 });
   assert.equal(stockQuery.ok, true);
 
+  const stockCostQuery = compileTapeScript("Check(Scrap).BelowCost(Craft)", { instructionCapacity: 1 });
+  assert.equal(stockCostQuery.ok, true);
+
+  const memoryQuery = compileTapeScript("Check(Memory).Above(2)", { instructionCapacity: 1 });
+  assert.equal(memoryQuery.ok, true);
+
   const craftCall = compileTapeScript("Craft(Home)", { instructionCapacity: 1 });
   assert.equal(craftCall.ok, true);
 
@@ -312,6 +318,18 @@ Goto @Loop`;
   state = stepGame(batteryStockGame);
   assert.equal(state.vm.cf, true);
 
+  const craftCostGame = createGame();
+  craftCostGame.resources.scrap = 1;
+  state = deployProgram(craftCostGame, "Check(Scrap).BelowCost(Craft)");
+  state = stepGame(craftCostGame);
+  assert.equal(state.vm.cf, true);
+
+  const memoryQueryGame = createGame();
+  memoryQueryGame.resources.memoryShards = 3;
+  state = deployProgram(memoryQueryGame, "Check(Memory).Above(2)");
+  state = stepGame(memoryQueryGame);
+  assert.equal(state.vm.cf, true);
+
   const wallGame = createGame();
   wallGame.robot.x = 0;
   wallGame.robot.dir = "W";
@@ -440,6 +458,73 @@ Goto @Loop`;
   secondRecipeGame.resources.cells = 1;
   const secondRecipeState = snapshot(secondRecipeGame);
   assert.deepEqual(secondRecipeState.facilities.fabricator.recipe, { scrap: 3, cells: 1, memoryShards: 1 });
+
+  const stockBalancerGame = createGame({
+    stageId: "m5",
+    instructionCapacity: 41,
+    width: 6,
+    height: 5,
+    base: { x: 0, y: 2 },
+    robot: { x: 0, y: 2, dir: "W", hp: 8, armor: 1, weapon: 1, energy: 16, maxEnergy: 16, cargo: [] },
+    resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
+    deposits: [
+      { id: "scrap-b", type: "scrap", x: 1, y: 1 },
+      { id: "scrap-c", type: "scrap", x: 2, y: 1 },
+      { id: "scrap-d", type: "scrap", x: 3, y: 1 },
+      { id: "scrap-e", type: "scrap", x: 4, y: 1 },
+      { id: "cell-b", type: "cell", x: 1, y: 3 },
+      { id: "cell-c", type: "cell", x: 2, y: 3 },
+    ],
+    obstacles: [],
+  });
+  state = deployProgram(stockBalancerGame, [
+    "@Loop",
+    "Check(Memory).Above(2)",
+    "IfTrue Goto @Done",
+    "Check(Cargo).Any()",
+    "IfTrue Unload(Home)",
+    "Check(Scrap).BelowCost(Craft)",
+    "IfTrue Goto @ScrapRun",
+    "Check(Battery).BelowCost(Craft)",
+    "IfTrue Goto @BatteryRun",
+    "Craft(Home)",
+    "Goto @Loop",
+    "@ScrapRun",
+    "Turn(Around)",
+    "Move()",
+    "@ScrapSeek",
+    "Turn(Left)",
+    "Check().Has(Scrap)",
+    "IfTrue PickUp()",
+    "IfTrue Goto @Return",
+    "Turn(Right)",
+    "Move()",
+    "Goto @ScrapSeek",
+    "@BatteryRun",
+    "Turn(Around)",
+    "Move()",
+    "@BatterySeek",
+    "Turn(Right)",
+    "Check().Has(Battery)",
+    "IfTrue PickUp()",
+    "IfTrue Goto @Return",
+    "Turn(Left)",
+    "Move()",
+    "Goto @BatterySeek",
+    "@Return",
+    "Check(Here).Is(Home)",
+    "IfFalse MoveToward(Home)",
+    "IfFalse Goto @Return",
+    "Goto @Loop",
+    "@Done",
+    "Wait()",
+    "Goto @Done",
+  ].join("\n"));
+  state = runGame(stockBalancerGame, 80);
+  assert.equal(state.resources.memoryShards, 3);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.resources.cells, 0);
+  assert.equal(state.vm.state, "Suspended");
 
   const rechargeGame = createGame();
   rechargeGame.robot.x = 1;

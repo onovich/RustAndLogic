@@ -4,7 +4,7 @@ const TURN_ARGS = new Set(["Left", "Right", "Around"]);
 const ITEM_ARGS = new Set(["Scrap", "Battery", "Chip"]);
 const ENTITY_ARGS = new Set(["Enemy"]);
 const TERRAIN_ARGS = new Set(["Wall", "Home", "Hazard"]);
-const RESOURCE_CHECK_TARGETS = new Set(["Scrap", "Battery", "Chip"]);
+const RESOURCE_CHECK_TARGETS = new Set(["Scrap", "Battery", "Chip", "Memory"]);
 const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage", ...RESOURCE_CHECK_TARGETS]);
 
 export function compileTapeScript(source, options = {}) {
@@ -335,6 +335,13 @@ function parseQuery(source) {
     if (["Any", "IsFull"].includes(predicate) && !value) {
       return { errors: [], instruction: { type: "query", target, predicate, value: "" } };
     }
+  }
+
+  if (RESOURCE_CHECK_TARGETS.has(target) && predicate === "BelowCost") {
+    if (value !== "Craft") {
+      return { errors: [`${predicate}() currently only supports Craft.`], op: "Check" };
+    }
+    return { errors: [], instruction: { type: "query", target, predicate, value } };
   }
 
   if ((["HP", "Energy", "Damage"].includes(target) || RESOURCE_CHECK_TARGETS.has(target)) && ["Below", "Above"].includes(predicate)) {

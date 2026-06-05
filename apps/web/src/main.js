@@ -1197,6 +1197,9 @@ function syncFlowState(beforeState, state) {
   if ("craft" in flow) {
     flow.craft = flow.craft || (beforeState ? state.resources.memoryShards > beforeState.resources.memoryShards : state.resources.memoryShards > 1);
   }
+  if ("stockBalance" in flow) {
+    flow.stockBalance = flow.stockBalance || state.resources.memoryShards >= 3;
+  }
   if ("repair" in flow) {
     flow.repair = flow.repair || Boolean(beforeState && state.robot.hp > beforeState.robot.hp);
   }
