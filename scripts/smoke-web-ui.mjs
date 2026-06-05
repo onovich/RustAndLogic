@@ -743,11 +743,13 @@ try {
     entityName: document.querySelector('[data-testid="graphics-entity-name"]')?.innerText ?? "",
     previewBackground: getComputedStyle(document.querySelector('[data-testid="graphics-preview"]')).backgroundImage,
     layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
+    templateCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template]').length,
   }));
   if (
     !graphicsPreviewState.entityName.toUpperCase().includes("ROBOT") ||
     !graphicsPreviewState.previewBackground.includes("data:image/svg+xml") ||
-    graphicsPreviewState.layerCount < 1
+    graphicsPreviewState.layerCount < 1 ||
+    graphicsPreviewState.templateCount < 4
   ) {
     throw new Error(`Expected graphics lab preview to initialize, got ${JSON.stringify(graphicsPreviewState)}.`);
   }
@@ -813,6 +815,16 @@ try {
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }
+  await page.locator('[data-testid="graphics-templates"] [data-template="signalToken"]').click();
+  await page.waitForFunction(() => {
+    const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
+    return exportValue.includes('"glyph": "W"') && exportValue.includes('"shape": "circle"');
+  });
+  await page.getByTestId("graphics-export-entity-button").click();
+  const wallEntityIoAfterTemplate = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!wallEntityIoAfterTemplate.includes('"glyph": "W"') || !wallEntityIoAfterTemplate.includes('"shape": "circle"')) {
+    throw new Error(`Expected entity template application to rewrite current visual, got: ${wallEntityIoAfterTemplate}`);
+  }
   const graphicsSelectOptions = await page.evaluate(() => {
     const readOptions = (field) =>
       [...document.querySelectorAll(`[data-testid="graphics-form"] [data-field="${field}"] option`)].map((node) => node.value);
@@ -875,7 +887,7 @@ try {
   if (afterMoveExport === beforeMoveExport) {
     throw new Error("Expected moving a graphics layer to rewrite export order.");
   }
-  await page.getByRole("button", { name: "Beacon" }).click();
+  await page.locator('[data-testid="graphics-presets"] [data-preset="beacon"]').click();
   await page.getByTestId("graphics-export-entity-button").click();
   const wallEntityIoAfterPreset = await page.getByTestId("graphics-entity-io").inputValue();
   if (!wallEntityIoAfterPreset.includes('"shape": "star"')) {

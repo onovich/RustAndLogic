@@ -167,6 +167,7 @@ const elements = {
   graphicsMoveLayerDownButton: query("graphics-move-layer-down-button"),
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
+  graphicsTemplates: query("graphics-templates"),
   graphicsPresets: query("graphics-presets"),
   graphicsFillSwatches: query("graphics-fill-swatches"),
   graphicsTextureSwatches: query("graphics-texture-swatches"),
@@ -630,6 +631,13 @@ function initializeGraphicsEditor() {
     }
     applyShapePreset(button.dataset.preset ?? "");
   });
+  elements.graphicsTemplates?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-template]");
+    if (!button) {
+      return;
+    }
+    applyEntityTemplate(button.dataset.template ?? "");
+  });
   const handleGraphicsSwatchClick = (event) => {
     const button = event.target.closest("[data-swatch-kind]");
     if (!button) {
@@ -710,6 +718,7 @@ function renderGraphicsEditor() {
   renderGraphicsEntityList();
   renderGraphicsLayerList();
   renderGraphicsForm();
+  renderGraphicsTemplates();
   renderGraphicsPresets();
   renderGraphicsSwatches();
 
@@ -771,6 +780,32 @@ function renderGraphicsEntityList() {
     button.dataset.active = String(entityKey === selectedVisualEntityKey);
     button.textContent = getGraphicsEntityLabel(entityKey);
     elements.graphicsEntityList.append(button);
+  }
+}
+
+function renderGraphicsTemplates() {
+  if (!elements.graphicsTemplates) {
+    return;
+  }
+  elements.graphicsTemplates.replaceChildren();
+  const group = elements.graphicsTemplates.closest(".visual-preset-group");
+  if (!selectedVisualEntityKey) {
+    elements.graphicsTemplates.hidden = true;
+    if (group) {
+      group.hidden = true;
+    }
+    return;
+  }
+  elements.graphicsTemplates.hidden = false;
+  if (group) {
+    group.hidden = false;
+  }
+  for (const template of graphicsEditorConfig.entityTemplates ?? []) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.template = template.id;
+    button.textContent = t(template.labelKey);
+    elements.graphicsTemplates.append(button);
   }
 }
 
@@ -1098,6 +1133,176 @@ function getGraphicsEntityLabel(entityKey) {
 
 function defaultGraphicsEditorConfig() {
   return {
+    entityTemplates: [
+      {
+        id: "frameBot",
+        labelKey: "graphics.template.frameBot",
+        visual: {
+          canvasSize: 24,
+          layers: [
+            {
+              id: "template-body",
+              type: "shape",
+              shape: "rectangle",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 0.82, min: 16 },
+              height: { scale: 0.82, min: 16 },
+              fill: "#ee9041",
+              fillOpacity: 0.94,
+              stroke: "#ffcd9f",
+              strokeWidth: 1,
+              radius: 3,
+              textureType: "stripes",
+              textureColor: "#6b2f14",
+              textureScale: 4,
+              stripeWidth: 1.2,
+              stripeAngle: 90,
+              stripeGap: 5,
+            },
+            {
+              id: "template-glyph",
+              type: "glyph",
+              glyph: { kind: "entityInitial" },
+              x: { kind: "center" },
+              y: { kind: "center", offset: 0.2 },
+              fontSize: { scale: 0.31, min: 7 },
+              glyphColor: "#201006",
+              stroke: "#ffe2b9",
+              strokeWidth: 0,
+            },
+          ],
+        },
+      },
+      {
+        id: "signalToken",
+        labelKey: "graphics.template.signalToken",
+        visual: {
+          canvasSize: 22,
+          layers: [
+            {
+              id: "template-token",
+              type: "shape",
+              shape: "circle",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 0.76, min: 14 },
+              height: { scale: 0.76, min: 14 },
+              fill: "#1e120b",
+              fillOpacity: 0.9,
+              stroke: "#f2a860",
+              strokeWidth: 1,
+              textureType: "dither",
+              textureColor: "#f2a860",
+              textureScale: 3,
+            },
+            {
+              id: "template-glyph",
+              type: "glyph",
+              glyph: { kind: "entityInitial" },
+              x: { kind: "center" },
+              y: { kind: "center" },
+              fontSize: { scale: 0.34, min: 7 },
+              glyphColor: "#ffdcb4",
+              stroke: "#1a0d08",
+              strokeWidth: 0,
+            },
+          ],
+        },
+      },
+      {
+        id: "hazardBeacon",
+        labelKey: "graphics.template.hazardBeacon",
+        visual: {
+          canvasSize: 40,
+          layers: [
+            {
+              id: "template-field",
+              type: "shape",
+              shape: "rectangle",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 1, min: 40 },
+              height: { scale: 1, min: 40 },
+              fill: "#ff8e3f",
+              fillOpacity: 0.08,
+              stroke: "#ff9e5c",
+              strokeWidth: 1,
+              radius: 0,
+              textureType: "stripes",
+              textureColor: "#ffb25e",
+              textureScale: 4,
+              stripeWidth: 1.5,
+              stripeAngle: 135,
+              stripeGap: 7,
+            },
+            {
+              id: "template-core",
+              type: "shape",
+              shape: "star",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 0.42, min: 12 },
+              height: { scale: 0.42, min: 12 },
+              points: 5,
+              outerRadius: { scale: 0.18, min: 6 },
+              innerRadius: { scale: 0.08, min: 3 },
+              fill: "#ffbe7e",
+              fillOpacity: 0.86,
+              stroke: "#ffe4c2",
+              strokeWidth: 0,
+            },
+          ],
+        },
+      },
+      {
+        id: "platedBlock",
+        labelKey: "graphics.template.platedBlock",
+        visual: {
+          canvasSize: 36,
+          layers: [
+            {
+              id: "template-shell",
+              type: "shape",
+              shape: "rectangle",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 0.94, min: 28 },
+              height: { scale: 0.94, min: 28 },
+              fill: "#0b0603",
+              fillOpacity: 0.96,
+              stroke: "#aa865f",
+              strokeWidth: 1,
+              radius: 0,
+              textureType: "stripes",
+              textureColor: "#6a4d32",
+              textureScale: 5,
+              stripeWidth: 2,
+              stripeAngle: 45,
+              stripeGap: 6,
+            },
+            {
+              id: "template-core",
+              type: "shape",
+              shape: "rectangle",
+              x: { kind: "center" },
+              y: { kind: "center" },
+              width: { scale: 0.56, min: 16 },
+              height: { scale: 0.56, min: 16 },
+              fill: "#1a120b",
+              fillOpacity: 0.72,
+              stroke: "#33261c",
+              strokeWidth: 1,
+              radius: 0,
+              textureType: "dither",
+              textureVariant: "cross",
+              textureColor: "#8f6a4a",
+              textureScale: 3,
+            },
+          ],
+        },
+      },
+    ],
     layerTypeOptions: [
       { value: "shape", labelKey: "graphics.option.layer.shape" },
       { value: "glyph", labelKey: "graphics.option.layer.glyph" },
@@ -1252,6 +1457,10 @@ function defaultGraphicsEditorConfig() {
 function normalizeGraphicsEditorConfig(config = {}) {
   const fallback = defaultGraphicsEditorConfig();
   return {
+    entityTemplates:
+      Array.isArray(config.entityTemplates) && config.entityTemplates.length > 0
+        ? cloneJson(config.entityTemplates)
+        : fallback.entityTemplates,
     entityFields:
       Array.isArray(config.entityFields) && config.entityFields.length > 0
         ? cloneJson(config.entityFields)
@@ -1496,6 +1705,31 @@ function importSelectedEntityVisual(source) {
   }
 }
 
+function applyEntityTemplate(templateId) {
+  const entityKey = selectedVisualEntityKey;
+  if (!entityKey) {
+    return;
+  }
+  const template = (graphicsEditorConfig.entityTemplates ?? []).find((item) => item.id === templateId);
+  if (!template?.visual) {
+    return;
+  }
+  const currentVisual = getSelectedEntityVisual();
+  const nextCanvasSize = Number(template.visual.canvasSize ?? currentVisual?.canvasSize ?? 24);
+  const resolvedVisual = resolveGraphicsTemplateValue(template.visual, {
+    canvasSize: nextCanvasSize,
+    entityKey,
+  });
+  entityVisualCatalog.entities[entityKey] = {
+    label: currentVisual?.label ?? getGraphicsEntityLabel(entityKey),
+    canvasSize: Number(resolvedVisual.canvasSize ?? nextCanvasSize),
+    layers: Array.isArray(resolvedVisual.layers) ? resolvedVisual.layers : [],
+  };
+  ensureSelectedVisualLayer();
+  persistEntityVisualCatalog();
+  showToast({ title: t("graphics.templateApplied"), body: t(template.labelKey) }, "success");
+}
+
 function applyShapePreset(presetId) {
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
@@ -1533,7 +1767,7 @@ function resolveGraphicsTemplateValue(value, context) {
   }
   if (value.kind === "center") {
     const canvasSize = Number(context.canvasSize ?? 24);
-    return canvasSize / 2;
+    return canvasSize / 2 + Number(value.offset ?? 0);
   }
   if (value.kind === "entityInitial") {
     return String(context.entityKey ?? "?").slice(0, 1).toUpperCase() || "?";
@@ -1552,7 +1786,9 @@ function resolveGraphicsTemplateValue(value, context) {
     }
     return resolved;
   }
-  return cloneJson(value);
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [key, resolveGraphicsTemplateValue(child, context)]),
+  );
 }
 
 function buildFillSwatchesForSelection() {

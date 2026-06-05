@@ -8,6 +8,176 @@
     }
   },
   "graphicsEditor": {
+    "entityTemplates": [
+      {
+        "id": "frameBot",
+        "labelKey": "graphics.template.frameBot",
+        "visual": {
+          "canvasSize": 24,
+          "layers": [
+            {
+              "id": "template-body",
+              "type": "shape",
+              "shape": "rectangle",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 0.82, "min": 16 },
+              "height": { "scale": 0.82, "min": 16 },
+              "fill": "#ee9041",
+              "fillOpacity": 0.94,
+              "stroke": "#ffcd9f",
+              "strokeWidth": 1,
+              "radius": 3,
+              "textureType": "stripes",
+              "textureColor": "#6b2f14",
+              "textureScale": 4,
+              "stripeWidth": 1.2,
+              "stripeAngle": 90,
+              "stripeGap": 5
+            },
+            {
+              "id": "template-glyph",
+              "type": "glyph",
+              "glyph": { "kind": "entityInitial" },
+              "x": { "kind": "center" },
+              "y": { "kind": "center", "offset": 0.2 },
+              "fontSize": { "scale": 0.31, "min": 7 },
+              "glyphColor": "#201006",
+              "stroke": "#ffe2b9",
+              "strokeWidth": 0
+            }
+          ]
+        }
+      },
+      {
+        "id": "signalToken",
+        "labelKey": "graphics.template.signalToken",
+        "visual": {
+          "canvasSize": 22,
+          "layers": [
+            {
+              "id": "template-token",
+              "type": "shape",
+              "shape": "circle",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 0.76, "min": 14 },
+              "height": { "scale": 0.76, "min": 14 },
+              "fill": "#1e120b",
+              "fillOpacity": 0.9,
+              "stroke": "#f2a860",
+              "strokeWidth": 1,
+              "textureType": "dither",
+              "textureColor": "#f2a860",
+              "textureScale": 3
+            },
+            {
+              "id": "template-glyph",
+              "type": "glyph",
+              "glyph": { "kind": "entityInitial" },
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "fontSize": { "scale": 0.34, "min": 7 },
+              "glyphColor": "#ffdcb4",
+              "stroke": "#1a0d08",
+              "strokeWidth": 0
+            }
+          ]
+        }
+      },
+      {
+        "id": "hazardBeacon",
+        "labelKey": "graphics.template.hazardBeacon",
+        "visual": {
+          "canvasSize": 40,
+          "layers": [
+            {
+              "id": "template-field",
+              "type": "shape",
+              "shape": "rectangle",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 1, "min": 40 },
+              "height": { "scale": 1, "min": 40 },
+              "fill": "#ff8e3f",
+              "fillOpacity": 0.08,
+              "stroke": "#ff9e5c",
+              "strokeWidth": 1,
+              "radius": 0,
+              "textureType": "stripes",
+              "textureColor": "#ffb25e",
+              "textureScale": 4,
+              "stripeWidth": 1.5,
+              "stripeAngle": 135,
+              "stripeGap": 7
+            },
+            {
+              "id": "template-core",
+              "type": "shape",
+              "shape": "star",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 0.42, "min": 12 },
+              "height": { "scale": 0.42, "min": 12 },
+              "points": 5,
+              "outerRadius": { "scale": 0.18, "min": 6 },
+              "innerRadius": { "scale": 0.08, "min": 3 },
+              "fill": "#ffbe7e",
+              "fillOpacity": 0.86,
+              "stroke": "#ffe4c2",
+              "strokeWidth": 0
+            }
+          ]
+        }
+      },
+      {
+        "id": "platedBlock",
+        "labelKey": "graphics.template.platedBlock",
+        "visual": {
+          "canvasSize": 36,
+          "layers": [
+            {
+              "id": "template-shell",
+              "type": "shape",
+              "shape": "rectangle",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 0.94, "min": 28 },
+              "height": { "scale": 0.94, "min": 28 },
+              "fill": "#0b0603",
+              "fillOpacity": 0.96,
+              "stroke": "#aa865f",
+              "strokeWidth": 1,
+              "radius": 0,
+              "textureType": "stripes",
+              "textureColor": "#6a4d32",
+              "textureScale": 5,
+              "stripeWidth": 2,
+              "stripeAngle": 45,
+              "stripeGap": 6
+            },
+            {
+              "id": "template-core",
+              "type": "shape",
+              "shape": "rectangle",
+              "x": { "kind": "center" },
+              "y": { "kind": "center" },
+              "width": { "scale": 0.56, "min": 16 },
+              "height": { "scale": 0.56, "min": 16 },
+              "fill": "#1a120b",
+              "fillOpacity": 0.72,
+              "stroke": "#33261c",
+              "strokeWidth": 1,
+              "radius": 0,
+              "textureType": "dither",
+              "textureVariant": "cross",
+              "textureColor": "#8f6a4a",
+              "textureScale": 3
+            }
+          ]
+        }
+      }
+    ],
     "entityFields": [
       { "field": "label", "labelKey": "graphics.field.entityLabel", "type": "text" },
       { "field": "canvasSize", "labelKey": "graphics.field.canvasSize", "type": "number", "valueType": "number", "min": 8, "max": 96, "step": 1 }

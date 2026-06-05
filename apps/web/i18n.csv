@@ -308,15 +308,21 @@ graphics.layerHidden,Hidden,隐藏
 graphics.layerLocked,Locked,锁定
 graphics.layerUnlocked,Editable,可编辑
 graphics.presets,Shape presets,形状预设
+graphics.templates,Entity templates,实体模板
 graphics.fillSwatches,Fill swatches,填充色板
 graphics.textureSwatches,Texture swatches,纹理色板
 graphics.preset.panel,Panel,面板
 graphics.preset.token,Token,标记
 graphics.preset.shard,Shard,碎片
 graphics.preset.beacon,Beacon,信标
+graphics.template.frameBot,Frame Bot,框架机体
+graphics.template.signalToken,Signal Token,信号标记
+graphics.template.hazardBeacon,Hazard Beacon,危险信标
+graphics.template.platedBlock,Plated Block,装甲方块
 graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
 graphics.importSuccess,Entity imported,实体已导入
 graphics.importFailed,Import failed,导入失败
+graphics.templateApplied,Template applied,模板已套用
 graphics.reset,Reset_Visuals,重置图形
 graphics.copy,Copy_JSON,复制 JSON
 graphics.copied,Copied,已复制
