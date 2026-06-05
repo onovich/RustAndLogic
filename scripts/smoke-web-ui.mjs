@@ -128,7 +128,7 @@ try {
     throw new Error(`Expected M1 sample presets to stay M1-only, got: ${startupRules.sampleActions}`);
   }
   const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
-  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE", "M4 HOT-ZONE RUN"]) {
+  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE", "M4 HOT-ZONE RUN", "M5 STOCK BALANCER"]) {
     if (!stageActions.includes(label)) {
       throw new Error(`Expected stage actions to include ${label}, got: ${stageActions}`);
     }
@@ -584,6 +584,47 @@ try {
   await page.locator('[data-testid="sample-actions"] [data-preset="m2"]').click();
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 14");
+  await page.getByTestId("reset-button").click();
+  await page.locator('[data-testid="stage-actions"] [data-stage="m5"]').click();
+  const m5SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
+  if (!m5SampleActions.includes("M4 HOT-ZONE RUN") || !m5SampleActions.includes("M5 STOCK BALANCER") || m5SampleActions.includes("M3 BASE CYCLE")) {
+    throw new Error(`Expected M5 sample actions to expose M4+M5 only, got: ${m5SampleActions}`);
+  }
+  const m5Guidance = await page.getByTestId("script-guidance").innerText();
+  if (!m5Guidance.toLowerCase().includes("base stock")) {
+    throw new Error(`Expected M5 script guidance, got: ${m5Guidance}`);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
+  await page.locator('[data-testid="sample-actions"] [data-preset="m5"]').click();
+  const m5PresetScript = await page.getByTestId("script-editor").inputValue();
+  if (!m5PresetScript.includes("Check(Battery).Below(1)") || !m5PresetScript.includes("Craft(Home)")) {
+    throw new Error(`Expected M5 preset to include stock query and craft call, got: ${m5PresetScript}`);
+  }
+  await page.getByTestId("script-editor").fill("Check(Scrap).Below(2)");
+  await page.getByTestId("step-button").click();
+  const stockLog = (await page.getByTestId("console-log").innerText()).toUpperCase();
+  if (!stockLog.includes("CHECK(SCRAP).BELOW(2) -> TRUE")) {
+    throw new Error(`Expected M5 stock query to evaluate against base resources, got: ${stockLog}`);
+  }
+  await page.getByTestId("reset-button").click();
+  await page.locator('[data-testid="sample-actions"] [data-preset="m5"]').click();
+  await page.getByTestId("play-button").click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="memory-shard-count"]').innerText.trim() === "2");
+  const m5Toast = await page.evaluate(() => ({
+    kind: document.querySelector('[data-testid="runtime-toast"]')?.dataset.kind ?? "",
+    title: document.querySelector('[data-testid="runtime-toast-title"]')?.innerText ?? "",
+  }));
+  if (m5Toast.kind !== "success" || !m5Toast.title.toUpperCase().includes("STOCK-AWARE CRAFTING CONFIRMED")) {
+    throw new Error(`Expected first M5 success teaching toast, got: ${JSON.stringify(m5Toast)}.`);
+  }
+  const m5FacilityText = (await page.getByTestId("facility-list").innerText()).toUpperCase();
+  if (!m5FacilityText.includes("3 SCRAP") || !m5FacilityText.includes("1 BATTERY")) {
+    throw new Error(`Expected M5 fabricator readout to refresh dynamic recipe, got: ${m5FacilityText}`);
+  }
+  await page.getByTestId("reset-button").click();
 
   const checklist = (await page.getByTestId("flow-checklist").innerText()).toUpperCase();
   for (const label of [

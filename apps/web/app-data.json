@@ -82,6 +82,40 @@
         "IfTrue Unload(Home)",
         "IfTrue Repair()"
       ]
+    },
+    {
+      "id": "m5",
+      "labelKey": "samples.m5",
+      "lines": [
+        "@Loop",
+        "Check(Cargo).Any()",
+        "IfTrue Unload(Home)",
+        "Check(Battery).Below(1)",
+        "IfTrue Goto @BatteryRun",
+        "Check(Scrap).Below(2)",
+        "IfTrue Goto @ScrapRun",
+        "Craft(Home)",
+        "Goto @Done",
+        "@ScrapRun",
+        "Turn(Around)",
+        "Move()",
+        "Turn(Left)",
+        "PickUp()",
+        "Turn(Around)",
+        "MoveToward(Home)",
+        "Goto @Loop",
+        "@BatteryRun",
+        "Turn(Around)",
+        "Move()",
+        "Turn(Right)",
+        "PickUp()",
+        "Turn(Around)",
+        "MoveToward(Home)",
+        "Goto @Loop",
+        "@Done",
+        "Wait()",
+        "Goto @Done"
+      ]
     }
   ],
   "storyPages": [
@@ -302,6 +336,56 @@
           { "id": "cell-a", "type": "cell", "x": 5, "y": 2 }
         ]
       }
+    },
+    {
+      "id": "m5",
+      "labelKey": "samples.m5",
+      "taskIds": ["deploy", "collect", "unload", "craft"],
+      "completionTaskIds": ["collect", "unload", "craft"],
+      "presetId": "m5",
+      "location": {
+        "kindKey": "location.kind.m5",
+        "nameKey": "location.name.m5",
+        "descriptionKey": "location.description.m5"
+      },
+      "ui": {
+        "recommendedSpeed": 5,
+        "enabledUpgrades": ["memory", "armor", "weapon"],
+        "visibleFacilities": ["charger", "repairBay", "fabricator"],
+        "samplePresetIds": ["m4", "m5"],
+        "recommendedPresetId": "m5"
+      },
+      "scriptGuidanceKey": "script.guidance.m5",
+      "runtimeHintKey": "runtime.stageHint.m5",
+      "teachingMoments": {
+        "success": [
+          { "id": "craft", "taskId": "craft", "titleKey": "teaching.m5.craft.title", "bodyKey": "teaching.m5.craft.body" }
+        ],
+        "failure": []
+      },
+      "resourceGuidanceKey": "stage.guidance.m5",
+      "storyPages": [
+        { "speakerKey": "story.m5.1.speaker", "textKey": "story.m5.1.text" },
+        { "speakerKey": "story.m5.2.speaker", "textKey": "story.m5.2.text" },
+        { "speakerKey": "story.m5.3.speaker", "textKey": "story.m5.3.text" }
+      ],
+      "game": {
+        "stageId": "m5",
+        "instructionCapacity": 30,
+        "width": 6,
+        "height": 5,
+        "base": { "x": 0, "y": 2 },
+        "robot": { "x": 0, "y": 2, "dir": "W", "hp": 8, "armor": 1, "weapon": 1, "energy": 6, "maxEnergy": 6, "cargo": [] },
+        "resources": { "scrap": 1, "cells": 0, "chips": 0, "memoryShards": 1 },
+        "obstacles": [
+          { "id": "wall-a", "x": 3, "y": 1 },
+          { "id": "wall-b", "x": 3, "y": 3 }
+        ],
+        "deposits": [
+          { "id": "scrap-a", "type": "scrap", "x": 1, "y": 1 },
+          { "id": "cell-a", "type": "cell", "x": 1, "y": 3 }
+        ]
+      }
     }
   ],
   "script": {
@@ -351,6 +435,9 @@
       { "value": "Check(Cargo).Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.scrap" },
       { "value": "Check(Cargo).Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.battery" },
       { "value": "Check(Cargo).Has(Chip)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.chip" },
+      { "value": "Check(Scrap).Below(2)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.scrap.low" },
+      { "value": "Check(Battery).Below(1)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.battery.low" },
+      { "value": "Check(Chip).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.resource.chip.any" },
       { "value": "Check(HP).Below(30)", "kindKey": "completion.kind.query", "hintKey": "completion.hp.low" },
       { "value": "Check(Energy).Below(40)", "kindKey": "completion.kind.query", "hintKey": "completion.energy.low" },
       { "value": "Check(Damage).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.damage.any" },

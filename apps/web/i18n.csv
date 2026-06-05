@@ -18,6 +18,7 @@ script.guidance.m1,Starter scaffold: use the wake script, confirm one pickup, th
 script.guidance.m2,Starter scaffold: start from the haul loop and add the energy check before trying to optimize path length.,起步脚手架：先从搬运循环开始，先补上电量检查，再考虑路径优化。
 script.guidance.m3,Starter scaffold: begin with the base cycle and keep home-facing branches readable before adding repair or fabrication tweaks.,起步脚手架：先从基地循环起步，先把朝向基地的分支写清楚，再加修理和合成细节。
 script.guidance.m4,Starter scaffold: treat the hot zone as a health cost. Read the hazard first, decide whether to enter, then service at home before the next run.,起步脚手架：把危险区当成生命值成本。先读取危险，再决定要不要进去，回家维护后再开下一趟。
+script.guidance.m5,Starter scaffold: read base stock before every run. Pull only the ingredient the fabricator is still missing, then stop once the first shard is made.,起步脚手架：每次出门前先读取基地库存。只去补合成台当前还缺的那种材料，做出第一枚记忆晶片后就先停住。
 teaching.m1.collect.title,First recovery confirmed,首次回收已确认
 teaching.m1.collect.body,Good. The robot can now pull cargo off the map. Next, make that pickup lead back home instead of wandering.,很好。机器人已经能把货从地图上取下来。下一步，把这次拾取稳定接回基地，而不是继续乱走。
 teaching.m1.unload.title,Loop closed,循环闭合
@@ -36,6 +37,8 @@ teaching.m4.chip.title,Hot-zone haul confirmed,危险区回收已确认
 teaching.m4.chip.body,Good. You brought a chip back alive. That is the first proof the script can trade hull safety for higher-value cargo without collapsing.,很好。你已经活着把芯片带回来了。这第一次证明你的脚本能用机体安全去换更高价值的货物，而且不会直接崩掉。
 teaching.m4.hazard.title,Service before greed,先维护，再贪收益
 teaching.m4.hazard.body,The hot zone punishes scripts that try to repair only after they are already stranded. Route home before service work is needed, not after.,危险区会惩罚那种“等到搁浅后才想维修”的脚本。要在需要维护之前就规划返航，而不是之后。
+teaching.m5.craft.title,Stock-aware crafting confirmed,库存感知合成已确认
+teaching.m5.craft.body,Good. The script is finally reading the base stock instead of hauling blindly. That is the first step from survival loops into real scheduling.,很好。脚本终于开始读取基地库存，而不是盲目搬运了。这是从生存循环迈向真正调度的第一步。
 script.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 script.title,Script,脚本
 script.controls,Run controls,运行控制
@@ -99,6 +102,7 @@ samples.m1,M1 Wake,示例 M1
 samples.m2,M2 Haul Loop,示例 M2
 samples.m3,M3 Base Cycle,示例 M3
 samples.m4,M4 Hot-Zone Run,示例 M4
+samples.m5,M5 Stock Balancer,示例 M5
 console.aria,Runtime console,运行控制台
 console.title,Console,控制台
 diff.aria,State diff,状态差异
@@ -185,6 +189,9 @@ completion.cargo.full,Cargo is full,货舱已满
 completion.cargo.scrap,Cargo has scrap,货舱里有废铁
 completion.cargo.battery,Cargo has battery,货舱里有电芯
 completion.cargo.chip,Cargo has a chip,货舱里有芯片
+completion.resource.scrap.low,Base scrap below threshold,基地废铁低于阈值
+completion.resource.battery.low,Base battery below threshold,基地电池低于阈值
+completion.resource.chip.any,Base has recovered chips,基地已有回收芯片
 completion.hp.low,HP below threshold,HP 低于阈值
 completion.energy.low,Battery below threshold,电量低于阈值
 completion.damage.any,Damaged this tick,本回合受到伤害
@@ -216,6 +223,7 @@ runtime.stageHint.m1,For this site, a short pickup-to-home loop beats any explor
 runtime.stageHint.m2,In this relay lane, every failure should make you re-check the battery return line first.,在这一关里，任何报错都先回头检查电量返航线。
 runtime.stageHint.m3,At Forge Yard, loop health matters more than greed: stabilize home actions before chasing more scrap.,在熔炉前场，循环健康比贪心重要：先稳住回家动作，再去追更多废铁。
 runtime.stageHint.m4,Hot Strip pays out better than the safe lane, but only if the script prices hull damage before the pickup.,热带回报比安全区高，但前提是脚本在拾取前就把机体损耗算进去。
+runtime.stageHint.m5,At Stock Exchange, every route should answer one question first: which ingredient is the base still missing right now?,在库存交换站，每一趟路线都要先回答一个问题：基地此刻到底还缺哪一种材料？
 vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止
@@ -227,6 +235,7 @@ stage.guidance.m1,Priority: recover nearby scrap first; ignore long loops until 
 stage.guidance.m2,Priority: treat battery as the limiter; haul scrap only when the return path is still affordable.,优先事项：把电量当作硬约束；只有返航还划算时再继续搬运废铁。
 stage.guidance.m3,Priority: feed the base loop; batteries unlock fabrication and scrap keeps repair online.,优先事项：先养活基地循环；电池决定能否合成，废铁决定修理是否在线。
 stage.guidance.m4,Priority: price in hull loss before every hazard step; one chip is worth more than scrap only if the robot still makes it home.,优先事项：每一步踏进危险区前都先估算机体损耗；只有机器人还能回家时，一枚芯片才比废铁更值钱。
+stage.guidance.m5,Priority: route for deficits, not scenery; whichever ingredient the fabricator still lacks should become the next trip.,优先事项：按缺口而不是按风景去走；合成台还缺哪种材料，下一趟就该优先补哪种。
 location.kind.m2,Relay haul corridor,中继搬运走廊
 location.name.m2,Relay Ladder,中继梯井
 location.description.m2,A longer salvage lane with sparse batteries and a punishing walk back home.,更长的回收通道，电池稀少，返航成本很高。
@@ -236,6 +245,9 @@ location.description.m3,A compact service yard where scrap, damage, and fabricat
 location.kind.m4,Hot-zone salvage lane,危险区回收带
 location.name.m4,Hot Strip,热蚀带
 location.description.m4,A short radiant lane with one clean chip payout and a very real repair bill if you mis-time the retreat.,一条很短的辐蚀回收带，里面有一枚干净的芯片回报，但撤退时机一旦失误，维修账单就会立刻落到你头上。
+location.kind.m5,Supply balancing fork,供给平衡岔口
+location.name.m5,Stock Exchange,库存交换站
+location.description.m5,A short fork where the real puzzle is no longer movement, but deciding which missing ingredient to refill before crafting.,一处分岔很短的小站，真正的谜题已经不再是移动，而是先判断合成前还缺哪一种材料。
 story.m2.1.speaker,K-6 Commander,K-6 指挥官
 story.m2.1.text,This relay ladder stretches farther than the first site. Range matters now; do not spend the last battery far from home.,这段中继梯井比第一处站点更长。现在航程就是约束，别把最后一格电浪费在离家太远的地方。
 story.m2.2.speaker,K-6 Commander,K-6 指挥官
@@ -254,3 +266,9 @@ story.m4.2.speaker,K-6 Commander,K-6 指挥官
 story.m4.2.text,Read the hot zone before you step in. If the hull is already thin, route home first and service there, not out in the field.,踏进去之前先读取危险区。如果机体余量已经很薄，就先回家维护，而不是在野外硬撑。
 story.m4.3.speaker,K-6 Commander,K-6 指挥官
 story.m4.3.text,Bring back one chip intact and the whole route changes meaning: risk is no longer noise, it is part of the program.,完整带回一枚芯片，这条路线的意义就变了：风险不再是噪声，而是程序本身的一部分。
+story.m5.1.speaker,K-6 Commander,K-6 指挥官
+story.m5.1.text,This fork is small, but it teaches a bigger habit: stop hauling whatever is closest and start reading what the base is actually missing.,这个岔口不大，但它会教你一个更大的习惯：别再搬最近的东西了，先读基地现在真正缺什么。
+story.m5.2.speaker,K-6 Commander,K-6 指挥官
+story.m5.2.text,The fabricator only cares about deficits. If batteries are missing, scrap is noise. If scrap is short, another battery changes nothing.,合成台只在乎缺口。缺电池时，废铁就是噪声；缺废铁时，再多一块电池也不会改变结果。
+story.m5.3.speaker,K-6 Commander,K-6 指挥官
+story.m5.3.text,Once the script can branch on stock counts, routing stops being a patrol and starts becoming scheduling.,一旦脚本能按库存分支，路线就不再只是巡逻，而开始变成调度。

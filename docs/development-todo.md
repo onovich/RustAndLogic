@@ -97,6 +97,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Bind each stage's script scaffolds, recommended sample presets, and runtime recovery hints to stage configuration data.
 - [x] Bind each stage's one-time first-success and first-failure teaching prompts to stage configuration data.
 - [x] Add the first M4 hot-zone slice with hazard tiles, chip recovery, and a hazard-aware retreat/repair script path.
+- [x] Add the first M5 stock-balancing slice with base resource queries, a stock-aware sample script, and dynamic fabricator recipe readouts.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

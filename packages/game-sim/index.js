@@ -336,6 +336,9 @@ function makeHardware(game) {
         const damage = game.lastDamageTick === game.tick ? 1 : 0;
         return compareNumber(damage, instruction.predicate, instruction.value);
       }
+      if (["Scrap", "Battery", "Chip"].includes(instruction.target)) {
+        return compareNumber(resourceCountForTarget(game, instruction.target), instruction.predicate, instruction.value);
+      }
 
       const location = targetLocation(game, instruction.target);
       if (instruction.predicate === "Has") {
@@ -419,6 +422,19 @@ function compareNumber(actual, predicate, expected) {
     return actual > expected;
   }
   return false;
+}
+
+function resourceCountForTarget(game, target) {
+  if (target === "Scrap") {
+    return game.resources.scrap ?? 0;
+  }
+  if (target === "Battery") {
+    return game.resources.cells ?? 0;
+  }
+  if (target === "Chip") {
+    return game.resources.chips ?? 0;
+  }
+  return 0;
 }
 
 function aheadOf(game, distance = 1) {
@@ -572,16 +588,36 @@ function spendFieldResource(game, type, amount) {
 }
 
 function craftAtBase(game) {
+  const recipe = currentFabricatorRecipe(game);
   if (!isHome(game, game.robot)) {
     return { ok: false, message: "Craft requires home base." };
   }
-  if (game.resources.scrap < 2 || game.resources.cells < 1) {
-    return { ok: false, message: "Craft blocked: requires 2 scrap and 1 battery." };
+  if (game.resources.scrap < recipe.scrap || game.resources.cells < recipe.cells) {
+    return { ok: false, message: `Craft blocked: requires ${formatRecipeNeeds(recipe)}.` };
   }
-  spendResource(game, "scrap", 2);
-  spendResource(game, "cells", 1);
-  game.resources.memoryShards += 1;
+  spendResource(game, "scrap", recipe.scrap);
+  spendResource(game, "cells", recipe.cells);
+  game.resources.memoryShards += recipe.memoryShards ?? 1;
   return { ok: true, message: "Fabricated 1 memory shard." };
+}
+
+function currentFabricatorRecipe(game) {
+  return {
+    scrap: Math.max(2, (game.resources.memoryShards ?? 1) + 1),
+    cells: 1,
+    memoryShards: 1,
+  };
+}
+
+function formatRecipeNeeds(recipe) {
+  const parts = [];
+  if (recipe.scrap > 0) {
+    parts.push(`${recipe.scrap} scrap`);
+  }
+  if (recipe.cells > 0) {
+    parts.push(`${recipe.cells} battery`);
+  }
+  return parts.join(" and ");
 }
 
 function isHome(game, location) {
@@ -712,6 +748,7 @@ function countCargoType(items, type) {
 
 function snapshotFacilities(game) {
   const home = isHome(game, game.robot);
+  const fabricatorRecipe = currentFabricatorRecipe(game);
   return {
     charger: {
       id: "charger",
@@ -730,9 +767,9 @@ function snapshotFacilities(game) {
     fabricator: {
       id: "fabricator",
       online: true,
-      ready: home && game.resources.scrap >= 2 && game.resources.cells >= 1,
-      status: home ? (game.resources.scrap >= 2 && game.resources.cells >= 1 ? "ready" : "missing") : "remote",
-      recipe: { scrap: 2, cells: 1, memoryShards: 1 },
+      ready: home && game.resources.scrap >= fabricatorRecipe.scrap && game.resources.cells >= fabricatorRecipe.cells,
+      status: home ? (game.resources.scrap >= fabricatorRecipe.scrap && game.resources.cells >= fabricatorRecipe.cells ? "ready" : "missing") : "remote",
+      recipe: fabricatorRecipe,
     },
   };
 }

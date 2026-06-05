@@ -58,6 +58,9 @@ Goto @Loop
 | keep | 查询 | `Check(Cargo).IsFull()` | 检查机器人货舱是否已满。 | 设置条件标志为 true 或 false；当前货舱容量为 3。 | `Check(Cargo).IsFull()` |
 | keep | 查询 | `Check(Cargo).Has(Scrap)` | 检查货舱里是否有废铁。 | 设置条件标志为 true 或 false。 | `Check(Cargo).Has(Scrap)` |
 | keep | 查询 | `Check(Cargo).Has(Battery)` | 检查货舱里是否有电池。 | 设置条件标志为 true 或 false。 | `Check(Cargo).Has(Battery)` |
+| keep | 查询 | `Check(Scrap).Below(2)` | 检查基地库存里的废铁是否低于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(Scrap).Below(2)` |
+| keep | 查询 | `Check(Battery).Below(1)` | 检查基地库存里的电池是否低于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(Battery).Below(1)` |
+| keep | 查询 | `Check(Chip).Above(0)` | 检查基地是否已经回收过至少一枚芯片。 | 设置条件标志为 true 或 false。 | `Check(Chip).Above(0)` |
 | keep | 查询 | `Check(HP).Below(30)` | 检查 HP 是否低于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(HP).Below(30)` |
 | keep | 查询 | `Check(HP).Above(70)` | 检查 HP 是否高于指定阈值。 | 设置条件标志为 true 或 false。 | `Check(HP).Above(70)` |
 | keep | 查询 | `Check(Energy).Below(40)` | 检查当前电量百分比是否低于指定阈值。 | 设置条件标志为 true 或 false；数值按 0~100 的电量百分比计算。 | `Check(Energy).Below(40)` |
@@ -74,10 +77,10 @@ Goto @Loop
 | --- | --- |
 | 方位 / 目标格 | `Forward`、`Back`、`Here`、`Home` |
 | 转向 | `Left`、`Right`、`Around` |
-| 物品 | `Scrap`、`Battery` |
+| 物品 | `Scrap`、`Battery`、`Chip` |
 | 实体 | `Enemy` |
 | 地形 / 标记 | `Wall`、`Home` |
-| 状态量 | `Cargo`、`HP`、`Energy`、`Damage` |
+| 状态量 | `Cargo`、`HP`、`Energy`、`Damage`、`Scrap`、`Battery`、`Chip` |
 
 ## 拟新增指令
 

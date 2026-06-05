@@ -1993,7 +1993,10 @@ function renderFacilities(facilities) {
     const desc = document.createElement("dd");
     const status = t(`facilities.status.${facility.status}`);
     if (entry.key === "fabricator" && facility.recipe) {
-      desc.textContent = `${status} // 2 ${t("resources.item.scrap")} + 1 ${t("resources.item.battery")} -> 1 ${t("resources.memoryShards")}`;
+      const outputs = facility.recipe.memoryShards ?? 1;
+      desc.textContent =
+        `${status} // ${facility.recipe.scrap} ${t("resources.item.scrap")} + ` +
+        `${facility.recipe.cells} ${t("resources.item.battery")} -> ${outputs} ${t("resources.memoryShards")}`;
     } else {
       desc.textContent = status;
     }

@@ -56,6 +56,9 @@ PickUp()
   const chipQuery = compileTapeScript("Check(Cargo).Has(Chip)", { instructionCapacity: 1 });
   assert.equal(chipQuery.ok, true);
 
+  const stockQuery = compileTapeScript("Check(Scrap).Below(2)", { instructionCapacity: 1 });
+  assert.equal(stockQuery.ok, true);
+
   const craftCall = compileTapeScript("Craft(Home)", { instructionCapacity: 1 });
   assert.equal(craftCall.ok, true);
 
@@ -297,6 +300,18 @@ Goto @Loop`;
   state = stepGame(energyQueryGame);
   assert.equal(state.vm.cf, true);
 
+  const stockQueryGame = createGame();
+  stockQueryGame.resources.scrap = 1;
+  state = deployProgram(stockQueryGame, "Check(Scrap).Below(2)");
+  state = stepGame(stockQueryGame);
+  assert.equal(state.vm.cf, true);
+
+  const batteryStockGame = createGame();
+  batteryStockGame.resources.cells = 1;
+  state = deployProgram(batteryStockGame, "Check(Battery).Above(0)");
+  state = stepGame(batteryStockGame);
+  assert.equal(state.vm.cf, true);
+
   const wallGame = createGame();
   wallGame.robot.x = 0;
   wallGame.robot.dir = "W";
@@ -412,6 +427,19 @@ Goto @Loop`;
   assert.equal(state.facilities.charger.status, "standby");
   assert.equal(state.facilities.repairBay.status, "ready");
   assert.equal(state.facilities.fabricator.status, "ready");
+  assert.deepEqual(state.facilities.fabricator.recipe, { scrap: 2, cells: 1, memoryShards: 1 });
+
+  const secondRecipeGame = createGame();
+  secondRecipeGame.robot.x = 0;
+  secondRecipeGame.robot.y = 0;
+  secondRecipeGame.resources.scrap = 2;
+  secondRecipeGame.resources.cells = 1;
+  state = deployProgram(secondRecipeGame, "Craft(Home)");
+  state = stepGame(secondRecipeGame);
+  secondRecipeGame.resources.scrap = 3;
+  secondRecipeGame.resources.cells = 1;
+  const secondRecipeState = snapshot(secondRecipeGame);
+  assert.deepEqual(secondRecipeState.facilities.fabricator.recipe, { scrap: 3, cells: 1, memoryShards: 1 });
 
   const rechargeGame = createGame();
   rechargeGame.robot.x = 1;

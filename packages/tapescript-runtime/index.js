@@ -4,7 +4,8 @@ const TURN_ARGS = new Set(["Left", "Right", "Around"]);
 const ITEM_ARGS = new Set(["Scrap", "Battery", "Chip"]);
 const ENTITY_ARGS = new Set(["Enemy"]);
 const TERRAIN_ARGS = new Set(["Wall", "Home", "Hazard"]);
-const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage"]);
+const RESOURCE_CHECK_TARGETS = new Set(["Scrap", "Battery", "Chip"]);
+const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage", ...RESOURCE_CHECK_TARGETS]);
 
 export function compileTapeScript(source, options = {}) {
   const instructionCapacity = options.instructionCapacity ?? 8;
@@ -336,7 +337,7 @@ function parseQuery(source) {
     }
   }
 
-  if (["HP", "Energy", "Damage"].includes(target) && ["Below", "Above"].includes(predicate)) {
+  if ((["HP", "Energy", "Damage"].includes(target) || RESOURCE_CHECK_TARGETS.has(target)) && ["Below", "Above"].includes(predicate)) {
     const amount = Number(value);
     if (!Number.isFinite(amount)) {
       return { errors: [`${predicate}() requires a number.`], op: "Check" };
