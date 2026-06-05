@@ -1,9 +1,9 @@
 const ACTION_NAMES = new Set(["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"]);
 const DIRECTION_ARGS = new Set(["Forward", "Back"]);
 const TURN_ARGS = new Set(["Left", "Right", "Around"]);
-const ITEM_ARGS = new Set(["Scrap", "Battery"]);
+const ITEM_ARGS = new Set(["Scrap", "Battery", "Chip"]);
 const ENTITY_ARGS = new Set(["Enemy"]);
-const TERRAIN_ARGS = new Set(["Wall", "Home"]);
+const TERRAIN_ARGS = new Set(["Wall", "Home", "Hazard"]);
 const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage"]);
 
 export function compileTapeScript(source, options = {}) {

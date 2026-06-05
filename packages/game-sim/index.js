@@ -26,12 +26,13 @@ const DEFAULT_GAME_CONFIG = {
   height: 5,
   tick: 0,
   instructionCapacity: 12,
-  resources: { scrap: 0, cells: 0, memoryShards: 1 },
+  resources: { scrap: 0, cells: 0, chips: 0, memoryShards: 1 },
   robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
   cargoCapacity: 3,
   base: { x: 0, y: 0 },
   lastDamageTick: null,
   obstacles: [{ id: "wall-a", x: 3, y: 1 }],
+  hazards: [],
   deposits: [
     { id: "scrap-a", type: "scrap", x: 2, y: 2 },
     { id: "cell-a", type: "cell", x: 4, y: 1 },
@@ -69,6 +70,7 @@ export function restoreGame(serialized, config = {}) {
       ...parsed.robot,
       cargo: Array.isArray(parsed.robot?.cargo) ? [...parsed.robot.cargo] : [...base.robot.cargo],
     },
+    hazards: Array.isArray(parsed.hazards) ? parsed.hazards.map((item) => ({ ...item })) : base.hazards,
     deposits: Array.isArray(parsed.deposits) ? parsed.deposits.map((item) => ({ ...item })) : base.deposits,
     obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles.map((item) => ({ ...item })) : base.obstacles,
     base: { ...base.base, ...parsed.base },
@@ -234,6 +236,7 @@ export function snapshot(game) {
     base: game.base,
     lastDamageTick: game.lastDamageTick,
     obstacles: game.obstacles,
+    hazards: game.hazards,
     deposits: game.deposits,
     program: game.program
       ? {
@@ -270,6 +273,7 @@ function mergeGameConfig(base, config = {}) {
     base: { ...base.base, ...config.base },
     lastDamageTick: config.lastDamageTick ?? base.lastDamageTick,
     obstacles: Array.isArray(config.obstacles) ? config.obstacles.map((item) => ({ ...item })) : base.obstacles.map((item) => ({ ...item })),
+    hazards: Array.isArray(config.hazards) ? config.hazards.map((item) => ({ ...item })) : base.hazards.map((item) => ({ ...item })),
     deposits: Array.isArray(config.deposits) ? config.deposits.map((item) => ({ ...item })) : base.deposits.map((item) => ({ ...item })),
     program: config.program ?? base.program,
     vm: config.vm ?? base.vm,
@@ -285,6 +289,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "instructionCapacity", before?.instructionCapacity, after?.instructionCapacity);
   compare(changes, "resources.scrap", before?.resources?.scrap, after?.resources?.scrap);
   compare(changes, "resources.cells", before?.resources?.cells, after?.resources?.cells);
+  compare(changes, "resources.chips", before?.resources?.chips, after?.resources?.chips);
   compare(changes, "resources.memoryShards", before?.resources?.memoryShards, after?.resources?.memoryShards);
   compare(changes, "robot.cargo.count", before?.robot?.cargo?.length ?? 0, after?.robot?.cargo?.length ?? 0);
   compare(changes, "robot.x", before?.robot?.x, after?.robot?.x);
@@ -302,6 +307,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "offline.ticks", before?.offline?.ticks, after?.offline?.ticks);
   compare(changes, "deposits.count", before?.deposits?.length ?? 0, after?.deposits?.length ?? 0);
   compare(changes, "obstacles.count", before?.obstacles?.length ?? 0, after?.obstacles?.length ?? 0);
+  compare(changes, "hazards.count", before?.hazards?.length ?? 0, after?.hazards?.length ?? 0);
   compare(changes, "logs.latest", before?.logs?.[0] ?? "", after?.logs?.[0] ?? "");
   return changes;
 }
@@ -344,6 +350,9 @@ function makeHardware(game) {
         }
         if (instruction.value === "Home") {
           return isHome(game, location);
+        }
+        if (instruction.value === "Hazard") {
+          return isHazard(game, location);
         }
       }
       if (instruction.predicate === "IsEmpty") {
@@ -501,6 +510,8 @@ function unloadCargo(game) {
   for (const item of game.robot.cargo) {
     if (item === "cell") {
       game.resources.cells += 1;
+    } else if (item === "chip") {
+      game.resources.chips += 1;
     } else {
       game.resources[item] = (game.resources[item] ?? 0) + 1;
     }
@@ -590,6 +601,10 @@ function isBlocked(game, location, options = {}) {
   );
 }
 
+function isHazard(game, location) {
+  return game.hazards.some((hazard) => hazard.x === location.x && hazard.y === location.y);
+}
+
 function isEmpty(game, location) {
   return isInside(game, location) &&
     !game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) &&
@@ -636,9 +651,38 @@ function performPoweredAction(game, op, run) {
       game.robot.energy = game.robot.maxEnergy;
       relayMessage = " Home relay restored battery.";
     }
+    const hazardMessage = applyHazardExposure(game);
+    if (hazardMessage) {
+      const combinedMessage = `${result.message}${relayMessage}${hazardMessage}`;
+      if (game.robot.hp <= 0) {
+        return { ok: false, message: combinedMessage };
+      }
+      return { ok: true, message: combinedMessage };
+    }
   }
 
   return relayMessage ? { ...result, message: `${result.message}${relayMessage}` } : result;
+}
+
+function applyHazardExposure(game) {
+  if (!isHazard(game, game.robot)) {
+    return "";
+  }
+  const damage = currentHazardDamage(game, game.robot);
+  if (damage <= 0) {
+    return "";
+  }
+  game.robot.hp = Math.max(0, game.robot.hp - damage);
+  game.lastDamageTick = game.tick + 1;
+  if (game.robot.hp <= 0) {
+    return ` Hazard breach: hull collapsed after taking ${damage} hot-zone damage.`;
+  }
+  return ` Hull scored by radiation (-${damage} HP).`;
+}
+
+function currentHazardDamage(game, location) {
+  const hazard = game.hazards.find((entry) => entry.x === location.x && entry.y === location.y);
+  return Number.isFinite(hazard?.damage) ? hazard.damage : 0;
 }
 
 function energyPercent(game) {

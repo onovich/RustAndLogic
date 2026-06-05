@@ -97,6 +97,7 @@ const elements = {
   robotPosition: query("robot-position"),
   scrap: query("scrap-count"),
   cells: query("cell-count"),
+  chips: query("chip-count"),
   memoryShards: query("memory-shard-count"),
   cargoCount: query("cargo-count"),
   cargoManifest: query("cargo-manifest"),
@@ -694,6 +695,7 @@ function render(state, options = {}) {
   elements.robotPosition.textContent = `R1 // ${state.robot.x},${state.robot.y} ${state.robot.dir}`;
   elements.scrap.textContent = state.resources.scrap;
   elements.cells.textContent = state.resources.cells;
+  elements.chips.textContent = state.resources.chips ?? 0;
   elements.memoryShards.textContent = state.resources.memoryShards;
   elements.cargoCount.textContent = `${state.robot.cargo.length}/${state.cargoCapacity}`;
   elements.cargoManifest.textContent = formatCargoManifest(state.robot.cargo);
@@ -872,6 +874,7 @@ function summarizeRuntimeToast(state) {
     occupied: ["runtime.blockedOccupied", "runtime.recodeOccupied"],
     empty: ["runtime.blockedEmpty", "runtime.recodeEmpty"],
     power: ["runtime.blockedPower", "runtime.recodePower"],
+    hazard: ["runtime.hazardFault", "runtime.recodeHazard"],
     logic: ["runtime.logicFault", "runtime.recodeLogic"],
     compile: ["runtime.compileFault", "runtime.recodeCompile"],
     generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
@@ -887,39 +890,46 @@ function summarizeRuntimeToast(state) {
 
 function detectRuntimeCause(state) {
   const latestLog = state.logs[0] ?? "";
-  if (!state.program?.ok || latestLog.includes("No script deployed") || latestLog.includes("Deploy failed")) {
+  const recentLogText = state.logs.slice(0, 10).join(" | ");
+  if (!state.program?.ok || recentLogText.includes("No script deployed") || recentLogText.includes("Deploy failed")) {
     return "compile";
   }
-  if (latestLog.includes("Blocked by boundary") || latestLog.includes("Drop blocked by boundary")) {
+  if (recentLogText.includes("Blocked by boundary") || recentLogText.includes("Drop blocked by boundary")) {
     return "boundary";
   }
-  if (latestLog.includes("Blocked by wall")) {
+  if (recentLogText.includes("Blocked by wall")) {
     return "wall";
   }
-  if (latestLog.includes("Battery depleted")) {
+  if (recentLogText.includes("Battery depleted")) {
     return "power";
   }
-  if (latestLog.includes("occupied") || latestLog.includes("Drop blocked")) {
+  if (recentLogText.includes("occupied") || recentLogText.includes("Drop blocked")) {
     return "occupied";
   }
   if (
-    latestLog.includes("Nothing ahead") ||
-    latestLog.includes("No target lock") ||
-    latestLog.includes("No cargo to drop") ||
-    latestLog.includes("No cargo to unload") ||
-    latestLog.includes("Unload requires")
+    recentLogText.includes("Nothing ahead") ||
+    recentLogText.includes("No target lock") ||
+    recentLogText.includes("No cargo to drop") ||
+    recentLogText.includes("No cargo to unload") ||
+    recentLogText.includes("Unload requires")
   ) {
     return "empty";
   }
   if (
+    (state.hazards?.length ?? 0) > 0 &&
+    (recentLogText.includes("Repair requires home base") || recentLogText.includes("Hazard breach"))
+  ) {
+    return "hazard";
+  }
+  if (
     state.vm?.state === "Fault" ||
     state.vm?.state === "Halted" ||
-    latestLog.includes("Logic Overload") ||
-    latestLog.includes("Program counter") ||
-    latestLog.includes("Cargo hold is full") ||
-    latestLog.includes("Repair blocked") ||
-    latestLog.includes("Already at home") ||
-    latestLog.includes("Unknown action")
+    recentLogText.includes("Logic Overload") ||
+    recentLogText.includes("Program counter") ||
+    recentLogText.includes("Cargo hold is full") ||
+    recentLogText.includes("Repair blocked") ||
+    recentLogText.includes("Already at home") ||
+    recentLogText.includes("Unknown action")
   ) {
     return "logic";
   }
@@ -1189,6 +1199,9 @@ function syncFlowState(beforeState, state) {
   }
   if ("repair" in flow) {
     flow.repair = flow.repair || Boolean(beforeState && state.robot.hp > beforeState.robot.hp);
+  }
+  if ("chip" in flow && !flow.chip && beforeState?.resources) {
+    flow.chip = (state.resources.chips ?? 0) > (beforeState.resources.chips ?? 0);
   }
   if ("recharge" in flow && !flow.recharge && beforeState?.robot) {
     const recharged =
@@ -1727,6 +1740,10 @@ function renderGrid(state, beforeState, options = {}) {
     worldLayers.obstacles.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
   }
 
+  for (const hazard of state.hazards ?? []) {
+    worldLayers.hazards.append(createWorldEntity("hazard-zone", hazard.x, hazard.y, WORLD_CELL_SIZE, "hazard"));
+  }
+
   if (state.base) {
     worldLayers.base.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
   }
@@ -1753,6 +1770,8 @@ function ensureWorldLayers() {
 
   const obstacles = document.createElement("div");
   obstacles.className = "world-layer world-layer-obstacles";
+  const hazards = document.createElement("div");
+  hazards.className = "world-layer world-layer-hazards";
   const base = document.createElement("div");
   base.className = "world-layer world-layer-base";
   const deposits = document.createElement("div");
@@ -1762,8 +1781,8 @@ function ensureWorldLayers() {
   const actors = document.createElement("div");
   actors.className = "world-layer world-layer-actors";
 
-  worldLayers = { obstacles, base, deposits, effects, actors };
-  elements.grid.replaceChildren(obstacles, base, deposits, effects, actors);
+  worldLayers = { obstacles, hazards, base, deposits, effects, actors };
+  elements.grid.replaceChildren(obstacles, hazards, base, deposits, effects, actors);
   return worldLayers;
 }
 
@@ -1772,6 +1791,7 @@ function clearWorldLayers() {
     return;
   }
   worldLayers.obstacles.replaceChildren();
+  worldLayers.hazards.replaceChildren();
   worldLayers.base.replaceChildren();
   worldLayers.deposits.replaceChildren();
 }
@@ -1983,7 +2003,7 @@ function renderFacilities(facilities) {
 }
 
 function storedInventoryTotal(resources) {
-  return (resources.scrap ?? 0) + (resources.cells ?? 0);
+  return (resources.scrap ?? 0) + (resources.cells ?? 0) + (resources.chips ?? 0);
 }
 
 function isRobotHome(state) {

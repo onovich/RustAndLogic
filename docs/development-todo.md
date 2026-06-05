@@ -96,6 +96,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Bind each stage's recommended speed, available upgrades, visible facilities, and completion target summary to stage configuration data.
 - [x] Bind each stage's script scaffolds, recommended sample presets, and runtime recovery hints to stage configuration data.
 - [x] Bind each stage's one-time first-success and first-failure teaching prompts to stage configuration data.
+- [x] Add the first M4 hot-zone slice with hazard tiles, chip recovery, and a hazard-aware retreat/repair script path.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

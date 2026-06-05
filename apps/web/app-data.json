@@ -10,6 +10,7 @@
   "taskDefinitions": [
     { "id": "deploy", "labelKey": "flow.deploy" },
     { "id": "collect", "labelKey": "flow.collect" },
+    { "id": "chip", "labelKey": "flow.chip" },
     { "id": "unload", "labelKey": "flow.unload" },
     { "id": "recharge", "labelKey": "flow.recharge" },
     { "id": "craft", "labelKey": "completion.craft.home" },
@@ -60,6 +61,26 @@
         "IfTrue PickUp()",
         "IfFalse Move()",
         "Goto @Loop"
+      ]
+    },
+    {
+      "id": "m4",
+      "labelKey": "samples.m4",
+      "lines": [
+        "Check().Is(Hazard)",
+        "IfFalse Goto @Advance",
+        "Check(HP).Below(7)",
+        "IfTrue Goto @Return",
+        "@Advance",
+        "Move()",
+        "Check().Has(Chip)",
+        "IfTrue PickUp()",
+        "@Return",
+        "MoveToward(Home)",
+        "MoveToward(Home)",
+        "Check(Here).Is(Home)",
+        "IfTrue Unload(Home)",
+        "IfTrue Repair()"
       ]
     }
   ],
@@ -225,6 +246,62 @@
           { "id": "cell-a", "type": "cell", "x": 2, "y": 2 }
         ]
       }
+    },
+    {
+      "id": "m4",
+      "labelKey": "samples.m4",
+      "taskIds": ["deploy", "chip", "unload", "repair"],
+      "completionTaskIds": ["chip", "unload", "repair"],
+      "presetId": "m4",
+      "location": {
+        "kindKey": "location.kind.m4",
+        "nameKey": "location.name.m4",
+        "descriptionKey": "location.description.m4"
+      },
+      "ui": {
+        "recommendedSpeed": 5,
+        "enabledUpgrades": ["memory", "armor", "weapon"],
+        "visibleFacilities": ["charger", "repairBay", "fabricator"],
+        "samplePresetIds": ["m3", "m4"],
+        "recommendedPresetId": "m4"
+      },
+      "scriptGuidanceKey": "script.guidance.m4",
+      "runtimeHintKey": "runtime.stageHint.m4",
+      "teachingMoments": {
+        "success": [
+          { "id": "chip", "taskId": "chip", "titleKey": "teaching.m4.chip.title", "bodyKey": "teaching.m4.chip.body" }
+        ],
+        "failure": [
+          { "id": "hazard", "cause": "hazard", "titleKey": "teaching.m4.hazard.title", "bodyKey": "teaching.m4.hazard.body" }
+        ]
+      },
+      "resourceGuidanceKey": "stage.guidance.m4",
+      "storyPages": [
+        { "speakerKey": "story.m4.1.speaker", "textKey": "story.m4.1.text" },
+        { "speakerKey": "story.m4.2.speaker", "textKey": "story.m4.2.text" },
+        { "speakerKey": "story.m4.3.speaker", "textKey": "story.m4.3.text" }
+      ],
+      "game": {
+        "stageId": "m4",
+        "width": 8,
+        "height": 5,
+        "instructionCapacity": 16,
+        "base": { "x": 0, "y": 2 },
+        "robot": { "x": 1, "y": 2, "dir": "E", "hp": 10, "armor": 1, "weapon": 1, "energy": 7, "maxEnergy": 7, "cargo": [] },
+        "resources": { "scrap": 1, "cells": 0, "chips": 0, "memoryShards": 1 },
+        "obstacles": [
+          { "id": "wall-a", "x": 4, "y": 1 },
+          { "id": "wall-b", "x": 4, "y": 3 }
+        ],
+        "hazards": [
+          { "id": "hot-a", "x": 2, "y": 2, "damage": 3 }
+        ],
+        "deposits": [
+          { "id": "chip-a", "type": "chip", "x": 3, "y": 2 },
+          { "id": "scrap-a", "type": "scrap", "x": 1, "y": 1 },
+          { "id": "cell-a", "type": "cell", "x": 5, "y": 2 }
+        ]
+      }
     }
   ],
   "script": {
@@ -245,7 +322,7 @@
       "actions": ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"],
       "queries": ["Check", "Has", "Is", "IsEmpty", "Any", "IsFull", "Below", "Above"],
       "branches": ["Goto", "IfTrue", "IfFalse"],
-      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Enemy", "Wall", "Cargo", "HP", "Energy", "Damage"]
+      "values": ["Forward", "Back", "Here", "Home", "Left", "Right", "Around", "Scrap", "Battery", "Chip", "Enemy", "Wall", "Hazard", "Cargo", "HP", "Energy", "Damage"]
     },
     "completions": [
       { "value": "Move()", "kindKey": "completion.kind.action", "hintKey": "completion.move.forward" },
@@ -263,14 +340,17 @@
       { "value": "Repair()", "kindKey": "completion.kind.action", "hintKey": "completion.repair" },
       { "value": "Check().Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.check.forward.scrap" },
       { "value": "Check().Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.check.forward.battery" },
+      { "value": "Check().Has(Chip)", "kindKey": "completion.kind.query", "hintKey": "completion.check.forward.chip" },
       { "value": "Check().Has(Enemy)", "kindKey": "completion.kind.query", "hintKey": "completion.check.enemy" },
       { "value": "Check().Is(Wall)", "kindKey": "completion.kind.query", "hintKey": "completion.check.wall" },
+      { "value": "Check().Is(Hazard)", "kindKey": "completion.kind.query", "hintKey": "completion.check.hazard" },
       { "value": "Check().IsEmpty()", "kindKey": "completion.kind.query", "hintKey": "completion.check.empty" },
       { "value": "Check(Here).Is(Home)", "kindKey": "completion.kind.query", "hintKey": "completion.check.home" },
       { "value": "Check(Cargo).Any()", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.any" },
       { "value": "Check(Cargo).IsFull()", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.full" },
       { "value": "Check(Cargo).Has(Scrap)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.scrap" },
       { "value": "Check(Cargo).Has(Battery)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.battery" },
+      { "value": "Check(Cargo).Has(Chip)", "kindKey": "completion.kind.query", "hintKey": "completion.cargo.chip" },
       { "value": "Check(HP).Below(30)", "kindKey": "completion.kind.query", "hintKey": "completion.hp.low" },
       { "value": "Check(Energy).Below(40)", "kindKey": "completion.kind.query", "hintKey": "completion.energy.low" },
       { "value": "Check(Damage).Above(0)", "kindKey": "completion.kind.query", "hintKey": "completion.damage.any" },

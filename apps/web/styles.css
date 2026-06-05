@@ -941,6 +941,7 @@ textarea[data-invalid="true"] {
 
 .robot,
 .deposit,
+.hazard-zone,
 .obstacle,
 .base-marker {
   position: absolute;
@@ -998,6 +999,26 @@ textarea[data-invalid="true"] {
 
 .deposit.cell {
   color: rgba(255, 225, 169, 0.82);
+}
+
+.deposit.chip {
+  color: rgba(188, 244, 255, 0.86);
+}
+
+.deposit.chip::before {
+  inset: 4px;
+  border-color: currentColor;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.hazard-zone {
+  border: 1px solid rgba(255, 158, 92, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 142, 63, 0.06), rgba(255, 142, 63, 0.14)),
+    repeating-linear-gradient(135deg, rgba(255, 166, 79, 0.18) 0 3px, rgba(15, 8, 4, 0) 3px 8px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 181, 101, 0.08),
+    0 0 12px rgba(255, 139, 60, 0.05);
 }
 
 .obstacle {

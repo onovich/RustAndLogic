@@ -128,7 +128,7 @@ try {
     throw new Error(`Expected M1 sample presets to stay M1-only, got: ${startupRules.sampleActions}`);
   }
   const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
-  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE"]) {
+  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE", "M4 HOT-ZONE RUN"]) {
     if (!stageActions.includes(label)) {
       throw new Error(`Expected stage actions to include ${label}, got: ${stageActions}`);
     }
@@ -170,7 +170,12 @@ try {
   if (!m2Rules.scriptGuidance.toLowerCase().includes("energy check")) {
     throw new Error(`Expected M2 script guidance, got: ${m2Rules.scriptGuidance}`);
   }
-  if (!m2Rules.sampleActions.includes("M1 WAKE") || !m2Rules.sampleActions.includes("M2 HAUL LOOP") || m2Rules.sampleActions.includes("M3 BASE CYCLE")) {
+  if (
+    !m2Rules.sampleActions.includes("M1 WAKE") ||
+    !m2Rules.sampleActions.includes("M2 HAUL LOOP") ||
+    m2Rules.sampleActions.includes("M3 BASE CYCLE") ||
+    m2Rules.sampleActions.includes("M4 HOT-ZONE RUN")
+  ) {
     throw new Error(`Expected M2 sample presets to expose M1+M2 only, got: ${m2Rules.sampleActions}`);
   }
   await page.locator('[data-testid="stage-actions"] [data-stage="m1"]').click();
@@ -534,6 +539,48 @@ try {
     throw new Error(`Expected runtime fault to pause playback, got: ${JSON.stringify(runtimeToast)}.`);
   }
   await page.getByTestId("reset-button").click();
+  await page.locator('[data-testid="stage-actions"] [data-stage="m4"]').click();
+  const m4SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
+  if (!m4SampleActions.includes("M3 BASE CYCLE") || !m4SampleActions.includes("M4 HOT-ZONE RUN") || m4SampleActions.includes("M2 HAUL LOOP")) {
+    throw new Error(`Expected M4 sample actions to expose M3+M4 only, got: ${m4SampleActions}`);
+  }
+  const m4Guidance = await page.getByTestId("script-guidance").innerText();
+  if (!m4Guidance.toLowerCase().includes("hot zone")) {
+    throw new Error(`Expected M4 script guidance, got: ${m4Guidance}`);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
+  const hazardCount = await page.locator(".grid .hazard-zone").count();
+  if (hazardCount === 0) {
+    throw new Error("Expected M4 to render visible hazard tiles.");
+  }
+  await page.getByTestId("script-editor").fill("Check().Is(Hazard)\nIfTrue Move()");
+  await page.getByTestId("step-button").click();
+  await expectText(page, "robot-position", "R1 // 2,2 E");
+  await expectText(page, "hp-value", "7");
+  await page.getByTestId("reset-button").click();
+  await page.getByTestId("script-editor").fill(["@Loop", "Check(HP).Below(8)", "IfTrue Repair()", "Move()", "Goto @Loop"].join("\n"));
+  await page.getByTestId("play-button").click();
+  await page.getByTestId("runtime-toast").waitFor({ state: "visible" });
+  const hazardToast = await page.evaluate(() => ({
+    kind: document.querySelector('[data-testid="runtime-toast"]')?.dataset.kind ?? "",
+    title: document.querySelector('[data-testid="runtime-toast-title"]')?.innerText ?? "",
+    playLabel: document.querySelector('[data-testid="play-button"]')?.innerText ?? "",
+  }));
+  if (hazardToast.kind !== "guide" || !hazardToast.title.toUpperCase().includes("SERVICE BEFORE GREED")) {
+    throw new Error(`Expected first M4 failure teaching toast, got: ${JSON.stringify(hazardToast)}.`);
+  }
+  if (!hazardToast.playLabel.toUpperCase().includes("RESUME")) {
+    throw new Error(`Expected M4 runtime fault to pause playback, got: ${JSON.stringify(hazardToast)}.`);
+  }
+  await page.getByTestId("reset-button").click();
+  await page.locator('[data-testid="stage-actions"] [data-stage="m3"]').click();
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
   await page.locator('[data-testid="sample-actions"] [data-preset="m2"]').click();
   await page.getByTestId("upgrade-button").click();
   await expectText(page, "capacity-label", "Capacity 14");

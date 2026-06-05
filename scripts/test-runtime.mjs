@@ -50,6 +50,12 @@ PickUp()
   const energyQuery = compileTapeScript("Check(Energy).Below(40)", { instructionCapacity: 1 });
   assert.equal(energyQuery.ok, true);
 
+  const hazardQuery = compileTapeScript("Check().Is(Hazard)", { instructionCapacity: 1 });
+  assert.equal(hazardQuery.ok, true);
+
+  const chipQuery = compileTapeScript("Check(Cargo).Has(Chip)", { instructionCapacity: 1 });
+  assert.equal(chipQuery.ok, true);
+
   const craftCall = compileTapeScript("Craft(Home)", { instructionCapacity: 1 });
   assert.equal(craftCall.ok, true);
 
@@ -218,6 +224,71 @@ Goto @Loop`;
   state = deployProgram(queryGame, "Check().Has(Battery)");
   state = stepGame(queryGame);
   assert.equal(state.vm.cf, true);
+
+  const hazardQueryGame = createGame({
+    instructionCapacity: 16,
+    base: { x: 0, y: 2 },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 7, maxEnergy: 7, cargo: [] },
+    hazards: [{ id: "hot-a", x: 2, y: 2, damage: 3 }],
+    deposits: [{ id: "chip-a", type: "chip", x: 3, y: 2 }],
+    resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
+  });
+  state = deployProgram(hazardQueryGame, "Check().Is(Hazard)\nIfTrue Move()");
+  state = stepGame(hazardQueryGame);
+  assert.equal(state.vm.cf, true);
+  assert.equal(state.robot.x, 2);
+  assert.equal(state.robot.y, 2);
+  assert.equal(state.robot.hp, 7);
+  assert.equal(state.hazards.length, 1);
+  assert.equal(state.logs.some((line) => line.includes("Hull scored by radiation")), true);
+
+  const hazardHaulGame = createGame({
+    instructionCapacity: 16,
+    base: { x: 0, y: 2 },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 7, maxEnergy: 7, cargo: [] },
+    hazards: [{ id: "hot-a", x: 2, y: 2, damage: 3 }],
+    deposits: [{ id: "chip-a", type: "chip", x: 3, y: 2 }],
+    resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
+  });
+  state = deployProgram(hazardHaulGame, [
+    "Check().Is(Hazard)",
+    "IfFalse Goto @Advance",
+    "Check(HP).Below(7)",
+    "IfTrue Goto @Return",
+    "@Advance",
+    "Move()",
+    "Check().Has(Chip)",
+    "IfTrue PickUp()",
+    "@Return",
+    "MoveToward(Home)",
+    "MoveToward(Home)",
+    "Check(Here).Is(Home)",
+    "IfTrue Unload(Home)",
+    "IfTrue Repair()",
+  ].join("\n"));
+  state = runGame(hazardHaulGame, 6);
+  assert.equal(state.resources.chips, 1);
+  assert.equal(state.robot.cargo.length, 0);
+  assert.equal(state.robot.hp, 6);
+  assert.equal(state.resources.scrap, 0);
+  assert.equal(state.logs.some((line) => line.includes("Transferred 1 cargo to base (chip x1)")), true);
+
+  const hazardFaultGame = createGame({
+    instructionCapacity: 16,
+    base: { x: 0, y: 2 },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 7, maxEnergy: 7, cargo: [] },
+    hazards: [{ id: "hot-a", x: 2, y: 2, damage: 3 }],
+    deposits: [{ id: "chip-a", type: "chip", x: 3, y: 2 }],
+  });
+  state = deployProgram(hazardFaultGame, [
+    "@Loop",
+    "Check(HP).Below(8)",
+    "IfTrue Repair()",
+    "Move()",
+    "Goto @Loop",
+  ].join("\n"));
+  state = runGame(hazardFaultGame, 3);
+  assert.equal(state.logs.includes("Repair(): Repair requires home base."), true);
 
   const energyQueryGame = createGame();
   energyQueryGame.robot.energy = 2;
