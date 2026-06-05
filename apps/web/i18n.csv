@@ -307,6 +307,11 @@ graphics.layerVisible,Visible,显示
 graphics.layerHidden,Hidden,隐藏
 graphics.layerLocked,Locked,锁定
 graphics.layerUnlocked,Editable,可编辑
+graphics.presets,Shape presets,形状预设
+graphics.preset.panel,Panel,面板
+graphics.preset.token,Token,标记
+graphics.preset.shard,Shard,碎片
+graphics.preset.beacon,Beacon,信标
 graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
 graphics.importSuccess,Entity imported,实体已导入
 graphics.importFailed,Import failed,导入失败

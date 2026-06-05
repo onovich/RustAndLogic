@@ -1513,10 +1513,39 @@ textarea[data-invalid="true"] {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
+  padding: 4px 0;
+  border-left: 2px solid rgba(51, 38, 28, 0.7);
+  padding-left: 8px;
 }
 
 .visual-layer-item button {
   text-align: left;
+}
+
+.visual-layer-item[data-hidden="true"] {
+  border-left-color: rgba(102, 77, 61, 0.95);
+  opacity: 0.76;
+}
+
+.visual-layer-item[data-locked="true"] {
+  border-left-color: rgba(242, 141, 53, 0.75);
+}
+
+.visual-layer-select {
+  display: grid;
+  gap: 2px;
+}
+
+.visual-layer-title {
+  color: var(--text);
+  font-size: 0.6rem;
+  line-height: 1.15;
+}
+
+.visual-layer-meta {
+  color: var(--muted);
+  font-size: 0.52rem;
+  line-height: 1.1;
 }
 
 .visual-layer-controls {
@@ -1555,6 +1584,19 @@ textarea[data-invalid="true"] {
 .visual-field label {
   color: var(--muted);
   font-size: 0.54rem;
+}
+
+.visual-preset-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.visual-preset-strip button {
+  min-height: 22px;
+  padding: 0 7px;
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
 }
 
 .visual-field input,

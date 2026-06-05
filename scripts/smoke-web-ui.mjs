@@ -834,6 +834,12 @@ try {
   if (afterMoveExport === beforeMoveExport) {
     throw new Error("Expected moving a graphics layer to rewrite export order.");
   }
+  await page.getByRole("button", { name: "Beacon" }).click();
+  await page.getByTestId("graphics-export-entity-button").click();
+  const wallEntityIoAfterPreset = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!wallEntityIoAfterPreset.includes('"shape": "star"')) {
+    throw new Error(`Expected shape preset to update selected wall layer, got: ${wallEntityIoAfterPreset}`);
+  }
   await page.getByTestId("graphics-studio-button").click();
   const studioState = await page.evaluate(() => {
     const panel = document.querySelector(".dev-panel");

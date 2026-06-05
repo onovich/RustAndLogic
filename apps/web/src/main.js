@@ -166,6 +166,7 @@ const elements = {
   graphicsMoveLayerDownButton: query("graphics-move-layer-down-button"),
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
+  graphicsPresets: query("graphics-presets"),
   graphicsEntityIo: query("graphics-entity-io"),
   graphicsExport: query("graphics-export"),
 };
@@ -618,6 +619,13 @@ function initializeGraphicsEditor() {
 
   elements.graphicsForm?.addEventListener("input", handleGraphicsFormInput);
   elements.graphicsForm?.addEventListener("change", handleGraphicsFormInput);
+  elements.graphicsPresets?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-preset]");
+    if (!button) {
+      return;
+    }
+    applyShapePreset(button.dataset.preset ?? "");
+  });
 }
 
 function setGraphicsStudioOpen(isOpen) {
@@ -689,6 +697,7 @@ function renderGraphicsEditor() {
   renderGraphicsEntityList();
   renderGraphicsLayerList();
   renderGraphicsForm();
+  renderGraphicsPresets();
 
   const visual = getSelectedEntityVisual();
   const previewUrl = visual ? buildEntityVisualDataUrl(selectedVisualEntityKey, visual) : "";
@@ -764,11 +773,20 @@ function renderGraphicsLayerList() {
   for (const layer of visual.layers ?? []) {
     const row = document.createElement("div");
     row.className = "visual-layer-item";
+    row.dataset.hidden = String(layer.visible === false);
+    row.dataset.locked = String(Boolean(layer.locked));
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "visual-layer-select";
     button.dataset.layerId = layer.id;
     button.dataset.active = String(layer.id === selectedVisualLayerId);
-    button.textContent = describeVisualLayer(layer);
+    const title = document.createElement("span");
+    title.className = "visual-layer-title";
+    title.textContent = describeVisualLayerTitle(layer);
+    const meta = document.createElement("span");
+    meta.className = "visual-layer-meta";
+    meta.textContent = describeVisualLayerMeta(layer);
+    button.append(title, meta);
     const controls = document.createElement("div");
     controls.className = "visual-layer-controls";
     const visibleButton = document.createElement("button");
@@ -786,6 +804,28 @@ function renderGraphicsLayerList() {
     controls.append(visibleButton, lockedButton);
     row.append(button, controls);
     elements.graphicsLayerList.append(row);
+  }
+}
+
+function renderGraphicsPresets() {
+  if (!elements.graphicsPresets) {
+    return;
+  }
+  elements.graphicsPresets.replaceChildren();
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!layer || layer.type !== "shape") {
+    elements.graphicsPresets.hidden = true;
+    return;
+  }
+  elements.graphicsPresets.hidden = false;
+  for (const preset of shapePresets()) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.preset = preset.id;
+    button.textContent = t(preset.labelKey);
+    button.disabled = Boolean(layer.locked);
+    elements.graphicsPresets.append(button);
   }
 }
 
@@ -1360,18 +1400,18 @@ function normalizeShapeLayer(layer, visual = getSelectedEntityVisual()) {
   }
 }
 
-function describeVisualLayer(layer) {
+function describeVisualLayerTitle(layer) {
   const layerType = t(`graphics.option.layer.${layer.type ?? "shape"}`);
-  const detail =
-    layer.type === "glyph"
-      ? layer.glyph ?? ""
-      : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
+  const detail = layer.type === "glyph" ? layer.glyph ?? "" : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
+  return `${layerType} // ${detail}`;
+}
+
+function describeVisualLayerMeta(layer) {
   const flags = [
-    layer.visible === false ? t("graphics.layerHidden") : null,
-    layer.locked ? t("graphics.layerLocked") : null,
-  ].filter(Boolean);
-  const suffix = flags.length > 0 ? ` // ${flags.join(" / ")}` : "";
-  return `${layerType} // ${layer.id} // ${detail}${suffix}`;
+    layer.visible === false ? t("graphics.layerHidden") : t("graphics.layerVisible"),
+    layer.locked ? t("graphics.layerLocked") : t("graphics.layerUnlocked"),
+  ];
+  return `${layer.id} // ${flags.join(" / ")}`;
 }
 
 function moveSelectedVisualLayer(delta) {
@@ -1475,6 +1515,93 @@ function importSelectedEntityVisual(source) {
     console.warn("Failed to import selected entity visual.", error);
     showToast({ title: t("graphics.importFailed"), body: String(error.message ?? error) }, "failure");
   }
+}
+
+function shapePresets() {
+  return [
+    { id: "panel", labelKey: "graphics.preset.panel" },
+    { id: "token", labelKey: "graphics.preset.token" },
+    { id: "shard", labelKey: "graphics.preset.shard" },
+    { id: "beacon", labelKey: "graphics.preset.beacon" },
+  ];
+}
+
+function applyShapePreset(presetId) {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!visual || !layer || layer.type !== "shape" || layer.locked) {
+    return;
+  }
+  const canvasSize = Number(visual.canvasSize ?? 24);
+  const presets = {
+    panel: {
+      shape: "rectangle",
+      x: canvasSize / 2,
+      y: canvasSize / 2,
+      width: Math.max(10, canvasSize * 0.82),
+      height: Math.max(10, canvasSize * 0.62),
+      radius: Math.max(1, canvasSize * 0.08),
+      rotation: 0,
+      fillOpacity: 0.92,
+      textureType: "stripes",
+      textureVariant: "checker",
+      stripeWidth: 1,
+      stripeAngle: 0,
+      stripeGap: 5,
+    },
+    token: {
+      shape: "circle",
+      x: canvasSize / 2,
+      y: canvasSize / 2,
+      width: Math.max(10, canvasSize * 0.76),
+      height: Math.max(10, canvasSize * 0.76),
+      radius: 0,
+      rotation: 0,
+      fillOpacity: 0.94,
+      textureType: "dither",
+      textureVariant: "checker",
+      textureScale: 3,
+    },
+    shard: {
+      shape: "polygon",
+      x: canvasSize / 2,
+      y: canvasSize / 2,
+      width: Math.max(10, canvasSize * 0.7),
+      height: Math.max(10, canvasSize * 0.8),
+      radius: 0,
+      rotation: 45,
+      sides: 4,
+      fillOpacity: 0.9,
+      textureType: "stripes",
+      textureVariant: "checker",
+      stripeWidth: 1,
+      stripeAngle: 45,
+      stripeGap: 4,
+    },
+    beacon: {
+      shape: "star",
+      x: canvasSize / 2,
+      y: canvasSize / 2,
+      width: Math.max(10, canvasSize * 0.72),
+      height: Math.max(10, canvasSize * 0.72),
+      radius: 0,
+      rotation: 0,
+      points: 5,
+      outerRadius: Math.max(5, canvasSize * 0.36),
+      innerRadius: Math.max(3, canvasSize * 0.18),
+      fillOpacity: 0.94,
+      textureType: "dither",
+      textureVariant: "cross",
+      textureScale: 3,
+    },
+  };
+  const preset = presets[presetId];
+  if (!preset) {
+    return;
+  }
+  Object.assign(layer, preset);
+  normalizeShapeLayer(layer, visual);
+  persistEntityVisualCatalog();
 }
 
 function renderGlyphLayer(layer) {
