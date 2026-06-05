@@ -902,24 +902,7 @@ function renderGraphicsForm() {
     return;
   }
 
-  appendGraphicsField({
-    scope: "entity",
-    field: "label",
-    label: t("graphics.field.entityLabel"),
-    type: "text",
-    value: visual.label ?? "",
-  });
-  appendGraphicsField({
-    scope: "entity",
-    field: "canvasSize",
-    label: t("graphics.field.canvasSize"),
-    type: "number",
-    value: visual.canvasSize ?? 24,
-    min: 8,
-    max: 96,
-    step: 1,
-    valueType: "number",
-  });
+  renderGraphicsFieldSchema("entity", visual, graphicsEditorConfig.entityFields);
 
   const layer = visual.layers.find((item) => item.id === selectedVisualLayerId);
   if (!layer) {
@@ -932,325 +915,75 @@ function renderGraphicsForm() {
     return;
   }
 
-  appendGraphicsField({
-    scope: "layer",
-    field: "id",
-    label: t("graphics.field.id"),
-    type: "text",
-    value: layer.id ?? "",
-  });
-  appendGraphicsSelectField({
-    scope: "layer",
-    field: "type",
-    label: t("graphics.field.type"),
-    value: layer.type ?? "shape",
-    options: buildGraphicsSelectOptions(graphicsEditorConfig.layerTypeOptions),
-  });
+  renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.layerBaseFields);
 
   if (layer.type === "glyph") {
-    renderGlyphLayerFields(layer);
+    renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.glyphFields);
     return;
   }
 
-  renderShapeLayerFields(layer);
+  renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.shapeFields);
 }
 
-function renderGlyphLayerFields(layer) {
-  appendGraphicsField({
-    scope: "layer",
-    field: "glyph",
-    label: t("graphics.field.glyph"),
-    type: "text",
-    value: layer.glyph ?? "",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "fontSize",
-    label: t("graphics.field.fontSize"),
-    type: "number",
-    value: layer.fontSize ?? 8,
-    min: 1,
-    max: 48,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "glyphColor",
-    label: t("graphics.field.glyphColor"),
-    type: "color",
-    value: normalizeColorValue(layer.glyphColor, "#f0d8bb"),
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "x",
-    label: t("graphics.field.x"),
-    type: "number",
-    value: layer.x ?? 0,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "y",
-    label: t("graphics.field.y"),
-    type: "number",
-    value: layer.y ?? 0,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "rotation",
-    label: t("graphics.field.rotation"),
-    type: "number",
-    value: layer.rotation ?? 0,
-    step: 1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "stroke",
-    label: t("graphics.field.stroke"),
-    type: "color",
-    value: normalizeColorValue(layer.stroke, "#000000"),
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "strokeWidth",
-    label: t("graphics.field.strokeWidth"),
-    type: "number",
-    value: layer.strokeWidth ?? 0,
-    min: 0,
-    max: 12,
-    step: 0.1,
-    valueType: "number",
-  });
+function renderGraphicsFieldSchema(scope, source, schema) {
+  for (const fieldConfig of Array.isArray(schema) ? schema : []) {
+    if (!fieldConfig || !fieldConfig.field || !shouldRenderGraphicsField(fieldConfig, source)) {
+      continue;
+    }
+    appendGraphicsFieldFromSchema(scope, source, fieldConfig);
+  }
 }
 
-function renderShapeLayerFields(layer) {
-  appendGraphicsSelectField({
-    scope: "layer",
-    field: "shape",
-    label: t("graphics.field.shape"),
-    value: layer.shape ?? "rectangle",
-    options: buildGraphicsSelectOptions(graphicsEditorConfig.shapeOptions),
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "x",
-    label: t("graphics.field.x"),
-    type: "number",
-    value: layer.x ?? 0,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "y",
-    label: t("graphics.field.y"),
-    type: "number",
-    value: layer.y ?? 0,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "width",
-    label: t("graphics.field.width"),
-    type: "number",
-    value: layer.width ?? 12,
-    min: 1,
-    max: 96,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "height",
-    label: t("graphics.field.height"),
-    type: "number",
-    value: layer.height ?? 12,
-    min: 1,
-    max: 96,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "rotation",
-    label: t("graphics.field.rotation"),
-    type: "number",
-    value: layer.rotation ?? 0,
-    step: 1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "fill",
-    label: t("graphics.field.fill"),
-    type: "color",
-    value: normalizeColorValue(layer.fill, "#f28d35"),
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "fillOpacity",
-    label: t("graphics.field.fillOpacity"),
-    type: "number",
-    value: layer.fillOpacity ?? 1,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "stroke",
-    label: t("graphics.field.stroke"),
-    type: "color",
-    value: normalizeColorValue(layer.stroke, "#000000"),
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "strokeWidth",
-    label: t("graphics.field.strokeWidth"),
-    type: "number",
-    value: layer.strokeWidth ?? 0,
-    min: 0,
-    max: 12,
-    step: 0.1,
-    valueType: "number",
-  });
-  appendGraphicsField({
-    scope: "layer",
-    field: "radius",
-    label: t("graphics.field.radius"),
-    type: "number",
-    value: layer.radius ?? 0,
-    min: 0,
-    max: 48,
-    step: 0.1,
-    valueType: "number",
-  });
-  if (layer.shape === "polygon") {
-    appendGraphicsField({
-      scope: "layer",
-      field: "sides",
-      label: t("graphics.field.sides"),
-      type: "number",
-      value: layer.sides ?? 6,
-      min: 3,
-      max: 12,
-      step: 1,
-      valueType: "integer",
-    });
+function shouldRenderGraphicsField(fieldConfig, source) {
+  const condition = fieldConfig.showWhen;
+  if (!condition) {
+    return true;
   }
-  if (layer.shape === "star") {
-    appendGraphicsField({
-      scope: "layer",
-      field: "points",
-      label: t("graphics.field.points"),
-      type: "number",
-      value: layer.points ?? 5,
-      min: 3,
-      max: 12,
-      step: 1,
-      valueType: "integer",
-    });
-    appendGraphicsField({
-      scope: "layer",
-      field: "innerRadius",
-      label: t("graphics.field.innerRadius"),
-      type: "number",
-      value: layer.innerRadius ?? 4,
-      min: 0.5,
-      max: 48,
-      step: 0.1,
-      valueType: "number",
-    });
-    appendGraphicsField({
-      scope: "layer",
-      field: "outerRadius",
-      label: t("graphics.field.outerRadius"),
-      type: "number",
-      value: layer.outerRadius ?? 8,
-      min: 0.5,
-      max: 48,
-      step: 0.1,
-      valueType: "number",
-    });
+  const currentValue = source?.[condition.field];
+  if (Object.prototype.hasOwnProperty.call(condition, "equals")) {
+    return currentValue === condition.equals;
   }
-  appendGraphicsSelectField({
-    scope: "layer",
-    field: "textureType",
-    label: t("graphics.field.textureType"),
-    value: layer.textureType ?? "none",
-    options: buildGraphicsSelectOptions(graphicsEditorConfig.textureTypeOptions),
-  });
-  if ((layer.textureType ?? "none") !== "none") {
-    appendGraphicsField({
-      scope: "layer",
-      field: "textureColor",
-      label: t("graphics.field.textureColor"),
-      type: "color",
-      value: normalizeColorValue(layer.textureColor, "#33261c"),
-    });
-    appendGraphicsField({
-      scope: "layer",
-      field: "textureScale",
-      label: t("graphics.field.textureScale"),
-      type: "number",
-      value: layer.textureScale ?? 4,
-      min: 1,
-      max: 16,
-      step: 1,
-      valueType: "integer",
-    });
+  if (Object.prototype.hasOwnProperty.call(condition, "notEquals")) {
+    return currentValue !== condition.notEquals;
   }
-  if (layer.textureType === "stripes") {
-    appendGraphicsField({
-      scope: "layer",
-      field: "stripeWidth",
-      label: t("graphics.field.stripeWidth"),
-      type: "number",
-      value: layer.stripeWidth ?? 1,
-      min: 0.5,
-      max: 12,
-      step: 0.1,
-      valueType: "number",
-    });
-    appendGraphicsField({
-      scope: "layer",
-      field: "stripeAngle",
-      label: t("graphics.field.stripeAngle"),
-      type: "number",
-      value: layer.stripeAngle ?? 45,
-      min: 0,
-      max: 360,
-      step: 1,
-      valueType: "number",
-    });
-    appendGraphicsField({
-      scope: "layer",
-      field: "stripeGap",
-      label: t("graphics.field.stripeGap"),
-      type: "number",
-      value: layer.stripeGap ?? 5,
-      min: 1,
-      max: 32,
-      step: 0.1,
-      valueType: "number",
-    });
-  }
-  if (layer.textureType === "dither") {
+  return true;
+}
+
+function appendGraphicsFieldFromSchema(scope, source, fieldConfig) {
+  const label = t(fieldConfig.labelKey ?? fieldConfig.field);
+  const value = resolveGraphicsFieldValue(source, fieldConfig);
+  if (fieldConfig.type === "select") {
     appendGraphicsSelectField({
-      scope: "layer",
-      field: "textureVariant",
-      label: t("graphics.field.textureVariant"),
-      value: layer.textureVariant ?? "checker",
-      options: buildGraphicsSelectOptions(graphicsEditorConfig.ditherVariantOptions),
+      scope,
+      field: fieldConfig.field,
+      label,
+      value,
+      options: buildGraphicsSelectOptions(graphicsEditorConfig[fieldConfig.optionsKey]),
     });
+    return;
   }
+  appendGraphicsField({
+    scope,
+    field: fieldConfig.field,
+    label,
+    type: fieldConfig.type ?? "text",
+    value,
+    valueType: fieldConfig.valueType ?? (fieldConfig.type === "number" ? "number" : "string"),
+    min: fieldConfig.min,
+    max: fieldConfig.max,
+    step: fieldConfig.step,
+  });
+}
+
+function resolveGraphicsFieldValue(source, fieldConfig) {
+  const rawValue = source?.[fieldConfig.field];
+  if (fieldConfig.type === "color") {
+    return normalizeColorValue(rawValue, fieldConfig.fallback ?? "#000000");
+  }
+  if (rawValue === undefined || rawValue === null) {
+    return fieldConfig.defaultValue ?? "";
+  }
+  return rawValue;
 }
 
 function appendGraphicsField({
@@ -1519,6 +1252,22 @@ function defaultGraphicsEditorConfig() {
 function normalizeGraphicsEditorConfig(config = {}) {
   const fallback = defaultGraphicsEditorConfig();
   return {
+    entityFields:
+      Array.isArray(config.entityFields) && config.entityFields.length > 0
+        ? cloneJson(config.entityFields)
+        : fallback.entityFields,
+    layerBaseFields:
+      Array.isArray(config.layerBaseFields) && config.layerBaseFields.length > 0
+        ? cloneJson(config.layerBaseFields)
+        : fallback.layerBaseFields,
+    glyphFields:
+      Array.isArray(config.glyphFields) && config.glyphFields.length > 0
+        ? cloneJson(config.glyphFields)
+        : fallback.glyphFields,
+    shapeFields:
+      Array.isArray(config.shapeFields) && config.shapeFields.length > 0
+        ? cloneJson(config.shapeFields)
+        : fallback.shapeFields,
     layerTypeOptions:
       Array.isArray(config.layerTypeOptions) && config.layerTypeOptions.length > 0
         ? cloneJson(config.layerTypeOptions)

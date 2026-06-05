@@ -122,6 +122,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Externalize Graphics Studio presets and editor swatches into app data so common authoring helpers stay data-driven instead of living in the Web UI implementation.
 - [x] Externalize Graphics Studio default shape/glyph layer templates into app data so newly added layers follow editable authoring defaults instead of JS-only constants.
 - [x] Externalize Graphics Studio option catalogs for layer type, shape, texture mode, and dither variant so editor dropdown vocabulary also lives in app data.
+- [x] Externalize Graphics Studio field schema for entity, glyph, and shape editors so form structure and conditional field visibility no longer live only in `main.js`.
 
 ## Definition Of Done For A Small Item
 

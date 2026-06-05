@@ -817,12 +817,16 @@ try {
     const readOptions = (field) =>
       [...document.querySelectorAll(`[data-testid="graphics-form"] [data-field="${field}"] option`)].map((node) => node.value);
     return {
+      entityFields: [...document.querySelectorAll('[data-testid="graphics-form"] [data-scope="entity"]')].map((node) => node.dataset.field),
+      baseFields: [...document.querySelectorAll('[data-testid="graphics-form"] [data-scope="layer"]')].slice(0, 2).map((node) => node.dataset.field),
       layerType: readOptions("type"),
       shape: readOptions("shape"),
       textureType: readOptions("textureType"),
     };
   });
   if (
+    graphicsSelectOptions.entityFields.join(",") !== "label,canvasSize" ||
+    graphicsSelectOptions.baseFields.join(",") !== "id,type" ||
     graphicsSelectOptions.layerType.join(",") !== "shape,glyph" ||
     graphicsSelectOptions.shape.join(",") !== "rectangle,circle,polygon,star" ||
     graphicsSelectOptions.textureType.join(",") !== "none,stripes,dither"
@@ -888,6 +892,23 @@ try {
   if (fillSwatchCount < 4 || textureSwatchCount < 4) {
     throw new Error(`Expected graphics swatch strips to render from config, got fill=${fillSwatchCount} texture=${textureSwatchCount}.`);
   }
+  const conditionalFieldsBefore = await page.evaluate(() => ({
+    hasPoints: Boolean(document.querySelector('[data-testid="graphics-form"] [data-field="points"]')),
+    hasSides: Boolean(document.querySelector('[data-testid="graphics-form"] [data-field="sides"]')),
+  }));
+  if (!conditionalFieldsBefore.hasPoints || conditionalFieldsBefore.hasSides) {
+    throw new Error(`Expected schema-driven conditional fields for star shape, got ${JSON.stringify(conditionalFieldsBefore)}.`);
+  }
+  await page.locator('[data-testid="graphics-form"] [data-field="shape"]').selectOption("polygon");
+  await page.waitForFunction(() =>
+    Boolean(document.querySelector('[data-testid="graphics-form"] [data-field="sides"]')) &&
+    !document.querySelector('[data-testid="graphics-form"] [data-field="points"]'),
+  );
+  await page.locator('[data-testid="graphics-form"] [data-field="textureType"]').selectOption("stripes");
+  await page.waitForFunction(() =>
+    Boolean(document.querySelector('[data-testid="graphics-form"] [data-field="stripeWidth"]')) &&
+    !document.querySelector('[data-testid="graphics-form"] [data-field="textureVariant"]'),
+  );
   await page.locator('[data-testid="graphics-fill-swatches"] .visual-swatch').nth(4).click();
   await page.waitForFunction(() =>
     document.querySelector('[data-testid="graphics-export"]').value.includes('"fill": "#00ff88"'),

@@ -8,6 +8,48 @@
     }
   },
   "graphicsEditor": {
+    "entityFields": [
+      { "field": "label", "labelKey": "graphics.field.entityLabel", "type": "text" },
+      { "field": "canvasSize", "labelKey": "graphics.field.canvasSize", "type": "number", "valueType": "number", "min": 8, "max": 96, "step": 1 }
+    ],
+    "layerBaseFields": [
+      { "field": "id", "labelKey": "graphics.field.id", "type": "text" },
+      { "field": "type", "labelKey": "graphics.field.type", "type": "select", "optionsKey": "layerTypeOptions" }
+    ],
+    "glyphFields": [
+      { "field": "glyph", "labelKey": "graphics.field.glyph", "type": "text" },
+      { "field": "fontSize", "labelKey": "graphics.field.fontSize", "type": "number", "valueType": "number", "min": 1, "max": 48, "step": 0.1 },
+      { "field": "glyphColor", "labelKey": "graphics.field.glyphColor", "type": "color", "fallback": "#f0d8bb" },
+      { "field": "x", "labelKey": "graphics.field.x", "type": "number", "valueType": "number", "step": 0.1 },
+      { "field": "y", "labelKey": "graphics.field.y", "type": "number", "valueType": "number", "step": 0.1 },
+      { "field": "rotation", "labelKey": "graphics.field.rotation", "type": "number", "valueType": "number", "step": 1 },
+      { "field": "stroke", "labelKey": "graphics.field.stroke", "type": "color", "fallback": "#000000" },
+      { "field": "strokeWidth", "labelKey": "graphics.field.strokeWidth", "type": "number", "valueType": "number", "min": 0, "max": 12, "step": 0.1 }
+    ],
+    "shapeFields": [
+      { "field": "shape", "labelKey": "graphics.field.shape", "type": "select", "optionsKey": "shapeOptions" },
+      { "field": "x", "labelKey": "graphics.field.x", "type": "number", "valueType": "number", "step": 0.1 },
+      { "field": "y", "labelKey": "graphics.field.y", "type": "number", "valueType": "number", "step": 0.1 },
+      { "field": "width", "labelKey": "graphics.field.width", "type": "number", "valueType": "number", "min": 1, "max": 96, "step": 0.1 },
+      { "field": "height", "labelKey": "graphics.field.height", "type": "number", "valueType": "number", "min": 1, "max": 96, "step": 0.1 },
+      { "field": "rotation", "labelKey": "graphics.field.rotation", "type": "number", "valueType": "number", "step": 1 },
+      { "field": "fill", "labelKey": "graphics.field.fill", "type": "color", "fallback": "#f28d35" },
+      { "field": "fillOpacity", "labelKey": "graphics.field.fillOpacity", "type": "number", "valueType": "number", "min": 0, "max": 1, "step": 0.05 },
+      { "field": "stroke", "labelKey": "graphics.field.stroke", "type": "color", "fallback": "#000000" },
+      { "field": "strokeWidth", "labelKey": "graphics.field.strokeWidth", "type": "number", "valueType": "number", "min": 0, "max": 12, "step": 0.1 },
+      { "field": "radius", "labelKey": "graphics.field.radius", "type": "number", "valueType": "number", "min": 0, "max": 48, "step": 0.1 },
+      { "field": "sides", "labelKey": "graphics.field.sides", "type": "number", "valueType": "integer", "min": 3, "max": 12, "step": 1, "showWhen": { "field": "shape", "equals": "polygon" } },
+      { "field": "points", "labelKey": "graphics.field.points", "type": "number", "valueType": "integer", "min": 3, "max": 12, "step": 1, "showWhen": { "field": "shape", "equals": "star" } },
+      { "field": "innerRadius", "labelKey": "graphics.field.innerRadius", "type": "number", "valueType": "number", "min": 0.5, "max": 48, "step": 0.1, "showWhen": { "field": "shape", "equals": "star" } },
+      { "field": "outerRadius", "labelKey": "graphics.field.outerRadius", "type": "number", "valueType": "number", "min": 0.5, "max": 48, "step": 0.1, "showWhen": { "field": "shape", "equals": "star" } },
+      { "field": "textureType", "labelKey": "graphics.field.textureType", "type": "select", "optionsKey": "textureTypeOptions" },
+      { "field": "textureColor", "labelKey": "graphics.field.textureColor", "type": "color", "fallback": "#33261c", "showWhen": { "field": "textureType", "notEquals": "none" } },
+      { "field": "textureScale", "labelKey": "graphics.field.textureScale", "type": "number", "valueType": "integer", "min": 1, "max": 16, "step": 1, "showWhen": { "field": "textureType", "notEquals": "none" } },
+      { "field": "stripeWidth", "labelKey": "graphics.field.stripeWidth", "type": "number", "valueType": "number", "min": 0.5, "max": 12, "step": 0.1, "showWhen": { "field": "textureType", "equals": "stripes" } },
+      { "field": "stripeAngle", "labelKey": "graphics.field.stripeAngle", "type": "number", "valueType": "number", "min": 0, "max": 360, "step": 1, "showWhen": { "field": "textureType", "equals": "stripes" } },
+      { "field": "stripeGap", "labelKey": "graphics.field.stripeGap", "type": "number", "valueType": "number", "min": 1, "max": 32, "step": 0.1, "showWhen": { "field": "textureType", "equals": "stripes" } },
+      { "field": "textureVariant", "labelKey": "graphics.field.textureVariant", "type": "select", "optionsKey": "ditherVariantOptions", "showWhen": { "field": "textureType", "equals": "dither" } }
+    ],
     "layerTypeOptions": [
       { "value": "shape", "labelKey": "graphics.option.layer.shape" },
       { "value": "glyph", "labelKey": "graphics.option.layer.glyph" }
