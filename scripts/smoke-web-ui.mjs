@@ -128,7 +128,7 @@ try {
     throw new Error(`Expected M1 sample presets to stay M1-only, got: ${startupRules.sampleActions}`);
   }
   const stageActions = (await page.getByTestId("stage-actions").innerText()).toUpperCase();
-  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE", "M4 HOT-ZONE RUN", "M5 STOCK BALANCER"]) {
+  for (const label of ["M1 WAKE", "M2 HAUL LOOP", "M3 BASE CYCLE", "M4 HOT-ZONE RUN", "M5 STOCK BALANCER", "M6 ARENA INTERCEPT"]) {
     if (!stageActions.includes(label)) {
       throw new Error(`Expected stage actions to include ${label}, got: ${stageActions}`);
     }
@@ -587,7 +587,12 @@ try {
   await page.getByTestId("reset-button").click();
   await page.locator('[data-testid="stage-actions"] [data-stage="m5"]').click();
   const m5SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
-  if (!m5SampleActions.includes("M4 HOT-ZONE RUN") || !m5SampleActions.includes("M5 STOCK BALANCER") || m5SampleActions.includes("M3 BASE CYCLE")) {
+  if (
+    !m5SampleActions.includes("M4 HOT-ZONE RUN") ||
+    !m5SampleActions.includes("M5 STOCK BALANCER") ||
+    m5SampleActions.includes("M3 BASE CYCLE") ||
+    m5SampleActions.includes("M6 ARENA INTERCEPT")
+  ) {
     throw new Error(`Expected M5 sample actions to expose M4+M5 only, got: ${m5SampleActions}`);
   }
   const m5Guidance = await page.getByTestId("script-guidance").innerText();
@@ -632,6 +637,53 @@ try {
   const m5FacilityText = (await page.getByTestId("facility-list").innerText()).toUpperCase();
   if (!m5FacilityText.includes("4 SCRAP") || !m5FacilityText.includes("1 BATTERY")) {
     throw new Error(`Expected M5 fabricator readout to refresh dynamic recipe, got: ${m5FacilityText}`);
+  }
+  await page.getByTestId("reset-button").click();
+
+  await page.locator('[data-testid="stage-actions"] [data-stage="m6"]').click();
+  const m6SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();
+  if (!m6SampleActions.includes("M5 STOCK BALANCER") || !m6SampleActions.includes("M6 ARENA INTERCEPT") || m6SampleActions.includes("M4 HOT-ZONE RUN")) {
+    throw new Error(`Expected M6 sample actions to expose M5+M6 only, got: ${m6SampleActions}`);
+  }
+  const m6Guidance = await page.getByTestId("script-guidance").innerText();
+  if (!m6Guidance.toLowerCase().includes("hostile contact")) {
+    throw new Error(`Expected M6 script guidance, got: ${m6Guidance}`);
+  }
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByTestId("story-dialogue").click();
+  }
+  await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
+  const enemyCount = await page.locator(".grid .enemy-entity").count();
+  if (enemyCount !== 1) {
+    throw new Error(`Expected M6 to render one hostile contact, got ${enemyCount}.`);
+  }
+  await page.locator('[data-testid="sample-actions"] [data-preset="m6"]').click();
+  const m6PresetScript = await page.getByTestId("script-editor").inputValue();
+  if (!m6PresetScript.includes("Check().Has(Enemy)") || !m6PresetScript.includes("Fire()")) {
+    throw new Error(`Expected M6 preset to include combat query and fire action, got: ${m6PresetScript}`);
+  }
+  for (let index = 0; index < 12; index += 1) {
+    await page.getByTestId("step-button").click();
+  }
+  await expectText(page, "chip-count", "1");
+  await expectText(page, "hp-value", "10");
+  const enemyCountAfter = await page.locator(".grid .enemy-entity").count();
+  if (enemyCountAfter !== 0) {
+    throw new Error(`Expected M6 hostile contact to be cleared, got ${enemyCountAfter}.`);
+  }
+  const m6Toast = await page.evaluate(() => ({
+    kind: document.querySelector('[data-testid="runtime-toast"]')?.dataset.kind ?? "",
+    title: document.querySelector('[data-testid="runtime-toast-title"]')?.innerText ?? "",
+  }));
+  if (
+    !m6Toast.title.toUpperCase().includes("COMBAT BRANCH CONFIRMED") ||
+    (m6Toast.kind && m6Toast.kind !== "success")
+  ) {
+    throw new Error(`Expected first M6 success teaching toast, got: ${JSON.stringify(m6Toast)}.`);
+  }
+  const m6FlowSummary = (await page.getByTestId("flow-summary").innerText()).toUpperCase();
+  if (!m6FlowSummary.includes("STAGE TARGET COMPLETE")) {
+    throw new Error(`Expected M6 stage summary to complete after the guarded chip run, got: ${m6FlowSummary}`);
   }
   await page.getByTestId("reset-button").click();
 

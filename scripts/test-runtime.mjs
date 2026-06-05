@@ -223,6 +223,17 @@ Goto @Loop`;
   state = stepGame(fireGame);
   assert.equal(state.logs.includes("Fire(): Weapon relay discharged."), true);
 
+  const duelGame = createGame({
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
+    enemies: [{ id: "bandit-front", name: "relay bandit", x: 2, y: 2, hp: 1, damage: 2, dropType: "chip" }],
+    deposits: [],
+  });
+  state = deployProgram(duelGame, "Fire()");
+  state = stepGame(duelGame);
+  assert.equal(state.enemies.length, 0);
+  assert.equal(state.deposits.some((deposit) => deposit.type === "chip" && deposit.x === 2 && deposit.y === 2), true);
+  assert.equal(state.logs.includes("Fire(): Neutralized relay bandit."), true);
+
   const missGame = createGame();
   state = deployProgram(missGame, "Fire()");
   state = stepGame(missGame);
@@ -232,6 +243,15 @@ Goto @Loop`;
   queryGame.deposits = [{ id: "front-cell", type: "cell", x: 2, y: 2 }];
   state = deployProgram(queryGame, "Check().Has(Battery)");
   state = stepGame(queryGame);
+  assert.equal(state.vm.cf, true);
+
+  const enemySignalGame = createGame({
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 6, maxEnergy: 6, cargo: [] },
+    enemies: [{ id: "bandit-a", name: "relay bandit", x: 2, y: 2, hp: 2, damage: 2 }],
+    deposits: [],
+  });
+  state = deployProgram(enemySignalGame, "Check().Has(Enemy)");
+  state = stepGame(enemySignalGame);
   assert.equal(state.vm.cf, true);
 
   const hazardQueryGame = createGame({
@@ -525,6 +545,50 @@ Goto @Loop`;
   assert.equal(state.resources.scrap, 0);
   assert.equal(state.resources.cells, 0);
   assert.equal(state.vm.state, "Suspended");
+
+  const combatLoopGame = createGame({
+    stageId: "m6",
+    instructionCapacity: 24,
+    width: 7,
+    height: 5,
+    base: { x: 0, y: 2 },
+    robot: { x: 1, y: 2, dir: "E", hp: 10, armor: 1, weapon: 1, energy: 10, maxEnergy: 10, cargo: [] },
+    resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
+    obstacles: [],
+    hazards: [],
+    enemies: [{ id: "bandit-a", name: "relay bandit", x: 4, y: 2, hp: 2, damage: 2, dropType: "chip" }],
+    deposits: [],
+  });
+  state = deployProgram(combatLoopGame, [
+    "@Loop",
+    "Check(Cargo).Any()",
+    "IfTrue Goto @Return",
+    "Check().Has(Enemy)",
+    "IfTrue Fire()",
+    "IfTrue Goto @Loop",
+    "Check().Has(Chip)",
+    "IfTrue PickUp()",
+    "IfTrue Goto @Loop",
+    "Check(HP).Below(9)",
+    "IfTrue Goto @Recover",
+    "Move()",
+    "Goto @Loop",
+    "@Recover",
+    "Check(Here).Is(Home)",
+    "IfTrue Repair()",
+    "IfFalse MoveToward(Home)",
+    "Goto @Loop",
+    "@Return",
+    "MoveToward(Home)",
+    "Check(Here).Is(Home)",
+    "IfTrue Unload(Home)",
+    "Goto @Loop",
+  ].join("\n"));
+  state = runGame(combatLoopGame, 10);
+  assert.equal(state.enemies.length, 0);
+  assert.equal(state.resources.chips, 1);
+  assert.equal(state.robot.hp, 10);
+  assert.equal(state.robot.cargo.length, 0);
 
   const rechargeGame = createGame();
   rechargeGame.robot.x = 1;

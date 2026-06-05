@@ -19,6 +19,7 @@ script.guidance.m2,Starter scaffold: start from the haul loop and add the energy
 script.guidance.m3,Starter scaffold: begin with the base cycle and keep home-facing branches readable before adding repair or fabrication tweaks.,起步脚手架：先从基地循环起步，先把朝向基地的分支写清楚，再加修理和合成细节。
 script.guidance.m4,Starter scaffold: treat the hot zone as a health cost. Read the hazard first, decide whether to enter, then service at home before the next run.,起步脚手架：把危险区当成生命值成本。先读取危险，再决定要不要进去，回家维护后再开下一趟。
 script.guidance.m5,Starter scaffold: read the current craft cost before every run. Pull only the ingredient the fabricator is still missing, then stop once the second shard is made.,起步脚手架：每次出门前先读取当前合成成本。只去补合成台这一轮还缺的那种材料，做出第二枚记忆晶片后就先停住。
+script.guidance.m6,Starter scaffold: branch on hostile contact first. Fire when the lane is blocked by a target, then route home to repair before the frame collapses.,起步脚手架：先按敌对接触分支。通道被敌人挡住时先开火，再在机体崩掉前规划回家维修。
 teaching.m1.collect.title,First recovery confirmed,首次回收已确认
 teaching.m1.collect.body,Good. The robot can now pull cargo off the map. Next, make that pickup lead back home instead of wandering.,很好。机器人已经能把货从地图上取下来。下一步，把这次拾取稳定接回基地，而不是继续乱走。
 teaching.m1.unload.title,Loop closed,循环闭合
@@ -39,6 +40,10 @@ teaching.m4.hazard.title,Service before greed,先维护，再贪收益
 teaching.m4.hazard.body,The hot zone punishes scripts that try to repair only after they are already stranded. Route home before service work is needed, not after.,危险区会惩罚那种“等到搁浅后才想维修”的脚本。要在需要维护之前就规划返航，而不是之后。
 teaching.m5.craft.title,Stock-aware crafting confirmed,库存感知合成已确认
 teaching.m5.craft.body,Good. The script is finally reading the live craft cost instead of hauling blindly. That is the first step from survival loops into real scheduling.,很好。脚本终于开始读取实时合成成本，而不是盲目搬运了。这是从生存循环迈向真正调度的第一步。
+teaching.m6.combat.title,Combat branch confirmed,战斗分支已确认
+teaching.m6.combat.body,Good. The script is no longer treating hostiles like random debris. It is reading contact, firing on priority, and routing home before damage snowballs.,很好。脚本已经不再把敌人当作随机杂物。它会读取接触信号、优先开火，并在损伤滚大前规划返航。
+teaching.m6.failure.title,Contact before cargo,先处理接敌，再谈搬运
+teaching.m6.failure.body,The arena lane punishes scripts that try to keep hauling through hostile contact. Clear the target first, then think about salvage and repairs.,角斗场走廊会惩罚那种顶着敌对接触继续搬运的脚本。先清掉目标，再考虑回收和维修。
 script.jumpHint,Ctrl-click @Label to jump,按住 Ctrl 点击 @标签跳转
 script.title,Script,脚本
 script.controls,Run controls,运行控制
@@ -97,6 +102,7 @@ flow.chip,Recover a hot-zone chip,回收危险区芯片
 flow.unload,Unload cargo at home,回家卸载货物
 flow.recharge,Recharge at home,回家补满电量
 flow.stockBalance,Complete two cost-aware fabrications,完成两次成本感知合成
+flow.combat,Defeat the hostile contact,击败敌对目标
 flow.save,Save and reload progress,保存并读取进度
 samples.title,Field scripts,示例脚本
 samples.m1,M1 Wake,示例 M1
@@ -104,6 +110,7 @@ samples.m2,M2 Haul Loop,示例 M2
 samples.m3,M3 Base Cycle,示例 M3
 samples.m4,M4 Hot-Zone Run,示例 M4
 samples.m5,M5 Stock Balancer,示例 M5
+samples.m6,M6 Arena Intercept,示例 M6
 console.aria,Runtime console,运行控制台
 console.title,Console,控制台
 diff.aria,State diff,状态差异
@@ -219,6 +226,8 @@ runtime.blockedEmpty,Halt_Reason: Empty_Target,中断原因：目标为空
 runtime.recodeEmpty,Check the forward cell before acting,执行动作前先检查前方
 runtime.hazardFault,Halt_Reason: Hot_Zone_Fault,中断原因：危险区故障
 runtime.recodeHazard,Retreat before field service is required,在需要现场维修前就先撤离
+runtime.combatFault,Halt_Reason: Hostile_Contact,中断原因：敌对接触
+runtime.recodeCombat,Clear the target first or repair before re-engaging,先清掉目标，或维修后再重新接敌
 runtime.logicFault,Halt_Reason: Logic_Fault,中断原因：逻辑故障
 runtime.recodeLogic,Simplify the loop or repair the branch,简化循环或修复分支
 runtime.compileFault,Halt_Reason: Compile_Fault,中断原因：编译故障
@@ -228,6 +237,7 @@ runtime.stageHint.m2,In this relay lane, every failure should make you re-check 
 runtime.stageHint.m3,At Forge Yard, loop health matters more than greed: stabilize home actions before chasing more scrap.,在熔炉前场，循环健康比贪心重要：先稳住回家动作，再去追更多废铁。
 runtime.stageHint.m4,Hot Strip pays out better than the safe lane, but only if the script prices hull damage before the pickup.,热带回报比安全区高，但前提是脚本在拾取前就把机体损耗算进去。
 runtime.stageHint.m5,At Stock Exchange, every route should answer one question first: which ingredient is the base still missing right now?,在库存交换站，每一趟路线都要先回答一个问题：基地此刻到底还缺哪一种材料？
+runtime.stageHint.m6,At Arena Gate, a blocked lane is no longer just pathing noise. Read contact first, then decide whether to fire, retreat, or repair.,在角斗场闸门，通道受阻已经不只是寻路噪声。先读接敌，再决定开火、撤退还是维修。
 vm.Ready,Ready,就绪
 vm.Suspended,Suspended,暂停
 vm.Halted,Halted,停止
@@ -240,6 +250,7 @@ stage.guidance.m2,Priority: treat battery as the limiter; haul scrap only when t
 stage.guidance.m3,Priority: feed the base loop; batteries unlock fabrication and scrap keeps repair online.,优先事项：先养活基地循环；电池决定能否合成，废铁决定修理是否在线。
 stage.guidance.m4,Priority: price in hull loss before every hazard step; one chip is worth more than scrap only if the robot still makes it home.,优先事项：每一步踏进危险区前都先估算机体损耗；只有机器人还能回家时，一枚芯片才比废铁更值钱。
 stage.guidance.m5,Priority: route for deficits, not scenery; whichever ingredient the fabricator still lacks should become the next trip.,优先事项：按缺口而不是按风景去走；合成台还缺哪种材料，下一趟就该优先补哪种。
+stage.guidance.m6,Priority: hostile contact outranks salvage; if a target is on the lane, clear it before the chip run and service the frame before the next engage.,优先事项：敌对接触优先于回收；通道上有目标时先清掉，再去拿芯片，并且在下一次接敌前先维护机体。
 location.kind.m2,Relay haul corridor,中继搬运走廊
 location.name.m2,Relay Ladder,中继梯井
 location.description.m2,A longer salvage lane with sparse batteries and a punishing walk back home.,更长的回收通道，电池稀少，返航成本很高。
@@ -252,6 +263,9 @@ location.description.m4,A short radiant lane with one clean chip payout and a ve
 location.kind.m5,Supply balancing fork,供给平衡岔口
 location.name.m5,Stock Exchange,库存交换站
 location.description.m5,A short fork where the real puzzle is no longer movement, but deciding which missing ingredient to refill before crafting.,一处分岔很短的小站，真正的谜题已经不再是移动，而是先判断合成前还缺哪一种材料。
+location.kind.m6,Arena intercept lane,角斗场拦截走廊
+location.name.m6,Arena Gate,角斗场闸门
+location.description.m6,A narrow combat lane where one hostile blocks the chip payout. The route only works if the script treats contact as a state change, not as scenery.,一条狭窄的战斗走廊，一名敌对目标挡住了芯片回报。只有当脚本把接敌当成状态切换而不是背景噪声时，这条路线才跑得通。
 story.m2.1.speaker,K-6 Commander,K-6 指挥官
 story.m2.1.text,This relay ladder stretches farther than the first site. Range matters now; do not spend the last battery far from home.,这段中继梯井比第一处站点更长。现在航程就是约束，别把最后一格电浪费在离家太远的地方。
 story.m2.2.speaker,K-6 Commander,K-6 指挥官
@@ -276,3 +290,9 @@ story.m5.2.speaker,K-6 Commander,K-6 指挥官
 story.m5.2.text,The fabricator only cares about deficits. If batteries are missing, scrap is noise. If scrap is short, another battery changes nothing.,合成台只在乎缺口。缺电池时，废铁就是噪声；缺废铁时，再多一块电池也不会改变结果。
 story.m5.3.speaker,K-6 Commander,K-6 指挥官
 story.m5.3.text,Once the script can branch on stock counts, routing stops being a patrol and starts becoming scheduling.,一旦脚本能按库存分支，路线就不再只是巡逻，而开始变成调度。
+story.m6.1.speaker,K-6 Commander,K-6 指挥官
+story.m6.1.text,The Arena Gate is where pathing turns into combat. That bandit is not terrain; it is a moving condition in your loop.,角斗场闸门会把寻路变成战斗。那个匪徒不是地形，而是你循环里的一个动态条件。
+story.m6.2.speaker,K-6 Commander,K-6 指挥官
+story.m6.2.text,If hostile contact is on the lane, scrap logic will fail. Read the contact, clear the target, then decide whether the frame can afford another push.,只要通道上出现敌对接触，拾荒逻辑就会失效。先读取接敌、清掉目标，再决定机体是否还撑得起下一次推进。
+story.m6.3.speaker,K-6 Commander,K-6 指挥官
+story.m6.3.text,Bring the guarded chip home intact and you have crossed the line from routing into combat scheduling.,把那枚被看守的芯片完整带回家，你就真的从路线规划跨进了战斗调度。

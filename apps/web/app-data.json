@@ -15,6 +15,7 @@
     { "id": "recharge", "labelKey": "flow.recharge" },
     { "id": "craft", "labelKey": "completion.craft.home" },
     { "id": "stockBalance", "labelKey": "flow.stockBalance" },
+    { "id": "combat", "labelKey": "flow.combat" },
     { "id": "repair", "labelKey": "completion.repair" },
     { "id": "save", "labelKey": "flow.save" }
   ],
@@ -129,6 +130,35 @@
         "@Done",
         "Wait()",
         "Goto @Done"
+      ]
+    },
+    {
+      "id": "m6",
+      "labelKey": "samples.m6",
+      "lines": [
+        "@Loop",
+        "Check(Cargo).Any()",
+        "IfTrue Goto @Return",
+        "Check().Has(Enemy)",
+        "IfTrue Fire()",
+        "IfTrue Goto @Loop",
+        "Check().Has(Chip)",
+        "IfTrue PickUp()",
+        "IfTrue Goto @Loop",
+        "Check(HP).Below(9)",
+        "IfTrue Goto @Recover",
+        "Move()",
+        "Goto @Loop",
+        "@Recover",
+        "Check(Here).Is(Home)",
+        "IfTrue Repair()",
+        "IfFalse MoveToward(Home)",
+        "Goto @Loop",
+        "@Return",
+        "MoveToward(Home)",
+        "Check(Here).Is(Home)",
+        "IfTrue Unload(Home)",
+        "Goto @Loop"
       ]
     }
   ],
@@ -400,6 +430,56 @@
           { "id": "cell-b", "type": "cell", "x": 1, "y": 3 },
           { "id": "cell-c", "type": "cell", "x": 2, "y": 3 }
         ]
+      }
+    },
+    {
+      "id": "m6",
+      "labelKey": "samples.m6",
+      "taskIds": ["deploy", "combat", "collect", "unload", "repair"],
+      "completionTaskIds": ["combat", "unload", "repair"],
+      "presetId": "m6",
+      "location": {
+        "kindKey": "location.kind.m6",
+        "nameKey": "location.name.m6",
+        "descriptionKey": "location.description.m6"
+      },
+      "ui": {
+        "recommendedSpeed": 5,
+        "enabledUpgrades": ["memory", "armor", "weapon"],
+        "visibleFacilities": ["charger", "repairBay"],
+        "samplePresetIds": ["m5", "m6"],
+        "recommendedPresetId": "m6"
+      },
+      "scriptGuidanceKey": "script.guidance.m6",
+      "runtimeHintKey": "runtime.stageHint.m6",
+      "teachingMoments": {
+        "success": [
+          { "id": "combat", "taskId": "combat", "titleKey": "teaching.m6.combat.title", "bodyKey": "teaching.m6.combat.body" }
+        ],
+        "failure": [
+          { "id": "combat", "cause": "combat", "titleKey": "teaching.m6.failure.title", "bodyKey": "teaching.m6.failure.body" }
+        ]
+      },
+      "resourceGuidanceKey": "stage.guidance.m6",
+      "storyPages": [
+        { "speakerKey": "story.m6.1.speaker", "textKey": "story.m6.1.text" },
+        { "speakerKey": "story.m6.2.speaker", "textKey": "story.m6.2.text" },
+        { "speakerKey": "story.m6.3.speaker", "textKey": "story.m6.3.text" }
+      ],
+      "game": {
+        "stageId": "m6",
+        "instructionCapacity": 24,
+        "width": 7,
+        "height": 5,
+        "base": { "x": 0, "y": 2 },
+        "robot": { "x": 1, "y": 2, "dir": "E", "hp": 10, "armor": 1, "weapon": 1, "energy": 10, "maxEnergy": 10, "cargo": [] },
+        "resources": { "scrap": 1, "cells": 0, "chips": 0, "memoryShards": 1 },
+        "obstacles": [],
+        "hazards": [],
+        "enemies": [
+          { "id": "bandit-a", "name": "relay bandit", "x": 4, "y": 2, "hp": 2, "damage": 2, "dropType": "chip" }
+        ],
+        "deposits": []
       }
     }
   ],

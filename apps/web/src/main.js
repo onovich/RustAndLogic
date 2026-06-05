@@ -875,6 +875,7 @@ function summarizeRuntimeToast(state) {
     empty: ["runtime.blockedEmpty", "runtime.recodeEmpty"],
     power: ["runtime.blockedPower", "runtime.recodePower"],
     hazard: ["runtime.hazardFault", "runtime.recodeHazard"],
+    combat: ["runtime.combatFault", "runtime.recodeCombat"],
     logic: ["runtime.logicFault", "runtime.recodeLogic"],
     compile: ["runtime.compileFault", "runtime.recodeCompile"],
     generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
@@ -914,6 +915,12 @@ function detectRuntimeCause(state) {
     recentLogText.includes("Unload requires")
   ) {
     return "empty";
+  }
+  if (
+    recentLogText.includes("Enemy strike") ||
+    recentLogText.includes("hostile contact destroyed")
+  ) {
+    return "combat";
   }
   if (
     (state.hazards?.length ?? 0) > 0 &&
@@ -1199,6 +1206,9 @@ function syncFlowState(beforeState, state) {
   }
   if ("stockBalance" in flow) {
     flow.stockBalance = flow.stockBalance || state.resources.memoryShards >= 3;
+  }
+  if ("combat" in flow && !flow.combat && beforeState?.enemies) {
+    flow.combat = (state.enemies?.length ?? 0) < (beforeState.enemies?.length ?? 0);
   }
   if ("repair" in flow) {
     flow.repair = flow.repair || Boolean(beforeState && state.robot.hp > beforeState.robot.hp);
@@ -1747,6 +1757,10 @@ function renderGrid(state, beforeState, options = {}) {
     worldLayers.hazards.append(createWorldEntity("hazard-zone", hazard.x, hazard.y, WORLD_CELL_SIZE, "hazard"));
   }
 
+  for (const enemy of state.enemies ?? []) {
+    worldLayers.enemies.append(createWorldEntity("enemy enemy-entity", enemy.x, enemy.y, ROBOT_WORLD_SIZE, enemy.name ?? "hostile"));
+  }
+
   if (state.base) {
     worldLayers.base.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
   }
@@ -1775,6 +1789,8 @@ function ensureWorldLayers() {
   obstacles.className = "world-layer world-layer-obstacles";
   const hazards = document.createElement("div");
   hazards.className = "world-layer world-layer-hazards";
+  const enemies = document.createElement("div");
+  enemies.className = "world-layer world-layer-enemies";
   const base = document.createElement("div");
   base.className = "world-layer world-layer-base";
   const deposits = document.createElement("div");
@@ -1784,8 +1800,8 @@ function ensureWorldLayers() {
   const actors = document.createElement("div");
   actors.className = "world-layer world-layer-actors";
 
-  worldLayers = { obstacles, hazards, base, deposits, effects, actors };
-  elements.grid.replaceChildren(obstacles, hazards, base, deposits, effects, actors);
+  worldLayers = { obstacles, hazards, enemies, base, deposits, effects, actors };
+  elements.grid.replaceChildren(obstacles, hazards, enemies, base, deposits, effects, actors);
   return worldLayers;
 }
 
@@ -1795,6 +1811,7 @@ function clearWorldLayers() {
   }
   worldLayers.obstacles.replaceChildren();
   worldLayers.hazards.replaceChildren();
+  worldLayers.enemies.replaceChildren();
   worldLayers.base.replaceChildren();
   worldLayers.deposits.replaceChildren();
 }

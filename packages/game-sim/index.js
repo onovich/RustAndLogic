@@ -33,6 +33,7 @@ const DEFAULT_GAME_CONFIG = {
   lastDamageTick: null,
   obstacles: [{ id: "wall-a", x: 3, y: 1 }],
   hazards: [],
+  enemies: [],
   deposits: [
     { id: "scrap-a", type: "scrap", x: 2, y: 2 },
     { id: "cell-a", type: "cell", x: 4, y: 1 },
@@ -70,6 +71,7 @@ export function restoreGame(serialized, config = {}) {
       ...parsed.robot,
       cargo: Array.isArray(parsed.robot?.cargo) ? [...parsed.robot.cargo] : [...base.robot.cargo],
     },
+    enemies: Array.isArray(parsed.enemies) ? parsed.enemies.map((item) => ({ ...item })) : base.enemies,
     hazards: Array.isArray(parsed.hazards) ? parsed.hazards.map((item) => ({ ...item })) : base.hazards,
     deposits: Array.isArray(parsed.deposits) ? parsed.deposits.map((item) => ({ ...item })) : base.deposits,
     obstacles: Array.isArray(parsed.obstacles) ? parsed.obstacles.map((item) => ({ ...item })) : base.obstacles,
@@ -103,7 +105,11 @@ export function stepGame(game) {
 
   game.vm.state = "Ready";
   const result = executeUntilPhysical(game.program, game.vm, makeHardware(game), { maxLogicSteps: 20 });
+  const enemyEvents = advanceEnemies(game);
   game.tick += 1;
+  for (const message of enemyEvents.reverse()) {
+    game.logs.unshift(message);
+  }
   for (const event of result.events.reverse()) {
     if (event.type === "trace") {
       game.logs.unshift(`PC ${event.pc}: ${event.source}`);
@@ -237,6 +243,7 @@ export function snapshot(game) {
     lastDamageTick: game.lastDamageTick,
     obstacles: game.obstacles,
     hazards: game.hazards,
+    enemies: game.enemies,
     deposits: game.deposits,
     program: game.program
       ? {
@@ -274,6 +281,7 @@ function mergeGameConfig(base, config = {}) {
     lastDamageTick: config.lastDamageTick ?? base.lastDamageTick,
     obstacles: Array.isArray(config.obstacles) ? config.obstacles.map((item) => ({ ...item })) : base.obstacles.map((item) => ({ ...item })),
     hazards: Array.isArray(config.hazards) ? config.hazards.map((item) => ({ ...item })) : base.hazards.map((item) => ({ ...item })),
+    enemies: Array.isArray(config.enemies) ? config.enemies.map((item) => ({ ...item })) : base.enemies.map((item) => ({ ...item })),
     deposits: Array.isArray(config.deposits) ? config.deposits.map((item) => ({ ...item })) : base.deposits.map((item) => ({ ...item })),
     program: config.program ?? base.program,
     vm: config.vm ?? base.vm,
@@ -308,6 +316,7 @@ export function diffSnapshots(before, after) {
   compare(changes, "deposits.count", before?.deposits?.length ?? 0, after?.deposits?.length ?? 0);
   compare(changes, "obstacles.count", before?.obstacles?.length ?? 0, after?.obstacles?.length ?? 0);
   compare(changes, "hazards.count", before?.hazards?.length ?? 0, after?.hazards?.length ?? 0);
+  compare(changes, "enemies.count", before?.enemies?.length ?? 0, after?.enemies?.length ?? 0);
   compare(changes, "logs.latest", before?.logs?.[0] ?? "", after?.logs?.[0] ?? "");
   return changes;
 }
@@ -346,7 +355,7 @@ function makeHardware(game) {
       const location = targetLocation(game, instruction.target);
       if (instruction.predicate === "Has") {
         if (instruction.value === "Enemy") {
-          return hasEnemySignal(game);
+          return hasEnemySignal(game, location);
         }
         return Boolean(findDeposit(game, location, itemType(instruction.value)));
       }
@@ -562,14 +571,36 @@ function unloadCargo(game) {
 }
 
 function fireWeapon(game) {
-  if (!hasEnemySignal(game)) {
+  const target = findEnemy(game, aheadOf(game));
+  if (!target && !hasEnemySignal(game)) {
     return { ok: false, message: "No target lock." };
   }
-  return { ok: true, message: "Weapon relay discharged." };
+  if (!target) {
+    return { ok: true, message: "Weapon relay discharged." };
+  }
+  const damage = Math.max(1, game.robot.weapon);
+  target.hp = Math.max(0, target.hp - damage);
+  if (target.hp <= 0) {
+    game.enemies = game.enemies.filter((enemy) => enemy.id !== target.id);
+    if (target.dropType && isEmpty(game, { x: target.x, y: target.y })) {
+      game.deposits.push({
+        id: `drop-${target.id}-${game.tick}`,
+        type: target.dropType,
+        x: target.x,
+        y: target.y,
+      });
+    }
+    return { ok: true, message: `Neutralized ${target.name ?? "hostile"}.` };
+  }
+  return { ok: true, message: `Hit ${target.name ?? "hostile"} (${target.hp} HP left).` };
 }
 
-function hasEnemySignal(game) {
-  return game.tick % 7 === 6;
+function hasEnemySignal(game, location = aheadOf(game)) {
+  return Boolean(findEnemy(game, location)) || (sameLocation(location, aheadOf(game)) && hasScriptedEnemySignal(game));
+}
+
+function hasScriptedEnemySignal(game) {
+  return (game.enemies?.length ?? 0) === 0 && game.tick % 7 === 6;
 }
 
 function repairRobot(game) {
@@ -657,6 +688,7 @@ function isBlocked(game, location, options = {}) {
   const includeDeposits = options.includeDeposits ?? true;
   return (
     !isInside(game, location) ||
+    Boolean(findEnemy(game, location)) ||
     game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) ||
     (includeDeposits && Boolean(findDeposit(game, location)))
   );
@@ -668,6 +700,7 @@ function isHazard(game, location) {
 
 function isEmpty(game, location) {
   return isInside(game, location) &&
+    !findEnemy(game, location) &&
     !game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) &&
     !findDeposit(game, location) &&
     !(game.robot.x === location.x && game.robot.y === location.y);
@@ -680,6 +713,9 @@ function blockMessage(game, location) {
   if (game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y)) {
     return "Blocked by wall.";
   }
+  if (findEnemy(game, location)) {
+    return "Blocked by occupied cell.";
+  }
   if (findDeposit(game, location)) {
     return "Blocked by occupied cell.";
   }
@@ -691,6 +727,14 @@ function findDeposit(game, location, type = "") {
     const typeMatches = type ? deposit.type === type : true;
     return typeMatches && deposit.x === location.x && deposit.y === location.y;
   });
+}
+
+function findEnemy(game, location) {
+  return game.enemies.find((enemy) => enemy.x === location.x && enemy.y === location.y);
+}
+
+function sameLocation(a, b) {
+  return a.x === b.x && a.y === b.y;
 }
 
 function performPoweredAction(game, op, run) {
@@ -797,6 +841,75 @@ function snapshotFacilities(game) {
       recipe: fabricatorRecipe,
     },
   };
+}
+
+function advanceEnemies(game) {
+  if (!Array.isArray(game.enemies) || game.enemies.length === 0 || game.robot.hp <= 0) {
+    return [];
+  }
+
+  const events = [];
+  for (const enemy of game.enemies) {
+    if (game.robot.hp <= 0) {
+      break;
+    }
+    if (manhattanDistance(enemy, game.robot) === 1) {
+      const damage = Math.max(1, (enemy.damage ?? 1) - Math.max(0, game.robot.armor - 1));
+      game.robot.hp = Math.max(0, game.robot.hp - damage);
+      game.lastDamageTick = game.tick + 1;
+      events.push(`Enemy strike: ${enemy.name ?? "hostile"} hit for ${damage} damage.`);
+      if (game.robot.hp <= 0) {
+        game.vm.state = "Fault";
+        game.vm.fault = "Hull breach: hostile contact destroyed the robot.";
+        events.push("Hull breach: hostile contact destroyed the robot.");
+      }
+      continue;
+    }
+
+    const next = nextEnemyStep(game, enemy);
+    if (next) {
+      enemy.x = next.x;
+      enemy.y = next.y;
+    }
+  }
+  return events;
+}
+
+function nextEnemyStep(game, enemy) {
+  const dx = game.robot.x - enemy.x;
+  const dy = game.robot.y - enemy.y;
+  const candidates = Math.abs(dx) >= Math.abs(dy)
+    ? [stepVector(enemy, Math.sign(dx), 0), stepVector(enemy, 0, Math.sign(dy))]
+    : [stepVector(enemy, 0, Math.sign(dy)), stepVector(enemy, Math.sign(dx), 0)];
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
+    if (canEnemyOccupy(game, enemy, candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function stepVector(origin, dx, dy) {
+  if (dx === 0 && dy === 0) {
+    return null;
+  }
+  return { x: origin.x + dx, y: origin.y + dy };
+}
+
+function canEnemyOccupy(game, enemy, location) {
+  return isInside(game, location) &&
+    !(game.robot.x === location.x && game.robot.y === location.y) &&
+    !game.obstacles.some((obstacle) => obstacle.x === location.x && obstacle.y === location.y) &&
+    !game.deposits.some((deposit) => deposit.x === location.x && deposit.y === location.y) &&
+    !game.enemies.some((other) => other.id !== enemy.id && other.x === location.x && other.y === location.y);
+}
+
+function manhattanDistance(a, b) {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
 function compare(changes, path, before, after) {
