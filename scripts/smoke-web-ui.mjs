@@ -813,6 +813,27 @@ try {
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }
+  const wallLayerCountBeforeAdd = await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').count();
+  await page.getByTestId("graphics-add-glyph-button").click();
+  await page.waitForFunction(
+    (count) => document.querySelectorAll('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').length === count + 1,
+    wallLayerCountBeforeAdd,
+  );
+  await page.getByTestId("graphics-export-entity-button").click();
+  const wallEntityIoAfterGlyphAdd = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!wallEntityIoAfterGlyphAdd.includes('"glyph": "W"')) {
+    throw new Error(`Expected added glyph layer to use data-driven entity initial defaults, got: ${wallEntityIoAfterGlyphAdd}`);
+  }
+  await page.getByTestId("graphics-add-shape-button").click();
+  await page.waitForFunction(
+    (count) => document.querySelectorAll('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').length === count + 2,
+    wallLayerCountBeforeAdd,
+  );
+  await page.getByTestId("graphics-export-entity-button").click();
+  const wallEntityIoAfterShapeAdd = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!wallEntityIoAfterShapeAdd.includes('"textureType": "none"') || !wallEntityIoAfterShapeAdd.includes('"fill": "#f28d35"')) {
+    throw new Error(`Expected added shape layer to use data-driven default styling, got: ${wallEntityIoAfterShapeAdd}`);
+  }
   await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').first().evaluate((node) => node.click());
   const beforeDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').count();
   const beforeMoveExport = await page.getByTestId("graphics-export").inputValue();

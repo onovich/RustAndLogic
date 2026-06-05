@@ -1372,6 +1372,40 @@ function getGraphicsEntityLabel(entityKey) {
 
 function defaultGraphicsEditorConfig() {
   return {
+    defaultShapeLayer: {
+      shape: "rectangle",
+      x: { kind: "center" },
+      y: { kind: "center" },
+      width: { scale: 0.72, min: 8, round: "integer" },
+      height: { scale: 0.72, min: 8, round: "integer" },
+      fill: "#f28d35",
+      fillOpacity: 0.9,
+      stroke: "#ffd8ad",
+      strokeWidth: 1,
+      radius: 2,
+      rotation: 0,
+      sides: 6,
+      points: 5,
+      innerRadius: { scale: 0.18, min: 3 },
+      outerRadius: { scale: 0.34, min: 5 },
+      textureType: "none",
+      textureVariant: "checker",
+      textureColor: "#33261c",
+      textureScale: 4,
+      stripeWidth: 1,
+      stripeAngle: 45,
+      stripeGap: 5,
+    },
+    defaultGlyphLayer: {
+      glyph: { kind: "entityInitial" },
+      x: { kind: "center" },
+      y: { kind: "center" },
+      fontSize: { scale: 0.32, min: 7 },
+      glyphColor: "#f0d8bb",
+      stroke: "#0d0805",
+      strokeWidth: 0,
+      rotation: 0,
+    },
     shapePresets: [
       {
         id: "panel",
@@ -1472,6 +1506,14 @@ function defaultGraphicsEditorConfig() {
 function normalizeGraphicsEditorConfig(config = {}) {
   const fallback = defaultGraphicsEditorConfig();
   return {
+    defaultShapeLayer:
+      config.defaultShapeLayer && typeof config.defaultShapeLayer === "object"
+        ? cloneJson(config.defaultShapeLayer)
+        : fallback.defaultShapeLayer,
+    defaultGlyphLayer:
+      config.defaultGlyphLayer && typeof config.defaultGlyphLayer === "object"
+        ? cloneJson(config.defaultGlyphLayer)
+        : fallback.defaultGlyphLayer,
     shapePresets:
       Array.isArray(config.shapePresets) && config.shapePresets.length > 0
         ? cloneJson(config.shapePresets)
@@ -1489,48 +1531,27 @@ function normalizeGraphicsEditorConfig(config = {}) {
 
 function createDefaultShapeLayer(visual) {
   const canvasSize = Number(visual.canvasSize ?? 24);
-  const outerSize = Math.max(8, Math.round(canvasSize * 0.72));
+  const template = resolveGraphicsTemplateObject(graphicsEditorConfig.defaultShapeLayer ?? {}, {
+    canvasSize,
+    entityKey: selectedVisualEntityKey,
+  });
   return {
     id: `${selectedVisualEntityKey}-shape-${Date.now().toString(36)}`,
     type: "shape",
-    shape: "rectangle",
-    x: canvasSize / 2,
-    y: canvasSize / 2,
-    width: outerSize,
-    height: outerSize,
-    fill: "#f28d35",
-    fillOpacity: 0.9,
-    stroke: "#ffd8ad",
-    strokeWidth: 1,
-    radius: 2,
-    rotation: 0,
-    sides: 6,
-    points: 5,
-    innerRadius: Math.max(3, canvasSize * 0.18),
-    outerRadius: Math.max(5, canvasSize * 0.34),
-    textureType: "none",
-    textureVariant: "checker",
-    textureColor: "#33261c",
-    textureScale: 4,
-    stripeWidth: 1,
-    stripeAngle: 45,
-    stripeGap: 5,
+    ...template,
   };
 }
 
 function createDefaultGlyphLayer(visual, entityKey) {
   const canvasSize = Number(visual.canvasSize ?? 24);
+  const template = resolveGraphicsTemplateObject(graphicsEditorConfig.defaultGlyphLayer ?? {}, {
+    canvasSize,
+    entityKey,
+  });
   return {
     id: `${selectedVisualEntityKey}-glyph-${Date.now().toString(36)}`,
     type: "glyph",
-    glyph: entityKey.slice(0, 1).toUpperCase(),
-    x: canvasSize / 2,
-    y: canvasSize / 2,
-    fontSize: Math.max(7, canvasSize * 0.32),
-    glyphColor: "#f0d8bb",
-    stroke: "#0d0805",
-    strokeWidth: 0,
-    rotation: 0,
+    ...template,
   };
 }
 
@@ -1708,28 +1729,39 @@ function applyShapePreset(presetId) {
   if (!preset) {
     return;
   }
-  Object.assign(layer, resolveGraphicsPresetPatch(preset.patch ?? {}, canvasSize));
+  Object.assign(
+    layer,
+    resolveGraphicsTemplateObject(preset.patch ?? {}, {
+      canvasSize,
+      entityKey: selectedVisualEntityKey,
+    }),
+  );
   normalizeShapeLayer(layer, visual);
   persistEntityVisualCatalog();
 }
 
-function resolveGraphicsPresetPatch(patch, canvasSize) {
+function resolveGraphicsTemplateObject(patch, context) {
   return Object.fromEntries(
-    Object.entries(patch).map(([key, value]) => [key, resolveGraphicsPresetValue(value, canvasSize)]),
+    Object.entries(patch).map(([key, value]) => [key, resolveGraphicsTemplateValue(value, context)]),
   );
 }
 
-function resolveGraphicsPresetValue(value, canvasSize) {
+function resolveGraphicsTemplateValue(value, context) {
   if (Array.isArray(value)) {
-    return value.map((item) => resolveGraphicsPresetValue(item, canvasSize));
+    return value.map((item) => resolveGraphicsTemplateValue(item, context));
   }
   if (value === null || value === undefined || typeof value !== "object") {
     return value;
   }
   if (value.kind === "center") {
+    const canvasSize = Number(context.canvasSize ?? 24);
     return canvasSize / 2;
   }
+  if (value.kind === "entityInitial") {
+    return String(context.entityKey ?? "?").slice(0, 1).toUpperCase() || "?";
+  }
   if ("scale" in value) {
+    const canvasSize = Number(context.canvasSize ?? 24);
     let resolved = canvasSize * Number(value.scale ?? 0);
     if (value.round === "integer") {
       resolved = Math.round(resolved);
