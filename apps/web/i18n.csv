@@ -299,6 +299,8 @@ story.m6.3.text,Bring the guarded chip home intact and you have crossed the line
 graphics.aria,Graphics lab,图形实验室
 graphics.title,Graphics_Lab,图形实验室
 graphics.layers,Layers,图层
+graphics.openStudio,Open_Studio,打开工作台
+graphics.closeStudio,Close_Studio,关闭工作台
 graphics.reset,Reset_Visuals,重置图形
 graphics.copy,Copy_JSON,复制 JSON
 graphics.copied,Copied,已复制

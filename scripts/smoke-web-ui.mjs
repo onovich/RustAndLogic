@@ -805,6 +805,37 @@ try {
   if (afterMoveExport === beforeMoveExport) {
     throw new Error("Expected moving a graphics layer to rewrite export order.");
   }
+  await page.getByTestId("graphics-studio-button").click();
+  const studioState = await page.evaluate(() => {
+    const panel = document.querySelector(".dev-panel");
+    const rect = panel?.getBoundingClientRect();
+    return {
+      bodyFlag: document.body.dataset.graphicsStudio,
+      studioFlag: panel?.dataset.studio,
+      openFlag: panel?.dataset.open,
+      top: rect?.top ?? null,
+      left: rect?.left ?? null,
+      width: rect?.width ?? 0,
+      height: rect?.height ?? 0,
+    };
+  });
+  if (
+    studioState.bodyFlag !== "true" ||
+    studioState.studioFlag !== "true" ||
+    studioState.openFlag !== "true" ||
+    studioState.top !== 16 ||
+    studioState.left !== 16 ||
+    studioState.width < 900 ||
+    studioState.height < 600
+  ) {
+    throw new Error(`Expected graphics studio mode to open as a full-screen dev workspace, got ${JSON.stringify(studioState)}.`);
+  }
+  const studioButtonLabel = await page.getByTestId("graphics-studio-button").innerText();
+  if (!studioButtonLabel.toUpperCase().includes("CLOSE_STUDIO")) {
+    throw new Error(`Expected graphics studio toggle to switch to close state, got ${studioButtonLabel}.`);
+  }
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.body.dataset.graphicsStudio === "false");
 
   console.log("Web UI smoke passed.");
 } finally {

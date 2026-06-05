@@ -116,6 +116,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add a developer-only graphics editor entry for authoring entity visuals for robots, items, obstacles, walls, and other map entities.
 - [x] Support layered composition per entity with editable glyph and shape controls:
   `character glyph`, `font size`, `glyph color`, `glyph position`, `background color`, `stroke color`, `shape type` (`rectangle`, `circle`, `regular polygon`, `star polygon`), `corner radius`, `polygon side count`, `star inner radius`, `star outer radius`, `star point count`, `stripe texture` (`color`, `width`, `angle`, `gap`), `pixel-dither texture` (`scale`, `texture type`), and multi-shape stacking where each shape carries the same editable styling model.
+- [x] Promote the graphics lab into a dedicated full-screen developer studio mode while keeping its local catalog, preview, diff, and runtime console linked to the same Web UI state.
 
 ## Definition Of Done For A Small Item
 

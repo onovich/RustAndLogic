@@ -153,6 +153,7 @@ const elements = {
   graphicsEntityName: query("graphics-entity-name"),
   graphicsEntityList: query("graphics-entity-list"),
   graphicsPreview: query("graphics-preview"),
+  graphicsStudioButton: query("graphics-studio-button"),
   graphicsResetButton: query("graphics-reset-button"),
   graphicsCopyButton: query("graphics-copy-button"),
   graphicsLayerList: query("graphics-layer-list"),
@@ -505,6 +506,10 @@ function initializeGraphicsEditor() {
     moveSelectedVisualLayer(1);
   });
 
+  elements.graphicsStudioButton?.addEventListener("click", () => {
+    setGraphicsStudioOpen(elements.devPanel?.dataset.studio !== "true");
+  });
+
   elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
     if (!visual || !selectedVisualLayerId) {
@@ -582,6 +587,17 @@ function initializeGraphicsEditor() {
 
   elements.graphicsForm?.addEventListener("input", handleGraphicsFormInput);
   elements.graphicsForm?.addEventListener("change", handleGraphicsFormInput);
+}
+
+function setGraphicsStudioOpen(isOpen) {
+  if (!elements.devPanel) {
+    return;
+  }
+  elements.devPanel.dataset.open = "true";
+  elements.devPanel.dataset.studio = String(isOpen);
+  document.body.dataset.graphicsStudio = String(isOpen);
+  renderGraphicsEditor();
+  updateControls();
 }
 
 function clearGraphicsCopyResetTimer() {
@@ -665,6 +681,11 @@ function renderGraphicsEditor() {
   }
   if (elements.graphicsCopyButton && !graphicsCopyResetTimer) {
     elements.graphicsCopyButton.textContent = t("graphics.copy");
+  }
+  if (elements.graphicsStudioButton) {
+    const studioOpen = elements.devPanel?.dataset.studio === "true";
+    elements.graphicsStudioButton.textContent = t(studioOpen ? "graphics.closeStudio" : "graphics.openStudio");
+    elements.graphicsStudioButton.dataset.active = String(studioOpen);
   }
 }
 
@@ -1607,6 +1628,10 @@ function toggleDrawer(kind) {
   if (elements.devPanel) {
     const next = !isSettings && elements.devPanel.dataset.open !== "true";
     elements.devPanel.dataset.open = String(next);
+    if (!next) {
+      elements.devPanel.dataset.studio = "false";
+      document.body.dataset.graphicsStudio = "false";
+    }
   }
   updateControls();
 }
@@ -1665,6 +1690,11 @@ elements.autocomplete.addEventListener("mousedown", (event) => {
 document.addEventListener("mousedown", (event) => {
   if (!event.target.closest(".editor-stack")) {
     hideAutocomplete();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && elements.devPanel?.dataset.studio === "true") {
+    setGraphicsStudioOpen(false);
   }
 });
 
