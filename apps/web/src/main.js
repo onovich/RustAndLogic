@@ -154,6 +154,8 @@ const elements = {
   graphicsEntityList: query("graphics-entity-list"),
   graphicsPreview: query("graphics-preview"),
   graphicsStudioButton: query("graphics-studio-button"),
+  graphicsExportEntityButton: query("graphics-export-entity-button"),
+  graphicsImportEntityButton: query("graphics-import-entity-button"),
   graphicsResetButton: query("graphics-reset-button"),
   graphicsCopyButton: query("graphics-copy-button"),
   graphicsLayerList: query("graphics-layer-list"),
@@ -164,6 +166,7 @@ const elements = {
   graphicsMoveLayerDownButton: query("graphics-move-layer-down-button"),
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
+  graphicsEntityIo: query("graphics-entity-io"),
   graphicsExport: query("graphics-export"),
 };
 
@@ -456,6 +459,17 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsLayerList?.addEventListener("click", (event) => {
+    const actionButton = event.target.closest("[data-layer-action]");
+    if (actionButton) {
+      const layerId = actionButton.dataset.layerId ?? "";
+      const action = actionButton.dataset.layerAction ?? "";
+      if (action === "visible") {
+        toggleLayerVisible(layerId);
+      } else if (action === "locked") {
+        toggleLayerLocked(layerId);
+      }
+      return;
+    }
     const button = event.target.closest("[data-layer-id]");
     if (!button) {
       return;
@@ -508,6 +522,23 @@ function initializeGraphicsEditor() {
 
   elements.graphicsStudioButton?.addEventListener("click", () => {
     setGraphicsStudioOpen(elements.devPanel?.dataset.studio !== "true");
+  });
+
+  elements.graphicsExportEntityButton?.addEventListener("click", () => {
+    const visual = getSelectedEntityVisual();
+    if (!visual || !elements.graphicsEntityIo) {
+      return;
+    }
+    elements.graphicsEntityIo.value = JSON.stringify(visual, null, 2);
+    elements.graphicsEntityIo.focus();
+    elements.graphicsEntityIo.select();
+  });
+
+  elements.graphicsImportEntityButton?.addEventListener("click", () => {
+    if (!elements.graphicsEntityIo) {
+      return;
+    }
+    importSelectedEntityVisual(elements.graphicsEntityIo.value);
   });
 
   elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
@@ -664,9 +695,14 @@ function renderGraphicsEditor() {
   elements.graphicsPreview.style.backgroundImage = previewUrl ? `url("${previewUrl}")` : "none";
   elements.graphicsPreview.setAttribute("aria-label", getGraphicsEntityLabel(selectedVisualEntityKey));
   elements.graphicsEntityName.textContent = getGraphicsEntityLabel(selectedVisualEntityKey);
+  if (elements.graphicsEntityIo && !elements.graphicsEntityIo.value.trim()) {
+    elements.graphicsEntityIo.placeholder = t("graphics.entityIoPlaceholder");
+  }
   elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
   const layerIndex = visual?.layers.findIndex((item) => item.id === selectedVisualLayerId) ?? -1;
   const layerCount = visual?.layers.length ?? 0;
+  const selectedLayer = visual?.layers.find((item) => item.id === selectedVisualLayerId) ?? null;
+  const selectedLocked = Boolean(selectedLayer?.locked);
   if (elements.graphicsDuplicateLayerButton) {
     elements.graphicsDuplicateLayerButton.disabled = !selectedVisualLayerId;
   }
@@ -686,6 +722,17 @@ function renderGraphicsEditor() {
     const studioOpen = elements.devPanel?.dataset.studio === "true";
     elements.graphicsStudioButton.textContent = t(studioOpen ? "graphics.closeStudio" : "graphics.openStudio");
     elements.graphicsStudioButton.dataset.active = String(studioOpen);
+  }
+  if (elements.graphicsExportEntityButton) {
+    elements.graphicsExportEntityButton.textContent = t("graphics.exportEntity");
+  }
+  if (elements.graphicsImportEntityButton) {
+    elements.graphicsImportEntityButton.textContent = t("graphics.importEntity");
+  }
+  if (elements.graphicsForm) {
+    for (const input of elements.graphicsForm.querySelectorAll("input, select")) {
+      input.disabled = selectedLocked && input.dataset.scope === "layer";
+    }
   }
 }
 
@@ -722,7 +769,22 @@ function renderGraphicsLayerList() {
     button.dataset.layerId = layer.id;
     button.dataset.active = String(layer.id === selectedVisualLayerId);
     button.textContent = describeVisualLayer(layer);
-    row.append(button);
+    const controls = document.createElement("div");
+    controls.className = "visual-layer-controls";
+    const visibleButton = document.createElement("button");
+    visibleButton.type = "button";
+    visibleButton.dataset.layerAction = "visible";
+    visibleButton.dataset.layerId = layer.id;
+    visibleButton.dataset.active = String(layer.visible !== false);
+    visibleButton.textContent = t(layer.visible === false ? "graphics.layerHidden" : "graphics.layerVisible");
+    const lockedButton = document.createElement("button");
+    lockedButton.type = "button";
+    lockedButton.dataset.layerAction = "locked";
+    lockedButton.dataset.layerId = layer.id;
+    lockedButton.dataset.active = String(Boolean(layer.locked));
+    lockedButton.textContent = t(layer.locked ? "graphics.layerLocked" : "graphics.layerUnlocked");
+    controls.append(visibleButton, lockedButton);
+    row.append(button, controls);
     elements.graphicsLayerList.append(row);
   }
 }
@@ -1304,7 +1366,12 @@ function describeVisualLayer(layer) {
     layer.type === "glyph"
       ? layer.glyph ?? ""
       : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
-  return `${layerType} // ${layer.id} // ${detail}`;
+  const flags = [
+    layer.visible === false ? t("graphics.layerHidden") : null,
+    layer.locked ? t("graphics.layerLocked") : null,
+  ].filter(Boolean);
+  const suffix = flags.length > 0 ? ` // ${flags.join(" / ")}` : "";
+  return `${layerType} // ${layer.id} // ${detail}${suffix}`;
 }
 
 function moveSelectedVisualLayer(delta) {
@@ -1361,10 +1428,53 @@ function renderEntityVisualSvg(visual) {
 }
 
 function renderEntityVisualLayer(layer, index, defs) {
+  if (layer.visible === false) {
+    return "";
+  }
   if (layer.type === "glyph") {
     return renderGlyphLayer(layer);
   }
   return renderShapeLayer(layer, index, defs);
+}
+
+function toggleLayerVisible(layerId) {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === layerId);
+  if (!layer) {
+    return;
+  }
+  layer.visible = layer.visible === false;
+  persistEntityVisualCatalog();
+}
+
+function toggleLayerLocked(layerId) {
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === layerId);
+  if (!layer) {
+    return;
+  }
+  layer.locked = !layer.locked;
+  persistEntityVisualCatalog();
+}
+
+function importSelectedEntityVisual(source) {
+  const entityKey = selectedVisualEntityKey;
+  if (!entityKey) {
+    return;
+  }
+  try {
+    const parsed = JSON.parse(source);
+    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.layers)) {
+      throw new Error("Missing layers array.");
+    }
+    entityVisualCatalog.entities[entityKey] = cloneJson(parsed);
+    ensureSelectedVisualLayer();
+    persistEntityVisualCatalog();
+    showToast({ title: t("graphics.importSuccess"), body: getGraphicsEntityLabel(entityKey) }, "success");
+  } catch (error) {
+    console.warn("Failed to import selected entity visual.", error);
+    showToast({ title: t("graphics.importFailed"), body: String(error.message ?? error) }, "failure");
+  }
 }
 
 function renderGlyphLayer(layer) {

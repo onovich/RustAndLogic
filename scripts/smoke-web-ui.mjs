@@ -767,6 +767,35 @@ try {
   if (!graphicsRenderState.exportHasColor || !graphicsRenderState.robotBackground.toLowerCase().includes("00ff88")) {
     throw new Error(`Expected graphics lab edits to update export JSON and world rendering, got ${JSON.stringify(graphicsRenderState)}.`);
   }
+  await page.getByTestId("graphics-export-entity-button").click();
+  const robotEntityIo = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!robotEntityIo.includes('"layers"') || !robotEntityIo.includes('"robot-glyph"')) {
+    throw new Error(`Expected single-entity export to populate entity I/O, got: ${robotEntityIo}`);
+  }
+  await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="locked"][data-layer-id="robot-body"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-form"] [data-field="fill"]').disabled === true);
+  await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="visible"][data-layer-id="robot-body"]').click();
+  await page.getByTestId("graphics-export-entity-button").click();
+  const robotEntityIoAfterHide = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!robotEntityIoAfterHide.includes('"visible": false')) {
+    throw new Error(`Expected layer visibility toggle to serialize into entity export, got: ${robotEntityIoAfterHide}`);
+  }
+  await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="visible"][data-layer-id="robot-body"]').click();
+  await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="locked"][data-layer-id="robot-body"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-form"] [data-field="fill"]').disabled === false);
+  await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id="robot-glyph"]:not([data-layer-action])').evaluate((node) => node.click());
+  await page.getByTestId("graphics-export-entity-button").click();
+  const robotImportSource = await page.getByTestId("graphics-entity-io").inputValue();
+  await page.getByTestId("graphics-entity-io").fill(robotImportSource.replace('"glyph": "R1"', '"glyph": "RX"'));
+  await page.getByTestId("graphics-import-entity-button").click();
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]')].some((node) => node.innerText.includes("RX")),
+  );
+  await page.getByTestId("graphics-export-entity-button").click();
+  const robotEntityIoAfterImport = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!robotEntityIoAfterImport.includes('"glyph": "RX"')) {
+    throw new Error(`Expected single-entity import to replace selected entity visual, got: ${robotEntityIoAfterImport}`);
+  }
   await page.getByTestId("graphics-copy-button").click();
   if (!(await page.getByTestId("graphics-copy-button").isVisible())) {
     throw new Error("Expected graphics copy control to stay available after export interaction.");
@@ -784,15 +813,15 @@ try {
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }
-  await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').first().click();
-  const beforeDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').count();
+  await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').first().evaluate((node) => node.click());
+  const beforeDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').count();
   const beforeMoveExport = await page.getByTestId("graphics-export").inputValue();
   await page.getByTestId("graphics-duplicate-layer-button").click();
   await page.waitForFunction(
-    (count) => document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length === count + 1,
+    (count) => document.querySelectorAll('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').length === count + 1,
     beforeDuplicateLayerCount,
   );
-  const afterDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').count();
+  const afterDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').count();
   if (afterDuplicateLayerCount !== beforeDuplicateLayerCount + 1) {
     throw new Error(`Expected graphics layer duplication to add one layer, got ${afterDuplicateLayerCount}.`);
   }

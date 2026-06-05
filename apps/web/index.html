@@ -197,6 +197,8 @@
                     </div>
                     <div class="visual-editor-actions">
                       <button data-testid="graphics-studio-button" type="button"></button>
+                      <button data-testid="graphics-export-entity-button" type="button"></button>
+                      <button data-testid="graphics-import-entity-button" type="button"></button>
                       <button data-testid="graphics-reset-button" data-i18n="graphics.reset" type="button"></button>
                       <button data-testid="graphics-copy-button" data-i18n="graphics.copy" type="button"></button>
                     </div>
@@ -217,6 +219,7 @@
                   </div>
                 </div>
                 <div class="visual-editor-form" data-testid="graphics-form"></div>
+                <textarea class="visual-export visual-entity-io" data-testid="graphics-entity-io" spellcheck="false"></textarea>
                 <textarea class="visual-export" data-testid="graphics-export" readonly spellcheck="false"></textarea>
               </section>
               <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">

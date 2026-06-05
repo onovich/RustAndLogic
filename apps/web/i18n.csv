@@ -301,6 +301,15 @@ graphics.title,Graphics_Lab,图形实验室
 graphics.layers,Layers,图层
 graphics.openStudio,Open_Studio,打开工作台
 graphics.closeStudio,Close_Studio,关闭工作台
+graphics.exportEntity,Export_Entity,导出实体
+graphics.importEntity,Import_Entity,导入实体
+graphics.layerVisible,Visible,显示
+graphics.layerHidden,Hidden,隐藏
+graphics.layerLocked,Locked,锁定
+graphics.layerUnlocked,Editable,可编辑
+graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
+graphics.importSuccess,Entity imported,实体已导入
+graphics.importFailed,Import failed,导入失败
 graphics.reset,Reset_Visuals,重置图形
 graphics.copy,Copy_JSON,复制 JSON
 graphics.copied,Copied,已复制

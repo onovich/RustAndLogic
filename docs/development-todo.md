@@ -117,6 +117,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Support layered composition per entity with editable glyph and shape controls:
   `character glyph`, `font size`, `glyph color`, `glyph position`, `background color`, `stroke color`, `shape type` (`rectangle`, `circle`, `regular polygon`, `star polygon`), `corner radius`, `polygon side count`, `star inner radius`, `star outer radius`, `star point count`, `stripe texture` (`color`, `width`, `angle`, `gap`), `pixel-dither texture` (`scale`, `texture type`), and multi-shape stacking where each shape carries the same editable styling model.
 - [x] Promote the graphics lab into a dedicated full-screen developer studio mode while keeping its local catalog, preview, diff, and runtime console linked to the same Web UI state.
+- [x] Add per-layer visibility and lock controls plus selected-entity import/export so developers can manage iteration without replacing the entire visual catalog each time.
 
 ## Definition Of Done For A Small Item
 
