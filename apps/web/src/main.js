@@ -944,10 +944,7 @@ function renderGraphicsForm() {
     field: "type",
     label: t("graphics.field.type"),
     value: layer.type ?? "shape",
-    options: [
-      { value: "shape", label: t("graphics.option.layer.shape") },
-      { value: "glyph", label: t("graphics.option.layer.glyph") },
-    ],
+    options: buildGraphicsSelectOptions(graphicsEditorConfig.layerTypeOptions),
   });
 
   if (layer.type === "glyph") {
@@ -1037,12 +1034,7 @@ function renderShapeLayerFields(layer) {
     field: "shape",
     label: t("graphics.field.shape"),
     value: layer.shape ?? "rectangle",
-    options: [
-      { value: "rectangle", label: t("graphics.option.shape.rectangle") },
-      { value: "circle", label: t("graphics.option.shape.circle") },
-      { value: "polygon", label: t("graphics.option.shape.polygon") },
-      { value: "star", label: t("graphics.option.shape.star") },
-    ],
+    options: buildGraphicsSelectOptions(graphicsEditorConfig.shapeOptions),
   });
   appendGraphicsField({
     scope: "layer",
@@ -1193,11 +1185,7 @@ function renderShapeLayerFields(layer) {
     field: "textureType",
     label: t("graphics.field.textureType"),
     value: layer.textureType ?? "none",
-    options: [
-      { value: "none", label: t("graphics.option.texture.none") },
-      { value: "stripes", label: t("graphics.option.texture.stripes") },
-      { value: "dither", label: t("graphics.option.texture.dither") },
-    ],
+    options: buildGraphicsSelectOptions(graphicsEditorConfig.textureTypeOptions),
   });
   if ((layer.textureType ?? "none") !== "none") {
     appendGraphicsField({
@@ -1260,11 +1248,7 @@ function renderShapeLayerFields(layer) {
       field: "textureVariant",
       label: t("graphics.field.textureVariant"),
       value: layer.textureVariant ?? "checker",
-      options: [
-        { value: "checker", label: t("graphics.option.dither.checker") },
-        { value: "noise", label: t("graphics.option.dither.noise") },
-        { value: "cross", label: t("graphics.option.dither.cross") },
-      ],
+      options: buildGraphicsSelectOptions(graphicsEditorConfig.ditherVariantOptions),
     });
   }
 }
@@ -1329,6 +1313,15 @@ function appendGraphicsSelectField({ scope, field, label, value, options }) {
   elements.graphicsForm.append(wrapper);
 }
 
+function buildGraphicsSelectOptions(options) {
+  return (Array.isArray(options) ? options : [])
+    .filter((option) => option && typeof option.value === "string")
+    .map((option) => ({
+      value: option.value,
+      label: option.labelKey ? t(option.labelKey) : option.label ?? option.value,
+    }));
+}
+
 function coerceGraphicsFieldValue(valueType, rawValue) {
   if (valueType === "number") {
     const parsed = Number(rawValue);
@@ -1372,6 +1365,26 @@ function getGraphicsEntityLabel(entityKey) {
 
 function defaultGraphicsEditorConfig() {
   return {
+    layerTypeOptions: [
+      { value: "shape", labelKey: "graphics.option.layer.shape" },
+      { value: "glyph", labelKey: "graphics.option.layer.glyph" },
+    ],
+    shapeOptions: [
+      { value: "rectangle", labelKey: "graphics.option.shape.rectangle" },
+      { value: "circle", labelKey: "graphics.option.shape.circle" },
+      { value: "polygon", labelKey: "graphics.option.shape.polygon" },
+      { value: "star", labelKey: "graphics.option.shape.star" },
+    ],
+    textureTypeOptions: [
+      { value: "none", labelKey: "graphics.option.texture.none" },
+      { value: "stripes", labelKey: "graphics.option.texture.stripes" },
+      { value: "dither", labelKey: "graphics.option.texture.dither" },
+    ],
+    ditherVariantOptions: [
+      { value: "checker", labelKey: "graphics.option.dither.checker" },
+      { value: "noise", labelKey: "graphics.option.dither.noise" },
+      { value: "cross", labelKey: "graphics.option.dither.cross" },
+    ],
     defaultShapeLayer: {
       shape: "rectangle",
       x: { kind: "center" },
@@ -1506,6 +1519,22 @@ function defaultGraphicsEditorConfig() {
 function normalizeGraphicsEditorConfig(config = {}) {
   const fallback = defaultGraphicsEditorConfig();
   return {
+    layerTypeOptions:
+      Array.isArray(config.layerTypeOptions) && config.layerTypeOptions.length > 0
+        ? cloneJson(config.layerTypeOptions)
+        : fallback.layerTypeOptions,
+    shapeOptions:
+      Array.isArray(config.shapeOptions) && config.shapeOptions.length > 0
+        ? cloneJson(config.shapeOptions)
+        : fallback.shapeOptions,
+    textureTypeOptions:
+      Array.isArray(config.textureTypeOptions) && config.textureTypeOptions.length > 0
+        ? cloneJson(config.textureTypeOptions)
+        : fallback.textureTypeOptions,
+    ditherVariantOptions:
+      Array.isArray(config.ditherVariantOptions) && config.ditherVariantOptions.length > 0
+        ? cloneJson(config.ditherVariantOptions)
+        : fallback.ditherVariantOptions,
     defaultShapeLayer:
       config.defaultShapeLayer && typeof config.defaultShapeLayer === "object"
         ? cloneJson(config.defaultShapeLayer)

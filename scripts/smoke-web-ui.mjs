@@ -813,6 +813,22 @@ try {
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }
+  const graphicsSelectOptions = await page.evaluate(() => {
+    const readOptions = (field) =>
+      [...document.querySelectorAll(`[data-testid="graphics-form"] [data-field="${field}"] option`)].map((node) => node.value);
+    return {
+      layerType: readOptions("type"),
+      shape: readOptions("shape"),
+      textureType: readOptions("textureType"),
+    };
+  });
+  if (
+    graphicsSelectOptions.layerType.join(",") !== "shape,glyph" ||
+    graphicsSelectOptions.shape.join(",") !== "rectangle,circle,polygon,star" ||
+    graphicsSelectOptions.textureType.join(",") !== "none,stripes,dither"
+  ) {
+    throw new Error(`Expected graphics editor select vocab to come from config, got ${JSON.stringify(graphicsSelectOptions)}.`);
+  }
   const wallLayerCountBeforeAdd = await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id]:not([data-layer-action])').count();
   await page.getByTestId("graphics-add-glyph-button").click();
   await page.waitForFunction(
@@ -860,6 +876,12 @@ try {
   const wallEntityIoAfterPreset = await page.getByTestId("graphics-entity-io").inputValue();
   if (!wallEntityIoAfterPreset.includes('"shape": "star"')) {
     throw new Error(`Expected shape preset to update selected wall layer, got: ${wallEntityIoAfterPreset}`);
+  }
+  const ditherVariantOptions = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="graphics-form"] [data-field="textureVariant"] option')].map((node) => node.value),
+  );
+  if (ditherVariantOptions.join(",") !== "checker,noise,cross") {
+    throw new Error(`Expected dither variant vocab to come from config, got ${JSON.stringify(ditherVariantOptions)}.`);
   }
   const fillSwatchCount = await page.locator('[data-testid="graphics-fill-swatches"] .visual-swatch').count();
   const textureSwatchCount = await page.locator('[data-testid="graphics-texture-swatches"] .visual-swatch').count();

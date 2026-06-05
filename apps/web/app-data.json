@@ -8,6 +8,26 @@
     }
   },
   "graphicsEditor": {
+    "layerTypeOptions": [
+      { "value": "shape", "labelKey": "graphics.option.layer.shape" },
+      { "value": "glyph", "labelKey": "graphics.option.layer.glyph" }
+    ],
+    "shapeOptions": [
+      { "value": "rectangle", "labelKey": "graphics.option.shape.rectangle" },
+      { "value": "circle", "labelKey": "graphics.option.shape.circle" },
+      { "value": "polygon", "labelKey": "graphics.option.shape.polygon" },
+      { "value": "star", "labelKey": "graphics.option.shape.star" }
+    ],
+    "textureTypeOptions": [
+      { "value": "none", "labelKey": "graphics.option.texture.none" },
+      { "value": "stripes", "labelKey": "graphics.option.texture.stripes" },
+      { "value": "dither", "labelKey": "graphics.option.texture.dither" }
+    ],
+    "ditherVariantOptions": [
+      { "value": "checker", "labelKey": "graphics.option.dither.checker" },
+      { "value": "noise", "labelKey": "graphics.option.dither.noise" },
+      { "value": "cross", "labelKey": "graphics.option.dither.cross" }
+    ],
     "defaultShapeLayer": {
       "shape": "rectangle",
       "x": { "kind": "center" },
