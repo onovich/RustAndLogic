@@ -304,6 +304,9 @@ graphics.copy,Copy_JSON,复制 JSON
 graphics.copied,Copied,已复制
 graphics.addShape,Add_Shape,添加图形
 graphics.addGlyph,Add_Glyph,添加字符
+graphics.duplicateLayer,Duplicate_Layer,复制图层
+graphics.moveLayerUp,Layer_Up,图层上移
+graphics.moveLayerDown,Layer_Down,图层下移
 graphics.deleteLayer,Delete_Layer,删除图层
 graphics.noLayer,No layer selected.,未选择图层。
 graphics.entity.robot,Robot,角色
@@ -313,6 +316,7 @@ graphics.entity.cell,Battery,电池
 graphics.entity.chip,Chip,芯片
 graphics.entity.hazard,Hazard,危险区
 graphics.entity.obstacle,Obstacle,障碍
+graphics.entity.wall,Wall,墙体
 graphics.entity.base,Base,基地
 graphics.field.entityLabel,Entity label,实体名称
 graphics.field.canvasSize,Canvas size,画布尺寸

@@ -113,8 +113,8 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 ## Milestone 5: Developer Visual Authoring Tooling
 
 - [x] Add the first developer-only graphics editor slice with a local visual catalog, live preview, map integration, local persistence, and JSON export.
-- [ ] Add a developer-only graphics editor entry for authoring entity visuals for robots, items, obstacles, walls, and other map entities.
-- [ ] Support layered composition per entity with editable glyph and shape controls:
+- [x] Add a developer-only graphics editor entry for authoring entity visuals for robots, items, obstacles, walls, and other map entities.
+- [x] Support layered composition per entity with editable glyph and shape controls:
   `character glyph`, `font size`, `glyph color`, `glyph position`, `background color`, `stroke color`, `shape type` (`rectangle`, `circle`, `regular polygon`, `star polygon`), `corner radius`, `polygon side count`, `star inner radius`, `star outer radius`, `star point count`, `stripe texture` (`color`, `width`, `angle`, `gap`), `pixel-dither texture` (`scale`, `texture type`), and multi-shape stacking where each shape carries the same editable styling model.
 
 ## Definition Of Done For A Small Item

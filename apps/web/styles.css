@@ -1439,6 +1439,10 @@ textarea[data-invalid="true"] {
   gap: 6px;
 }
 
+.visual-editor-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .visual-layer-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

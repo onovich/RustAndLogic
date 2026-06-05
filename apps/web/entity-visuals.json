@@ -227,6 +227,50 @@
         }
       ]
     },
+    "wall": {
+      "label": "Wall",
+      "canvasSize": 36,
+      "layers": [
+        {
+          "id": "wall-frame",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 18,
+          "y": 18,
+          "width": 34,
+          "height": 34,
+          "fill": "#0b0603",
+          "fillOpacity": 0.96,
+          "stroke": "#aa865f",
+          "strokeWidth": 1,
+          "radius": 0,
+          "textureType": "stripes",
+          "textureColor": "#6a4d32",
+          "textureScale": 5,
+          "stripeWidth": 2,
+          "stripeAngle": 45,
+          "stripeGap": 6
+        },
+        {
+          "id": "wall-core",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 18,
+          "y": 18,
+          "width": 20,
+          "height": 20,
+          "fill": "#1a120b",
+          "fillOpacity": 0.72,
+          "stroke": "#33261c",
+          "strokeWidth": 1,
+          "radius": 0,
+          "textureType": "dither",
+          "textureVariant": "cross",
+          "textureColor": "#8f6a4a",
+          "textureScale": 3
+        }
+      ]
+    },
     "base": {
       "label": "Base",
       "canvasSize": 22,

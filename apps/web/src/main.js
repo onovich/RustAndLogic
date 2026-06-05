@@ -158,6 +158,9 @@ const elements = {
   graphicsLayerList: query("graphics-layer-list"),
   graphicsAddShapeButton: query("graphics-add-shape-button"),
   graphicsAddGlyphButton: query("graphics-add-glyph-button"),
+  graphicsDuplicateLayerButton: query("graphics-duplicate-layer-button"),
+  graphicsMoveLayerUpButton: query("graphics-move-layer-up-button"),
+  graphicsMoveLayerDownButton: query("graphics-move-layer-down-button"),
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
   graphicsExport: query("graphics-export"),
@@ -480,6 +483,28 @@ function initializeGraphicsEditor() {
     persistEntityVisualCatalog();
   });
 
+  elements.graphicsDuplicateLayerButton?.addEventListener("click", () => {
+    const visual = getSelectedEntityVisual();
+    const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+    if (!visual || !layer) {
+      return;
+    }
+    const duplicate = cloneJson(layer);
+    duplicate.id = `${layer.id}-copy-${Date.now().toString(36)}`;
+    const index = visual.layers.findIndex((item) => item.id === selectedVisualLayerId);
+    visual.layers.splice(index + 1, 0, duplicate);
+    selectedVisualLayerId = duplicate.id;
+    persistEntityVisualCatalog();
+  });
+
+  elements.graphicsMoveLayerUpButton?.addEventListener("click", () => {
+    moveSelectedVisualLayer(-1);
+  });
+
+  elements.graphicsMoveLayerDownButton?.addEventListener("click", () => {
+    moveSelectedVisualLayer(1);
+  });
+
   elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
     if (!visual || !selectedVisualLayerId) {
@@ -624,6 +649,17 @@ function renderGraphicsEditor() {
   elements.graphicsPreview.setAttribute("aria-label", getGraphicsEntityLabel(selectedVisualEntityKey));
   elements.graphicsEntityName.textContent = getGraphicsEntityLabel(selectedVisualEntityKey);
   elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
+  const layerIndex = visual?.layers.findIndex((item) => item.id === selectedVisualLayerId) ?? -1;
+  const layerCount = visual?.layers.length ?? 0;
+  if (elements.graphicsDuplicateLayerButton) {
+    elements.graphicsDuplicateLayerButton.disabled = !selectedVisualLayerId;
+  }
+  if (elements.graphicsMoveLayerUpButton) {
+    elements.graphicsMoveLayerUpButton.disabled = layerIndex <= 0;
+  }
+  if (elements.graphicsMoveLayerDownButton) {
+    elements.graphicsMoveLayerDownButton.disabled = layerIndex < 0 || layerIndex >= layerCount - 1;
+  }
   if (elements.graphicsDeleteLayerButton) {
     elements.graphicsDeleteLayerButton.disabled = !selectedVisualLayerId;
   }
@@ -1248,6 +1284,24 @@ function describeVisualLayer(layer) {
       ? layer.glyph ?? ""
       : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
   return `${layerType} // ${layer.id} // ${detail}`;
+}
+
+function moveSelectedVisualLayer(delta) {
+  const visual = getSelectedEntityVisual();
+  if (!visual || !selectedVisualLayerId) {
+    return;
+  }
+  const index = visual.layers.findIndex((layer) => layer.id === selectedVisualLayerId);
+  if (index < 0) {
+    return;
+  }
+  const nextIndex = clamp(index + delta, 0, visual.layers.length - 1);
+  if (nextIndex === index) {
+    return;
+  }
+  const [layer] = visual.layers.splice(index, 1);
+  visual.layers.splice(nextIndex, 0, layer);
+  persistEntityVisualCatalog();
 }
 
 function normalizeColorValue(value, fallback) {

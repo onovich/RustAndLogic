@@ -771,6 +771,40 @@ try {
   if (!(await page.getByTestId("graphics-copy-button").isVisible())) {
     throw new Error("Expected graphics copy control to stay available after export interaction.");
   }
+  await page.locator('[data-testid="graphics-entity-list"] [data-entity-key="wall"]').click();
+  const wallGraphicsState = await page.evaluate(() => ({
+    entityName: document.querySelector('[data-testid="graphics-entity-name"]')?.innerText ?? "",
+    exportHasWall: document.querySelector('[data-testid="graphics-export"]')?.value.includes('"wall"') ?? false,
+    layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
+  }));
+  if (
+    !wallGraphicsState.entityName.toUpperCase().includes("WALL") ||
+    !wallGraphicsState.exportHasWall ||
+    wallGraphicsState.layerCount < 2
+  ) {
+    throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
+  }
+  await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').first().click();
+  const beforeDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').count();
+  const beforeMoveExport = await page.getByTestId("graphics-export").inputValue();
+  await page.getByTestId("graphics-duplicate-layer-button").click();
+  await page.waitForFunction(
+    (count) => document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length === count + 1,
+    beforeDuplicateLayerCount,
+  );
+  const afterDuplicateLayerCount = await page.locator('[data-testid="graphics-layer-list"] [data-layer-id]').count();
+  if (afterDuplicateLayerCount !== beforeDuplicateLayerCount + 1) {
+    throw new Error(`Expected graphics layer duplication to add one layer, got ${afterDuplicateLayerCount}.`);
+  }
+  await page.getByTestId("graphics-move-layer-down-button").click();
+  await page.waitForFunction(
+    (beforeText) => document.querySelector('[data-testid="graphics-export"]').value !== beforeText,
+    beforeMoveExport,
+  );
+  const afterMoveExport = await page.getByTestId("graphics-export").inputValue();
+  if (afterMoveExport === beforeMoveExport) {
+    throw new Error("Expected moving a graphics layer to rewrite export order.");
+  }
 
   console.log("Web UI smoke passed.");
 } finally {
