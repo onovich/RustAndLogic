@@ -69,6 +69,13 @@ let scriptCompletions = [];
 let scriptPresets = [];
 let taskDefinitions = [];
 let stageDefinitions = [];
+let defaultEntityVisualCatalog = { version: 1, entities: {} };
+let entityVisualCatalog = { version: 1, entities: {} };
+let selectedVisualEntityKey = "";
+let selectedVisualLayerId = "";
+let graphicsCopyResetTimer = 0;
+const entityVisualDataUrlCache = new Map();
+const entityVisualsKey = "rust-and-logic.entity-visuals.v1";
 
 const elements = {
   editor: query("script-editor"),
@@ -143,6 +150,17 @@ const elements = {
   runtimeToastTitle: query("runtime-toast-title"),
   runtimeToastBody: query("runtime-toast-body"),
   diagnosticCount: query("diagnostic-count"),
+  graphicsEntityName: query("graphics-entity-name"),
+  graphicsEntityList: query("graphics-entity-list"),
+  graphicsPreview: query("graphics-preview"),
+  graphicsResetButton: query("graphics-reset-button"),
+  graphicsCopyButton: query("graphics-copy-button"),
+  graphicsLayerList: query("graphics-layer-list"),
+  graphicsAddShapeButton: query("graphics-add-shape-button"),
+  graphicsAddGlyphButton: query("graphics-add-glyph-button"),
+  graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
+  graphicsForm: query("graphics-form"),
+  graphicsExport: query("graphics-export"),
 };
 
 let i18n = { en: {}, zh: {} };
@@ -153,6 +171,24 @@ async function loadI18n() {
 
 async function loadAppData() {
   appData = JSON.parse(await loadTextAsset(["/apps/web/app-data.json", "./app-data.json"]));
+}
+
+async function loadEntityVisualCatalog() {
+  const loaded = JSON.parse(await loadTextAsset(["/apps/web/entity-visuals.json", "./entity-visuals.json"]));
+  defaultEntityVisualCatalog = cloneJson(loaded);
+  entityVisualCatalog = cloneJson(loaded);
+
+  const stored = localStorage.getItem(entityVisualsKey);
+  if (stored) {
+    try {
+      entityVisualCatalog = mergeEntityVisualCatalogs(defaultEntityVisualCatalog, JSON.parse(stored));
+    } catch (error) {
+      console.warn("Failed to restore local entity visuals override.", error);
+    }
+  }
+
+  selectedVisualEntityKey = Object.keys(entityVisualCatalog.entities ?? {})[0] ?? "";
+  ensureSelectedVisualLayer();
 }
 
 async function loadTextAsset(paths) {
@@ -383,6 +419,1093 @@ function parseCsv(source) {
   return rows;
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function mergeEntityVisualCatalogs(baseCatalog, overrideCatalog) {
+  const merged = cloneJson(baseCatalog);
+  if (!overrideCatalog?.entities) {
+    return merged;
+  }
+
+  for (const [entityKey, overrideVisual] of Object.entries(overrideCatalog.entities)) {
+    merged.entities[entityKey] = cloneJson(overrideVisual);
+  }
+
+  return merged;
+}
+
+function initializeGraphicsEditor() {
+  if (!elements.graphicsEntityList) {
+    return;
+  }
+
+  elements.graphicsEntityList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-entity-key]");
+    if (!button) {
+      return;
+    }
+    selectedVisualEntityKey = button.dataset.entityKey ?? selectedVisualEntityKey;
+    ensureSelectedVisualLayer();
+    renderGraphicsEditor();
+  });
+
+  elements.graphicsLayerList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-layer-id]");
+    if (!button) {
+      return;
+    }
+    selectedVisualLayerId = button.dataset.layerId ?? selectedVisualLayerId;
+    renderGraphicsEditor();
+  });
+
+  elements.graphicsAddShapeButton?.addEventListener("click", () => {
+    const visual = getSelectedEntityVisual();
+    if (!visual) {
+      return;
+    }
+    visual.layers.push(createDefaultShapeLayer(visual));
+    selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
+    persistEntityVisualCatalog();
+  });
+
+  elements.graphicsAddGlyphButton?.addEventListener("click", () => {
+    const visual = getSelectedEntityVisual();
+    if (!visual) {
+      return;
+    }
+    visual.layers.push(createDefaultGlyphLayer(visual, selectedVisualEntityKey));
+    selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
+    persistEntityVisualCatalog();
+  });
+
+  elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
+    const visual = getSelectedEntityVisual();
+    if (!visual || !selectedVisualLayerId) {
+      return;
+    }
+    visual.layers = visual.layers.filter((layer) => layer.id !== selectedVisualLayerId);
+    ensureSelectedVisualLayer();
+    persistEntityVisualCatalog();
+  });
+
+  elements.graphicsResetButton?.addEventListener("click", () => {
+    entityVisualCatalog = cloneJson(defaultEntityVisualCatalog);
+    localStorage.removeItem(entityVisualsKey);
+    clearGraphicsCopyResetTimer();
+    if (elements.graphicsCopyButton) {
+      elements.graphicsCopyButton.textContent = t("graphics.copy");
+    }
+    ensureSelectedVisualLayer();
+    renderGraphicsEditor();
+    refreshWorldVisuals();
+  });
+
+  elements.graphicsCopyButton?.addEventListener("click", async () => {
+    if (!elements.graphicsExport) {
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(elements.graphicsExport.value);
+      } else {
+        copyGraphicsExportWithExecCommand();
+      }
+      setGraphicsCopyButtonState("graphics.copied");
+    } catch (error) {
+      try {
+        copyGraphicsExportWithExecCommand();
+        setGraphicsCopyButtonState("graphics.copied");
+      } catch (fallbackError) {
+        console.warn("Failed to copy graphics JSON.", error, fallbackError);
+        setGraphicsCopyButtonState("graphics.copy");
+      }
+    }
+  });
+
+  const handleGraphicsFormInput = (event) => {
+    const input = event.target.closest("[data-field]");
+    if (!input) {
+      return;
+    }
+    const scope = input.dataset.scope ?? "layer";
+    const field = input.dataset.field;
+    const valueType = input.dataset.valueType ?? "string";
+    const targetVisual = getSelectedEntityVisual();
+    const target =
+      scope === "entity"
+        ? targetVisual
+        : targetVisual?.layers.find((layer) => layer.id === selectedVisualLayerId);
+    if (!target || !field) {
+      return;
+    }
+    const nextValue = coerceGraphicsFieldValue(valueType, input.value);
+    if (field === "type" && scope === "layer") {
+      upgradeVisualLayerType(target, nextValue, targetVisual);
+    } else {
+      target[field] = nextValue;
+    }
+    if (field === "id" && scope === "layer") {
+      selectedVisualLayerId = String(nextValue);
+    }
+    if ((field === "shape" || field === "type") && scope === "layer") {
+      normalizeShapeLayer(target, targetVisual);
+    }
+    persistEntityVisualCatalog();
+  };
+
+  elements.graphicsForm?.addEventListener("input", handleGraphicsFormInput);
+  elements.graphicsForm?.addEventListener("change", handleGraphicsFormInput);
+}
+
+function clearGraphicsCopyResetTimer() {
+  if (graphicsCopyResetTimer) {
+    window.clearTimeout(graphicsCopyResetTimer);
+    graphicsCopyResetTimer = 0;
+  }
+}
+
+function copyGraphicsExportWithExecCommand() {
+  if (!elements.graphicsExport) {
+    throw new Error("Missing graphics export textarea.");
+  }
+  elements.graphicsExport.focus();
+  elements.graphicsExport.select();
+  const copied = document.execCommand("copy");
+  elements.graphicsExport.setSelectionRange(0, 0);
+  if (!copied) {
+    throw new Error("document.execCommand('copy') returned false.");
+  }
+}
+
+function setGraphicsCopyButtonState(key) {
+  if (!elements.graphicsCopyButton) {
+    return;
+  }
+  clearGraphicsCopyResetTimer();
+  elements.graphicsCopyButton.textContent = t(key);
+  if (key !== "graphics.copy") {
+    graphicsCopyResetTimer = window.setTimeout(() => {
+      if (elements.graphicsCopyButton) {
+        elements.graphicsCopyButton.textContent = t("graphics.copy");
+      }
+      graphicsCopyResetTimer = 0;
+    }, 1200);
+  }
+}
+
+function persistEntityVisualCatalog() {
+  localStorage.setItem(entityVisualsKey, JSON.stringify(entityVisualCatalog));
+  entityVisualDataUrlCache.clear();
+  ensureSelectedVisualLayer();
+  renderGraphicsEditor();
+  refreshWorldVisuals();
+}
+
+function refreshWorldVisuals() {
+  const state = snapshot(game);
+  renderGrid(state, state, { animate: false });
+}
+
+function renderGraphicsEditor() {
+  if (!elements.graphicsEntityList || !elements.graphicsPreview || !elements.graphicsExport) {
+    return;
+  }
+
+  ensureSelectedVisualLayer();
+  renderGraphicsEntityList();
+  renderGraphicsLayerList();
+  renderGraphicsForm();
+
+  const visual = getSelectedEntityVisual();
+  const previewUrl = visual ? buildEntityVisualDataUrl(selectedVisualEntityKey, visual) : "";
+  elements.graphicsPreview.style.backgroundImage = previewUrl ? `url("${previewUrl}")` : "none";
+  elements.graphicsPreview.setAttribute("aria-label", getGraphicsEntityLabel(selectedVisualEntityKey));
+  elements.graphicsEntityName.textContent = getGraphicsEntityLabel(selectedVisualEntityKey);
+  elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
+  if (elements.graphicsDeleteLayerButton) {
+    elements.graphicsDeleteLayerButton.disabled = !selectedVisualLayerId;
+  }
+  if (elements.graphicsCopyButton && !graphicsCopyResetTimer) {
+    elements.graphicsCopyButton.textContent = t("graphics.copy");
+  }
+}
+
+function renderGraphicsEntityList() {
+  if (!elements.graphicsEntityList) {
+    return;
+  }
+  elements.graphicsEntityList.replaceChildren();
+  for (const entityKey of Object.keys(entityVisualCatalog.entities ?? {})) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.entityKey = entityKey;
+    button.dataset.active = String(entityKey === selectedVisualEntityKey);
+    button.textContent = getGraphicsEntityLabel(entityKey);
+    elements.graphicsEntityList.append(button);
+  }
+}
+
+function renderGraphicsLayerList() {
+  if (!elements.graphicsLayerList) {
+    return;
+  }
+  elements.graphicsLayerList.replaceChildren();
+  const visual = getSelectedEntityVisual();
+  if (!visual) {
+    return;
+  }
+
+  for (const layer of visual.layers ?? []) {
+    const row = document.createElement("div");
+    row.className = "visual-layer-item";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.layerId = layer.id;
+    button.dataset.active = String(layer.id === selectedVisualLayerId);
+    button.textContent = describeVisualLayer(layer);
+    row.append(button);
+    elements.graphicsLayerList.append(row);
+  }
+}
+
+function renderGraphicsForm() {
+  if (!elements.graphicsForm) {
+    return;
+  }
+  elements.graphicsForm.replaceChildren();
+  const visual = getSelectedEntityVisual();
+  if (!visual) {
+    return;
+  }
+
+  appendGraphicsField({
+    scope: "entity",
+    field: "label",
+    label: t("graphics.field.entityLabel"),
+    type: "text",
+    value: visual.label ?? "",
+  });
+  appendGraphicsField({
+    scope: "entity",
+    field: "canvasSize",
+    label: t("graphics.field.canvasSize"),
+    type: "number",
+    value: visual.canvasSize ?? 24,
+    min: 8,
+    max: 96,
+    step: 1,
+    valueType: "number",
+  });
+
+  const layer = visual.layers.find((item) => item.id === selectedVisualLayerId);
+  if (!layer) {
+    const placeholder = document.createElement("div");
+    placeholder.className = "visual-field";
+    const label = document.createElement("label");
+    label.textContent = t("graphics.noLayer");
+    placeholder.append(label);
+    elements.graphicsForm.append(placeholder);
+    return;
+  }
+
+  appendGraphicsField({
+    scope: "layer",
+    field: "id",
+    label: t("graphics.field.id"),
+    type: "text",
+    value: layer.id ?? "",
+  });
+  appendGraphicsSelectField({
+    scope: "layer",
+    field: "type",
+    label: t("graphics.field.type"),
+    value: layer.type ?? "shape",
+    options: [
+      { value: "shape", label: t("graphics.option.layer.shape") },
+      { value: "glyph", label: t("graphics.option.layer.glyph") },
+    ],
+  });
+
+  if (layer.type === "glyph") {
+    renderGlyphLayerFields(layer);
+    return;
+  }
+
+  renderShapeLayerFields(layer);
+}
+
+function renderGlyphLayerFields(layer) {
+  appendGraphicsField({
+    scope: "layer",
+    field: "glyph",
+    label: t("graphics.field.glyph"),
+    type: "text",
+    value: layer.glyph ?? "",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "fontSize",
+    label: t("graphics.field.fontSize"),
+    type: "number",
+    value: layer.fontSize ?? 8,
+    min: 1,
+    max: 48,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "glyphColor",
+    label: t("graphics.field.glyphColor"),
+    type: "color",
+    value: normalizeColorValue(layer.glyphColor, "#f0d8bb"),
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "x",
+    label: t("graphics.field.x"),
+    type: "number",
+    value: layer.x ?? 0,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "y",
+    label: t("graphics.field.y"),
+    type: "number",
+    value: layer.y ?? 0,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "rotation",
+    label: t("graphics.field.rotation"),
+    type: "number",
+    value: layer.rotation ?? 0,
+    step: 1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "stroke",
+    label: t("graphics.field.stroke"),
+    type: "color",
+    value: normalizeColorValue(layer.stroke, "#000000"),
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "strokeWidth",
+    label: t("graphics.field.strokeWidth"),
+    type: "number",
+    value: layer.strokeWidth ?? 0,
+    min: 0,
+    max: 12,
+    step: 0.1,
+    valueType: "number",
+  });
+}
+
+function renderShapeLayerFields(layer) {
+  appendGraphicsSelectField({
+    scope: "layer",
+    field: "shape",
+    label: t("graphics.field.shape"),
+    value: layer.shape ?? "rectangle",
+    options: [
+      { value: "rectangle", label: t("graphics.option.shape.rectangle") },
+      { value: "circle", label: t("graphics.option.shape.circle") },
+      { value: "polygon", label: t("graphics.option.shape.polygon") },
+      { value: "star", label: t("graphics.option.shape.star") },
+    ],
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "x",
+    label: t("graphics.field.x"),
+    type: "number",
+    value: layer.x ?? 0,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "y",
+    label: t("graphics.field.y"),
+    type: "number",
+    value: layer.y ?? 0,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "width",
+    label: t("graphics.field.width"),
+    type: "number",
+    value: layer.width ?? 12,
+    min: 1,
+    max: 96,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "height",
+    label: t("graphics.field.height"),
+    type: "number",
+    value: layer.height ?? 12,
+    min: 1,
+    max: 96,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "rotation",
+    label: t("graphics.field.rotation"),
+    type: "number",
+    value: layer.rotation ?? 0,
+    step: 1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "fill",
+    label: t("graphics.field.fill"),
+    type: "color",
+    value: normalizeColorValue(layer.fill, "#f28d35"),
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "fillOpacity",
+    label: t("graphics.field.fillOpacity"),
+    type: "number",
+    value: layer.fillOpacity ?? 1,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "stroke",
+    label: t("graphics.field.stroke"),
+    type: "color",
+    value: normalizeColorValue(layer.stroke, "#000000"),
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "strokeWidth",
+    label: t("graphics.field.strokeWidth"),
+    type: "number",
+    value: layer.strokeWidth ?? 0,
+    min: 0,
+    max: 12,
+    step: 0.1,
+    valueType: "number",
+  });
+  appendGraphicsField({
+    scope: "layer",
+    field: "radius",
+    label: t("graphics.field.radius"),
+    type: "number",
+    value: layer.radius ?? 0,
+    min: 0,
+    max: 48,
+    step: 0.1,
+    valueType: "number",
+  });
+  if (layer.shape === "polygon") {
+    appendGraphicsField({
+      scope: "layer",
+      field: "sides",
+      label: t("graphics.field.sides"),
+      type: "number",
+      value: layer.sides ?? 6,
+      min: 3,
+      max: 12,
+      step: 1,
+      valueType: "integer",
+    });
+  }
+  if (layer.shape === "star") {
+    appendGraphicsField({
+      scope: "layer",
+      field: "points",
+      label: t("graphics.field.points"),
+      type: "number",
+      value: layer.points ?? 5,
+      min: 3,
+      max: 12,
+      step: 1,
+      valueType: "integer",
+    });
+    appendGraphicsField({
+      scope: "layer",
+      field: "innerRadius",
+      label: t("graphics.field.innerRadius"),
+      type: "number",
+      value: layer.innerRadius ?? 4,
+      min: 0.5,
+      max: 48,
+      step: 0.1,
+      valueType: "number",
+    });
+    appendGraphicsField({
+      scope: "layer",
+      field: "outerRadius",
+      label: t("graphics.field.outerRadius"),
+      type: "number",
+      value: layer.outerRadius ?? 8,
+      min: 0.5,
+      max: 48,
+      step: 0.1,
+      valueType: "number",
+    });
+  }
+  appendGraphicsSelectField({
+    scope: "layer",
+    field: "textureType",
+    label: t("graphics.field.textureType"),
+    value: layer.textureType ?? "none",
+    options: [
+      { value: "none", label: t("graphics.option.texture.none") },
+      { value: "stripes", label: t("graphics.option.texture.stripes") },
+      { value: "dither", label: t("graphics.option.texture.dither") },
+    ],
+  });
+  if ((layer.textureType ?? "none") !== "none") {
+    appendGraphicsField({
+      scope: "layer",
+      field: "textureColor",
+      label: t("graphics.field.textureColor"),
+      type: "color",
+      value: normalizeColorValue(layer.textureColor, "#33261c"),
+    });
+    appendGraphicsField({
+      scope: "layer",
+      field: "textureScale",
+      label: t("graphics.field.textureScale"),
+      type: "number",
+      value: layer.textureScale ?? 4,
+      min: 1,
+      max: 16,
+      step: 1,
+      valueType: "integer",
+    });
+  }
+  if (layer.textureType === "stripes") {
+    appendGraphicsField({
+      scope: "layer",
+      field: "stripeWidth",
+      label: t("graphics.field.stripeWidth"),
+      type: "number",
+      value: layer.stripeWidth ?? 1,
+      min: 0.5,
+      max: 12,
+      step: 0.1,
+      valueType: "number",
+    });
+    appendGraphicsField({
+      scope: "layer",
+      field: "stripeAngle",
+      label: t("graphics.field.stripeAngle"),
+      type: "number",
+      value: layer.stripeAngle ?? 45,
+      min: 0,
+      max: 360,
+      step: 1,
+      valueType: "number",
+    });
+    appendGraphicsField({
+      scope: "layer",
+      field: "stripeGap",
+      label: t("graphics.field.stripeGap"),
+      type: "number",
+      value: layer.stripeGap ?? 5,
+      min: 1,
+      max: 32,
+      step: 0.1,
+      valueType: "number",
+    });
+  }
+  if (layer.textureType === "dither") {
+    appendGraphicsSelectField({
+      scope: "layer",
+      field: "textureVariant",
+      label: t("graphics.field.textureVariant"),
+      value: layer.textureVariant ?? "checker",
+      options: [
+        { value: "checker", label: t("graphics.option.dither.checker") },
+        { value: "noise", label: t("graphics.option.dither.noise") },
+        { value: "cross", label: t("graphics.option.dither.cross") },
+      ],
+    });
+  }
+}
+
+function appendGraphicsField({
+  scope,
+  field,
+  label,
+  type,
+  value,
+  valueType = type === "number" ? "number" : "string",
+  min,
+  max,
+  step,
+}) {
+  if (!elements.graphicsForm) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.className = "visual-field";
+  const labelNode = document.createElement("label");
+  labelNode.textContent = label;
+  const input = document.createElement("input");
+  input.type = type;
+  input.value = value ?? "";
+  input.dataset.scope = scope;
+  input.dataset.field = field;
+  input.dataset.valueType = valueType;
+  if (min !== undefined) {
+    input.min = String(min);
+  }
+  if (max !== undefined) {
+    input.max = String(max);
+  }
+  if (step !== undefined) {
+    input.step = String(step);
+  }
+  wrapper.append(labelNode, input);
+  elements.graphicsForm.append(wrapper);
+}
+
+function appendGraphicsSelectField({ scope, field, label, value, options }) {
+  if (!elements.graphicsForm) {
+    return;
+  }
+  const wrapper = document.createElement("div");
+  wrapper.className = "visual-field";
+  const labelNode = document.createElement("label");
+  labelNode.textContent = label;
+  const select = document.createElement("select");
+  select.dataset.scope = scope;
+  select.dataset.field = field;
+  select.dataset.valueType = "string";
+  for (const option of options) {
+    const node = document.createElement("option");
+    node.value = option.value;
+    node.textContent = option.label;
+    node.selected = option.value === value;
+    select.append(node);
+  }
+  wrapper.append(labelNode, select);
+  elements.graphicsForm.append(wrapper);
+}
+
+function coerceGraphicsFieldValue(valueType, rawValue) {
+  if (valueType === "number") {
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (valueType === "integer") {
+    const parsed = Number.parseInt(rawValue, 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return rawValue;
+}
+
+function ensureSelectedVisualLayer() {
+  const visual = getSelectedEntityVisual();
+  if (!visual) {
+    selectedVisualLayerId = "";
+    return;
+  }
+  const ids = new Set((visual.layers ?? []).map((layer) => layer.id));
+  if (!selectedVisualLayerId || !ids.has(selectedVisualLayerId)) {
+    selectedVisualLayerId = visual.layers?.[0]?.id ?? "";
+  }
+}
+
+function getSelectedEntityVisual() {
+  return getEntityVisual(selectedVisualEntityKey);
+}
+
+function getEntityVisual(entityKey) {
+  return entityVisualCatalog.entities?.[entityKey] ?? null;
+}
+
+function getGraphicsEntityLabel(entityKey) {
+  const labelKey = `graphics.entity.${entityKey}`;
+  const translated = t(labelKey);
+  if (translated !== labelKey) {
+    return translated;
+  }
+  return getEntityVisual(entityKey)?.label ?? entityKey;
+}
+
+function createDefaultShapeLayer(visual) {
+  const canvasSize = Number(visual.canvasSize ?? 24);
+  const outerSize = Math.max(8, Math.round(canvasSize * 0.72));
+  return {
+    id: `${selectedVisualEntityKey}-shape-${Date.now().toString(36)}`,
+    type: "shape",
+    shape: "rectangle",
+    x: canvasSize / 2,
+    y: canvasSize / 2,
+    width: outerSize,
+    height: outerSize,
+    fill: "#f28d35",
+    fillOpacity: 0.9,
+    stroke: "#ffd8ad",
+    strokeWidth: 1,
+    radius: 2,
+    rotation: 0,
+    sides: 6,
+    points: 5,
+    innerRadius: Math.max(3, canvasSize * 0.18),
+    outerRadius: Math.max(5, canvasSize * 0.34),
+    textureType: "none",
+    textureVariant: "checker",
+    textureColor: "#33261c",
+    textureScale: 4,
+    stripeWidth: 1,
+    stripeAngle: 45,
+    stripeGap: 5,
+  };
+}
+
+function createDefaultGlyphLayer(visual, entityKey) {
+  const canvasSize = Number(visual.canvasSize ?? 24);
+  return {
+    id: `${selectedVisualEntityKey}-glyph-${Date.now().toString(36)}`,
+    type: "glyph",
+    glyph: entityKey.slice(0, 1).toUpperCase(),
+    x: canvasSize / 2,
+    y: canvasSize / 2,
+    fontSize: Math.max(7, canvasSize * 0.32),
+    glyphColor: "#f0d8bb",
+    stroke: "#0d0805",
+    strokeWidth: 0,
+    rotation: 0,
+  };
+}
+
+function upgradeVisualLayerType(layer, nextType, visual) {
+  layer.type = nextType;
+  if (nextType === "glyph") {
+    Object.assign(layer, createDefaultGlyphLayer(visual, selectedVisualEntityKey), {
+      id: layer.id,
+      type: "glyph",
+      x: layer.x ?? (visual?.canvasSize ?? 24) / 2,
+      y: layer.y ?? (visual?.canvasSize ?? 24) / 2,
+    });
+    return;
+  }
+  Object.assign(layer, createDefaultShapeLayer(visual), {
+    id: layer.id,
+    type: "shape",
+    x: layer.x ?? (visual?.canvasSize ?? 24) / 2,
+    y: layer.y ?? (visual?.canvasSize ?? 24) / 2,
+  });
+}
+
+function normalizeShapeLayer(layer, visual = getSelectedEntityVisual()) {
+  if (layer.type !== "shape") {
+    return;
+  }
+  const canvasSize = Number(visual?.canvasSize ?? 24);
+  if (layer.shape === "polygon" && !layer.sides) {
+    layer.sides = 6;
+  }
+  if (layer.shape === "star") {
+    if (!layer.points) {
+      layer.points = 5;
+    }
+    if (!layer.outerRadius) {
+      layer.outerRadius = Math.max(layer.width ?? 6, layer.height ?? 6) / 2;
+    }
+    if (!layer.innerRadius) {
+      layer.innerRadius = layer.outerRadius * 0.55;
+    }
+  }
+  if (layer.x === undefined) {
+    layer.x = canvasSize / 2;
+  }
+  if (layer.y === undefined) {
+    layer.y = canvasSize / 2;
+  }
+}
+
+function describeVisualLayer(layer) {
+  const layerType = t(`graphics.option.layer.${layer.type ?? "shape"}`);
+  const detail =
+    layer.type === "glyph"
+      ? layer.glyph ?? ""
+      : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
+  return `${layerType} // ${layer.id} // ${detail}`;
+}
+
+function normalizeColorValue(value, fallback) {
+  if (typeof value === "string" && /^#[0-9A-Fa-f]{6}$/.test(value)) {
+    return value;
+  }
+  return fallback;
+}
+
+function buildEntityVisualDataUrl(entityKey, visual = getEntityVisual(entityKey)) {
+  if (!visual) {
+    return "";
+  }
+  const cacheKey = `${entityKey}:${JSON.stringify(visual)}`;
+  if (entityVisualDataUrlCache.has(cacheKey)) {
+    return entityVisualDataUrlCache.get(cacheKey);
+  }
+  const svg = renderEntityVisualSvg(visual);
+  const dataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  entityVisualDataUrlCache.set(cacheKey, dataUrl);
+  return dataUrl;
+}
+
+function renderEntityVisualSvg(visual) {
+  const canvasSize = Number(visual.canvasSize ?? 24);
+  const defs = [];
+  const body = (visual.layers ?? [])
+    .map((layer, index) => renderEntityVisualLayer(layer, index, defs))
+    .join("");
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${canvasSize} ${canvasSize}" width="${canvasSize}" height="${canvasSize}">`,
+    defs.length > 0 ? `<defs>${defs.join("")}</defs>` : "",
+    body,
+    "</svg>",
+  ].join("");
+}
+
+function renderEntityVisualLayer(layer, index, defs) {
+  if (layer.type === "glyph") {
+    return renderGlyphLayer(layer);
+  }
+  return renderShapeLayer(layer, index, defs);
+}
+
+function renderGlyphLayer(layer) {
+  const transform = buildLayerTransform(layer);
+  const strokeWidth = Number(layer.strokeWidth ?? 0);
+  const stroke = strokeWidth > 0 ? normalizeColorValue(layer.stroke, "#000000") : "none";
+  return [
+    `<text`,
+    ` x="${Number(layer.x ?? 0)}"`,
+    ` y="${Number(layer.y ?? 0)}"`,
+    ` fill="${normalizeColorValue(layer.glyphColor, "#f0d8bb")}"`,
+    ` font-family="RAL Mono, monospace"`,
+    ` font-size="${Number(layer.fontSize ?? 8)}"`,
+    ` text-anchor="middle"`,
+    ` dominant-baseline="central"`,
+    ` stroke="${stroke}"`,
+    ` stroke-width="${strokeWidth}"`,
+    transform ? ` transform="${transform}"` : "",
+    ` paint-order="stroke fill">`,
+    escapeXml(layer.glyph ?? ""),
+    `</text>`,
+  ].join("");
+}
+
+function renderShapeLayer(layer, index, defs) {
+  const fill = normalizeColorValue(layer.fill, "#f28d35");
+  const fillOpacity = Number(layer.fillOpacity ?? 1);
+  const strokeWidth = Number(layer.strokeWidth ?? 0);
+  const stroke = strokeWidth > 0 ? normalizeColorValue(layer.stroke, "#000000") : "none";
+  const baseShape = buildShapeMarkup(layer, {
+    fill,
+    fillOpacity,
+    stroke,
+    strokeWidth,
+  });
+  if (!layer.textureType || layer.textureType === "none") {
+    return baseShape;
+  }
+
+  const patternId = `texture-${index}`;
+  defs.push(buildTexturePattern(patternId, layer));
+  const textureShape = buildShapeMarkup(layer, {
+    fill: `url(#${patternId})`,
+    fillOpacity: 0.68,
+    stroke: "none",
+    strokeWidth: 0,
+  });
+  return `${baseShape}${textureShape}`;
+}
+
+function buildShapeMarkup(layer, { fill, fillOpacity, stroke, strokeWidth }) {
+  const common = {
+    fill,
+    fillOpacity,
+    stroke,
+    strokeWidth,
+    transform: buildLayerTransform(layer),
+  };
+  switch (layer.shape) {
+    case "circle":
+      return buildEllipseMarkup(layer, common);
+    case "polygon":
+      return buildPolygonMarkup(layer, common, Number(layer.sides ?? 6));
+    case "star":
+      return buildStarMarkup(layer, common);
+    case "rectangle":
+    default:
+      return buildRectangleMarkup(layer, common);
+  }
+}
+
+function buildRectangleMarkup(layer, common) {
+  const width = Number(layer.width ?? 0);
+  const height = Number(layer.height ?? 0);
+  const x = Number(layer.x ?? 0) - width / 2;
+  const y = Number(layer.y ?? 0) - height / 2;
+  return [
+    `<rect x="${x}" y="${y}" width="${width}" height="${height}"`,
+    ` rx="${Number(layer.radius ?? 0)}"`,
+    buildCommonSvgAttributes(common),
+    ` />`,
+  ].join("");
+}
+
+function buildEllipseMarkup(layer, common) {
+  return [
+    `<ellipse cx="${Number(layer.x ?? 0)}" cy="${Number(layer.y ?? 0)}"`,
+    ` rx="${Number(layer.width ?? 0) / 2}"`,
+    ` ry="${Number(layer.height ?? 0) / 2}"`,
+    buildCommonSvgAttributes(common),
+    ` />`,
+  ].join("");
+}
+
+function buildPolygonMarkup(layer, common, sides) {
+  const points = buildRegularPolygonPoints(layer, sides);
+  return `<polygon points="${points}"${buildCommonSvgAttributes(common)} />`;
+}
+
+function buildStarMarkup(layer, common) {
+  const points = buildStarPolygonPoints(layer);
+  return `<polygon points="${points}"${buildCommonSvgAttributes(common)} />`;
+}
+
+function buildCommonSvgAttributes({ fill, fillOpacity, stroke, strokeWidth, transform }) {
+  return [
+    ` fill="${fill}"`,
+    ` fill-opacity="${fillOpacity}"`,
+    ` stroke="${stroke}"`,
+    ` stroke-width="${strokeWidth}"`,
+    transform ? ` transform="${transform}"` : "",
+  ].join("");
+}
+
+function buildRegularPolygonPoints(layer, sides) {
+  const cx = Number(layer.x ?? 0);
+  const cy = Number(layer.y ?? 0);
+  const rx = Number(layer.width ?? 0) / 2;
+  const ry = Number(layer.height ?? 0) / 2;
+  const angleOffset = (-90 * Math.PI) / 180;
+  return Array.from({ length: Math.max(3, sides) }, (_, index) => {
+    const angle = angleOffset + (index * Math.PI * 2) / Math.max(3, sides);
+    return `${(cx + Math.cos(angle) * rx).toFixed(3)},${(cy + Math.sin(angle) * ry).toFixed(3)}`;
+  }).join(" ");
+}
+
+function buildStarPolygonPoints(layer) {
+  const cx = Number(layer.x ?? 0);
+  const cy = Number(layer.y ?? 0);
+  const points = Math.max(3, Number(layer.points ?? 5));
+  const outerRadius = Number(layer.outerRadius ?? Math.max(layer.width ?? 0, layer.height ?? 0) / 2);
+  const innerRadius = Number(layer.innerRadius ?? outerRadius * 0.55);
+  const angleOffset = (-90 * Math.PI) / 180;
+  return Array.from({ length: points * 2 }, (_, index) => {
+    const radius = index % 2 === 0 ? outerRadius : innerRadius;
+    const angle = angleOffset + (index * Math.PI) / points;
+    return `${(cx + Math.cos(angle) * radius).toFixed(3)},${(cy + Math.sin(angle) * radius).toFixed(3)}`;
+  }).join(" ");
+}
+
+function buildLayerTransform(layer) {
+  const rotation = Number(layer.rotation ?? 0);
+  if (!rotation) {
+    return "";
+  }
+  return `rotate(${rotation} ${Number(layer.x ?? 0)} ${Number(layer.y ?? 0)})`;
+}
+
+function buildTexturePattern(patternId, layer) {
+  if (layer.textureType === "dither") {
+    return buildDitherPattern(patternId, layer);
+  }
+  return buildStripePattern(patternId, layer);
+}
+
+function buildStripePattern(patternId, layer) {
+  const scale = Math.max(1, Number(layer.textureScale ?? 4));
+  const gap = Math.max(1, Number(layer.stripeGap ?? 5)) * (scale / 4);
+  const stripeWidth = Math.max(0.5, Number(layer.stripeWidth ?? 1)) * (scale / 4);
+  const color = normalizeColorValue(layer.textureColor, "#33261c");
+  const angle = Number(layer.stripeAngle ?? 45);
+  return [
+    `<pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${gap}" height="${gap}"`,
+    ` patternTransform="rotate(${angle})">`,
+    `<rect width="${stripeWidth}" height="${gap}" fill="${color}" fill-opacity="0.75" />`,
+    `</pattern>`,
+  ].join("");
+}
+
+function buildDitherPattern(patternId, layer) {
+  const scale = Math.max(1, Number(layer.textureScale ?? 4));
+  const size = Math.max(2, scale * 2);
+  const color = normalizeColorValue(layer.textureColor, "#33261c");
+  const variant = layer.textureVariant ?? "checker";
+  let body = `<rect width="${size / 2}" height="${size / 2}" fill="${color}" fill-opacity="0.72" />`;
+  if (variant === "noise") {
+    body = [
+      `<rect x="0" y="0" width="${size / 3}" height="${size / 3}" fill="${color}" fill-opacity="0.72" />`,
+      `<rect x="${size / 2}" y="${size / 3}" width="${size / 4}" height="${size / 4}" fill="${color}" fill-opacity="0.54" />`,
+      `<rect x="${size / 4}" y="${size / 1.6}" width="${size / 5}" height="${size / 5}" fill="${color}" fill-opacity="0.48" />`,
+    ].join("");
+  } else if (variant === "cross") {
+    body = [
+      `<rect x="${size / 2 - 0.5}" y="0" width="1" height="${size}" fill="${color}" fill-opacity="0.72" />`,
+      `<rect x="0" y="${size / 2 - 0.5}" width="${size}" height="1" fill="${color}" fill-opacity="0.72" />`,
+    ].join("");
+  }
+  return `<pattern id="${patternId}" patternUnits="userSpaceOnUse" width="${size}" height="${size}">${body}</pattern>`;
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function applyEntityVisual(node, entityKey) {
+  if (!node || !entityKey) {
+    return;
+  }
+  const dataUrl = buildEntityVisualDataUrl(entityKey);
+  if (!dataUrl) {
+    node.classList.remove("entity-visualized");
+    node.style.backgroundImage = "";
+    return;
+  }
+  node.classList.add("entity-visualized");
+  node.style.backgroundImage = `url("${dataUrl}")`;
+  node.style.backgroundRepeat = "no-repeat";
+  node.style.backgroundPosition = "center";
+  node.style.backgroundSize = "contain";
+}
+
 function setLanguageMode(mode) {
   languageMode = mode === "en" || mode === "zh" ? mode : "auto";
   language = resolveLanguage(languageMode);
@@ -596,6 +1719,7 @@ elements.reset.addEventListener("click", () => {
   stopPlayback(false);
   applyStageConfiguration(currentStageId);
 });
+initializeGraphicsEditor();
 
 applyLanguage = function applyLanguagePatched() {
   document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
@@ -620,6 +1744,7 @@ applyLanguage = function applyLanguagePatched() {
   renderFlowList();
   renderStageActions();
   renderSampleActions();
+  renderGraphicsEditor();
   updateControls();
 };
 
@@ -671,10 +1796,12 @@ updateControls = function updateControlsPatched() {
 
 await loadI18n();
 await loadAppData();
+await loadEntityVisualCatalog();
 initializeAppData();
 applyLanguage();
 updateSidebarToggles();
 updateEditorTools();
+renderGraphicsEditor();
 applyCanvasTransform();
 renderStoryDialogue();
 render(snapshot(game), { animate: false });
@@ -1750,24 +2877,39 @@ function renderGrid(state, beforeState, options = {}) {
   elements.grid.dataset.loaded = "true";
 
   for (const obstacle of state.obstacles ?? []) {
-    worldLayers.obstacles.append(createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall"));
+    worldLayers.obstacles.append(
+      createWorldEntity("obstacle", obstacle.x, obstacle.y, OBSTACLE_WORLD_SIZE, "wall", "obstacle"),
+    );
   }
 
   for (const hazard of state.hazards ?? []) {
-    worldLayers.hazards.append(createWorldEntity("hazard-zone", hazard.x, hazard.y, WORLD_CELL_SIZE, "hazard"));
+    worldLayers.hazards.append(
+      createWorldEntity("hazard-zone", hazard.x, hazard.y, WORLD_CELL_SIZE, "hazard", "hazard"),
+    );
   }
 
   for (const enemy of state.enemies ?? []) {
-    worldLayers.enemies.append(createWorldEntity("enemy enemy-entity", enemy.x, enemy.y, ROBOT_WORLD_SIZE, enemy.name ?? "hostile"));
+    worldLayers.enemies.append(
+      createWorldEntity("enemy enemy-entity", enemy.x, enemy.y, ROBOT_WORLD_SIZE, enemy.name ?? "hostile", "enemy"),
+    );
   }
 
   if (state.base) {
-    worldLayers.base.append(createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base"));
+    worldLayers.base.append(
+      createWorldEntity("base-marker", state.base.x, state.base.y, BASE_WORLD_SIZE, "home base", "base"),
+    );
   }
 
   for (const deposit of state.deposits) {
     worldLayers.deposits.append(
-      createWorldEntity(`deposit ${deposit.type}`, deposit.x, deposit.y, DEPOSIT_WORLD_SIZE, deposit.type),
+      createWorldEntity(
+        `deposit ${deposit.type}`,
+        deposit.x,
+        deposit.y,
+        DEPOSIT_WORLD_SIZE,
+        deposit.type,
+        visualEntityKeyForDeposit(deposit.type),
+      ),
     );
   }
 
@@ -1821,6 +2963,7 @@ function renderRobot(state, options = {}) {
     robotNode = document.createElement("div");
     robotNode.className = "robot robot-avatar";
   }
+  applyEntityVisual(robotNode, "robot");
   robotNode.title = `Robot facing ${state.robot.dir}`;
   robotNode.dataset.dir = state.robot.dir;
   const duration = options.animationDuration ?? currentSpeedProfile().duration;
@@ -1881,6 +3024,7 @@ function animatePickup(deposit, robot, duration = currentSpeedProfile().duration
   const size = DEPOSIT_WORLD_SIZE;
   const ghost = document.createElement("div");
   ghost.className = `deposit pickup-ghost ${deposit.type}`;
+  applyEntityVisual(ghost, visualEntityKeyForDeposit(deposit.type));
   ghost.style.width = `${size}px`;
   ghost.style.height = `${size}px`;
   ghost.style.transitionDuration = `${duration}ms`;
@@ -1918,9 +3062,10 @@ function syncWorldBounds(state) {
   }
 }
 
-function createWorldEntity(className, x, y, size, title = "") {
+function createWorldEntity(className, x, y, size, title = "", entityKey = "") {
   const node = document.createElement("div");
   node.className = className;
+  applyEntityVisual(node, entityKey);
   if (title) {
     node.title = title;
   }
@@ -1931,6 +3076,16 @@ function createWorldEntity(className, x, y, size, title = "") {
     node.style.transform = `translate(${position.left + (position.width - size) / 2}px, ${position.top + (position.height - size) / 2}px)`;
   }
   return node;
+}
+
+function visualEntityKeyForDeposit(type) {
+  if (type === "cell") {
+    return "cell";
+  }
+  if (type === "chip") {
+    return "chip";
+  }
+  return "scrap";
 }
 
 function directionDegrees(direction) {

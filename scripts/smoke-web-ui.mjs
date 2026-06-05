@@ -738,6 +738,39 @@ try {
     throw new Error(`Expected developer log drawer to open, got ${JSON.stringify(devLogState)}.`);
   }
   await expectText(page, "devlog-toggle", "Dev_Log [-]");
+  await page.locator('[data-testid="graphics-entity-list"] [data-entity-key="robot"]').click();
+  const graphicsPreviewState = await page.evaluate(() => ({
+    entityName: document.querySelector('[data-testid="graphics-entity-name"]')?.innerText ?? "",
+    previewBackground: getComputedStyle(document.querySelector('[data-testid="graphics-preview"]')).backgroundImage,
+    layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
+  }));
+  if (
+    !graphicsPreviewState.entityName.toUpperCase().includes("ROBOT") ||
+    !graphicsPreviewState.previewBackground.includes("data:image/svg+xml") ||
+    graphicsPreviewState.layerCount < 1
+  ) {
+    throw new Error(`Expected graphics lab preview to initialize, got ${JSON.stringify(graphicsPreviewState)}.`);
+  }
+  await page.locator('[data-testid="graphics-form"] [data-field="fill"]').evaluate((input) => {
+    input.value = "#00ff88";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="graphics-export"]')?.value.includes('"fill": "#00ff88"'),
+  );
+  const graphicsRenderState = await page.evaluate(() => ({
+    exportHasColor: document.querySelector('[data-testid="graphics-export"]')?.value.includes('"fill": "#00ff88"') ?? false,
+    robotBackground:
+      getComputedStyle(document.querySelector(".robot-avatar")).backgroundImage,
+  }));
+  if (!graphicsRenderState.exportHasColor || !graphicsRenderState.robotBackground.toLowerCase().includes("00ff88")) {
+    throw new Error(`Expected graphics lab edits to update export JSON and world rendering, got ${JSON.stringify(graphicsRenderState)}.`);
+  }
+  await page.getByTestId("graphics-copy-button").click();
+  if (!(await page.getByTestId("graphics-copy-button").isVisible())) {
+    throw new Error("Expected graphics copy control to stay available after export interaction.");
+  }
 
   console.log("Web UI smoke passed.");
 } finally {

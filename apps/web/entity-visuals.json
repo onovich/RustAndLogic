@@ -1,0 +1,269 @@
+{
+  "version": 1,
+  "entities": {
+    "robot": {
+      "label": "Robot",
+      "canvasSize": 24,
+      "layers": [
+        {
+          "id": "robot-body",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 12,
+          "y": 12,
+          "width": 20,
+          "height": 20,
+          "fill": "#ee9041",
+          "fillOpacity": 0.96,
+          "stroke": "#ffcd9f",
+          "strokeWidth": 1,
+          "radius": 3,
+          "textureType": "stripes",
+          "textureColor": "#6b2f14",
+          "textureScale": 4,
+          "stripeWidth": 1.2,
+          "stripeAngle": 90,
+          "stripeGap": 5
+        },
+        {
+          "id": "robot-glyph",
+          "type": "glyph",
+          "glyph": "R1",
+          "x": 12,
+          "y": 12.2,
+          "fontSize": 7.4,
+          "glyphColor": "#201006",
+          "stroke": "#ffe2b9",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "enemy": {
+      "label": "Enemy",
+      "canvasSize": 24,
+      "layers": [
+        {
+          "id": "enemy-core",
+          "type": "shape",
+          "shape": "circle",
+          "x": 12,
+          "y": 12,
+          "width": 18,
+          "height": 18,
+          "fill": "#5b1d15",
+          "fillOpacity": 0.95,
+          "stroke": "#ffc9bf",
+          "strokeWidth": 1,
+          "textureType": "dither",
+          "textureColor": "#d06f5e",
+          "textureScale": 3
+        },
+        {
+          "id": "enemy-glyph",
+          "type": "glyph",
+          "glyph": "X",
+          "x": 12,
+          "y": 12.3,
+          "fontSize": 9,
+          "glyphColor": "#ffe3da",
+          "stroke": "#39120c",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "scrap": {
+      "label": "Scrap",
+      "canvasSize": 22,
+      "layers": [
+        {
+          "id": "scrap-frame",
+          "type": "shape",
+          "shape": "polygon",
+          "x": 11,
+          "y": 11,
+          "width": 16,
+          "height": 16,
+          "fill": "#1e120b",
+          "fillOpacity": 0.84,
+          "stroke": "#f2a860",
+          "strokeWidth": 1,
+          "sides": 4,
+          "rotation": 45,
+          "textureType": "stripes",
+          "textureColor": "#f2a860",
+          "textureScale": 4,
+          "stripeWidth": 1,
+          "stripeAngle": 45,
+          "stripeGap": 4
+        }
+      ]
+    },
+    "cell": {
+      "label": "Battery",
+      "canvasSize": 22,
+      "layers": [
+        {
+          "id": "cell-body",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 11,
+          "y": 11,
+          "width": 14,
+          "height": 18,
+          "fill": "#1c140e",
+          "fillOpacity": 0.92,
+          "stroke": "#ffe0a2",
+          "strokeWidth": 1,
+          "radius": 2,
+          "textureType": "stripes",
+          "textureColor": "#8a7253",
+          "textureScale": 4,
+          "stripeWidth": 1,
+          "stripeAngle": 0,
+          "stripeGap": 5
+        },
+        {
+          "id": "cell-cap",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 11,
+          "y": 5,
+          "width": 6,
+          "height": 3,
+          "fill": "#ffe2b6",
+          "fillOpacity": 0.88,
+          "stroke": "#ffe2b6",
+          "strokeWidth": 0,
+          "radius": 1
+        }
+      ]
+    },
+    "chip": {
+      "label": "Chip",
+      "canvasSize": 22,
+      "layers": [
+        {
+          "id": "chip-rhombus",
+          "type": "shape",
+          "shape": "polygon",
+          "x": 11,
+          "y": 11,
+          "width": 15,
+          "height": 15,
+          "fill": "#11181a",
+          "fillOpacity": 0.88,
+          "stroke": "#b8f4ff",
+          "strokeWidth": 1,
+          "sides": 4,
+          "rotation": 45,
+          "textureType": "dither",
+          "textureColor": "#7fd8e8",
+          "textureScale": 3
+        },
+        {
+          "id": "chip-core",
+          "type": "shape",
+          "shape": "circle",
+          "x": 11,
+          "y": 11,
+          "width": 4,
+          "height": 4,
+          "fill": "#d8fbff",
+          "fillOpacity": 0.95,
+          "stroke": "#d8fbff",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "hazard": {
+      "label": "Hazard",
+      "canvasSize": 40,
+      "layers": [
+        {
+          "id": "hazard-field",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 20,
+          "y": 20,
+          "width": 40,
+          "height": 40,
+          "fill": "#ff8e3f",
+          "fillOpacity": 0.08,
+          "stroke": "#ff9e5c",
+          "strokeWidth": 1,
+          "radius": 0,
+          "textureType": "stripes",
+          "textureColor": "#ffb25e",
+          "textureScale": 4,
+          "stripeWidth": 1.5,
+          "stripeAngle": 135,
+          "stripeGap": 7
+        }
+      ]
+    },
+    "obstacle": {
+      "label": "Obstacle",
+      "canvasSize": 36,
+      "layers": [
+        {
+          "id": "obstacle-shell",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 18,
+          "y": 18,
+          "width": 34,
+          "height": 34,
+          "fill": "#0c0603",
+          "fillOpacity": 0.92,
+          "stroke": "#8f6a4a",
+          "strokeWidth": 1,
+          "radius": 1,
+          "textureType": "stripes",
+          "textureColor": "#8f6a4a",
+          "textureScale": 5,
+          "stripeWidth": 2,
+          "stripeAngle": 45,
+          "stripeGap": 6
+        }
+      ]
+    },
+    "base": {
+      "label": "Base",
+      "canvasSize": 22,
+      "layers": [
+        {
+          "id": "base-frame",
+          "type": "shape",
+          "shape": "rectangle",
+          "x": 11,
+          "y": 11,
+          "width": 18,
+          "height": 18,
+          "fill": "#ff9d43",
+          "fillOpacity": 0.08,
+          "stroke": "#ffbe7e",
+          "strokeWidth": 1,
+          "radius": 2,
+          "textureType": "none",
+          "textureColor": "#ffbe7e",
+          "textureScale": 4
+        },
+        {
+          "id": "base-core",
+          "type": "shape",
+          "shape": "polygon",
+          "x": 11,
+          "y": 11,
+          "width": 8,
+          "height": 8,
+          "fill": "#ffbe7e",
+          "fillOpacity": 0.72,
+          "stroke": "#ffdfbc",
+          "strokeWidth": 0,
+          "sides": 4,
+          "rotation": 45
+        }
+      ]
+    }
+  }
+}

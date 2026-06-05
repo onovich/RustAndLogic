@@ -184,6 +184,37 @@
                 <h2 data-i18n="dev.title"></h2>
                 <span data-testid="diff-count">0 changes</span>
               </div>
+              <section class="visual-editor-panel" aria-label="Graphics lab" data-i18n-attr="aria-label:graphics.aria">
+                <div class="section-heading">
+                  <h2 data-i18n="graphics.title"></h2>
+                  <span data-testid="graphics-entity-name"></span>
+                </div>
+                <div class="visual-editor-toolbar" data-testid="graphics-entity-list"></div>
+                <div class="visual-editor-workbench">
+                  <div class="visual-preview-stack">
+                    <div class="visual-preview-frame">
+                      <div class="visual-preview-surface" data-testid="graphics-preview"></div>
+                    </div>
+                    <div class="visual-editor-actions">
+                      <button data-testid="graphics-reset-button" data-i18n="graphics.reset" type="button"></button>
+                      <button data-testid="graphics-copy-button" data-i18n="graphics.copy" type="button"></button>
+                    </div>
+                  </div>
+                  <div class="visual-layer-stack">
+                    <div class="section-heading compact-heading">
+                      <h3 data-i18n="graphics.layers"></h3>
+                    </div>
+                    <div class="visual-layer-list" data-testid="graphics-layer-list"></div>
+                    <div class="visual-editor-actions">
+                      <button data-testid="graphics-add-shape-button" data-i18n="graphics.addShape" type="button"></button>
+                      <button data-testid="graphics-add-glyph-button" data-i18n="graphics.addGlyph" type="button"></button>
+                      <button data-testid="graphics-delete-layer-button" data-i18n="graphics.deleteLayer" type="button"></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="visual-editor-form" data-testid="graphics-form"></div>
+                <textarea class="visual-export" data-testid="graphics-export" readonly spellcheck="false"></textarea>
+              </section>
               <section class="diff-panel" aria-label="State diff" data-i18n-attr="aria-label:diff.aria">
                 <ol data-testid="diff-list"></ol>
               </section>

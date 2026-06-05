@@ -296,3 +296,62 @@ story.m6.2.speaker,K-6 Commander,K-6 指挥官
 story.m6.2.text,If hostile contact is on the lane, scrap logic will fail. Read the contact, clear the target, then decide whether the frame can afford another push.,只要通道上出现敌对接触，拾荒逻辑就会失效。先读取接敌、清掉目标，再决定机体是否还撑得起下一次推进。
 story.m6.3.speaker,K-6 Commander,K-6 指挥官
 story.m6.3.text,Bring the guarded chip home intact and you have crossed the line from routing into combat scheduling.,把那枚被看守的芯片完整带回家，你就真的从路线规划跨进了战斗调度。
+graphics.aria,Graphics lab,图形实验室
+graphics.title,Graphics_Lab,图形实验室
+graphics.layers,Layers,图层
+graphics.reset,Reset_Visuals,重置图形
+graphics.copy,Copy_JSON,复制 JSON
+graphics.copied,Copied,已复制
+graphics.addShape,Add_Shape,添加图形
+graphics.addGlyph,Add_Glyph,添加字符
+graphics.deleteLayer,Delete_Layer,删除图层
+graphics.noLayer,No layer selected.,未选择图层。
+graphics.entity.robot,Robot,角色
+graphics.entity.enemy,Enemy,敌人
+graphics.entity.scrap,Scrap,废铁
+graphics.entity.cell,Battery,电池
+graphics.entity.chip,Chip,芯片
+graphics.entity.hazard,Hazard,危险区
+graphics.entity.obstacle,Obstacle,障碍
+graphics.entity.base,Base,基地
+graphics.field.entityLabel,Entity label,实体名称
+graphics.field.canvasSize,Canvas size,画布尺寸
+graphics.field.id,Layer id,图层 ID
+graphics.field.type,Layer type,图层类型
+graphics.field.shape,Shape,形状
+graphics.field.glyph,Glyph,字符
+graphics.field.fontSize,Font size,字号
+graphics.field.glyphColor,Glyph color,字符颜色
+graphics.field.x,Position X,X 坐标
+graphics.field.y,Position Y,Y 坐标
+graphics.field.width,Width,宽度
+graphics.field.height,Height,高度
+graphics.field.rotation,Rotation,旋转
+graphics.field.fill,Fill,填充色
+graphics.field.fillOpacity,Fill opacity,填充透明度
+graphics.field.stroke,Stroke,描边色
+graphics.field.strokeWidth,Stroke width,描边宽度
+graphics.field.radius,Corner radius,圆角
+graphics.field.sides,Side count,边数
+graphics.field.points,Point count,角数
+graphics.field.innerRadius,Inner radius,内径
+graphics.field.outerRadius,Outer radius,外径
+graphics.field.textureType,Texture,纹理
+graphics.field.textureColor,Texture color,纹理颜色
+graphics.field.textureScale,Texture scale,纹理缩放
+graphics.field.textureVariant,Dither type,抖动类型
+graphics.field.stripeWidth,Stripe width,条纹宽度
+graphics.field.stripeAngle,Stripe angle,条纹角度
+graphics.field.stripeGap,Stripe gap,条纹间距
+graphics.option.layer.shape,Shape,图形
+graphics.option.layer.glyph,Glyph,字符
+graphics.option.shape.rectangle,Rectangle,矩形
+graphics.option.shape.circle,Circle,圆形
+graphics.option.shape.polygon,Polygon,正多边形
+graphics.option.shape.star,Star,正多角形
+graphics.option.texture.none,None,无
+graphics.option.texture.stripes,Stripes,斜条纹
+graphics.option.texture.dither,Dither,像素抖动
+graphics.option.dither.checker,Checker,棋盘
+graphics.option.dither.noise,Noise,噪点
+graphics.option.dither.cross,Cross,十字
