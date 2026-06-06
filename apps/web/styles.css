@@ -652,6 +652,22 @@ textarea[data-invalid="true"] {
   color: #f6d3ac;
 }
 
+.tok-label-def {
+  color: #ffdcb4;
+  text-decoration-color: rgba(255, 176, 92, 0.48);
+}
+
+.tok-label-ref {
+  color: #f4c488;
+  text-decoration-style: dotted;
+}
+
+.tok-label-missing {
+  color: #ff9a7a;
+  text-decoration-style: wavy;
+  text-decoration-color: rgba(255, 130, 104, 0.7);
+}
+
 .tok-action,
 .tok-branch {
   color: var(--accent);

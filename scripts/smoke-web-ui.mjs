@@ -498,11 +498,30 @@ try {
   });
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
   const labelSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
-  if (!labelSuggestion.includes("@LOOP")) {
+  if (!labelSuggestion.includes("@LOOP") || !labelSuggestion.includes("LINE 1")) {
     throw new Error(`Expected label suggestion after Goto, got: ${labelSuggestion}`);
   }
   await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
   await expectValue(page, "script-editor", "@Loop\nGoto @Loop");
+
+  await page.getByTestId("script-editor").fill("Goto @Missing");
+  await page.getByTestId("play-button").click();
+  const missingLabelDiagnostic = (await page.getByTestId("script-diagnostics").innerText()).toUpperCase();
+  if (!missingLabelDiagnostic.includes("UNKNOWN LABEL: @MISSING")) {
+    throw new Error(`Expected missing label diagnostic, got: ${missingLabelDiagnostic}`);
+  }
+  const missingLabelTokens = await page.locator(".tok-label-missing").count();
+  if (missingLabelTokens === 0) {
+    throw new Error("Expected unresolved label references to use the missing-label token style.");
+  }
+
+  await page.getByTestId("script-editor").fill("@Loop\nGoto @Loop");
+  await page.getByTestId("play-button").click();
+  const definedLabelTokens = await page.locator(".tok-label-def").count();
+  const resolvedLabelTokens = await page.locator(".tok-label-ref").count();
+  if (definedLabelTokens === 0 || resolvedLabelTokens === 0) {
+    throw new Error(`Expected editor to distinguish label definitions and resolved references, got def=${definedLabelTokens} ref=${resolvedLabelTokens}.`);
+  }
 
   const badScript = `${originalScript}\nBogus`;
   await page.getByTestId("script-editor").fill(badScript);

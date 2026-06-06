@@ -29,6 +29,7 @@ let robotTweenFrame = 0;
 let robotVisualTransform = "";
 let activeSuggestions = [];
 let activeSuggestionIndex = 0;
+let labelDefinitions = new Map();
 let deployedSource = "";
 let currentPresetId = null;
 let storyIndex = 0;
@@ -3768,6 +3769,7 @@ function updateEditorTools(errors = null) {
   currentPresetId = scriptPresets.find((preset) => (preset.lines ?? []).join("\n") === elements.editor.value)?.id ?? null;
   const program = errors ? null : compileTapeScript(elements.editor.value, { instructionCapacity: game.instructionCapacity });
   const activeErrors = errors ?? program.errors;
+  labelDefinitions = collectLabelDefinitions();
   renderScriptHighlight(activeErrors);
   renderDiagnostics(activeErrors);
   renderSampleActions();
@@ -3847,7 +3849,7 @@ function highlightLine(line) {
     if (/^\s+$/.test(token)) {
       pieces.push(escapeHtml(token));
     } else if (token.startsWith("@")) {
-      pieces.push(`<span class="tok-label">${escapeHtml(token)}</span>`);
+      pieces.push(renderHighlightedLabelToken(token, code));
     } else if (scriptActions.has(token)) {
       pieces.push(`<span class="tok-action">${escapeHtml(token)}</span>`);
     } else if (scriptQueries.has(token)) {
@@ -3866,6 +3868,18 @@ function highlightLine(line) {
     pieces.push(`<span class="tok-comment">${escapeHtml(comment)}</span>`);
   }
   return pieces.join("");
+}
+
+function renderHighlightedLabelToken(token, code) {
+  const labelName = token.slice(1);
+  if (code.trimStart().startsWith(token)) {
+    return `<span class="tok-label tok-label-def">${escapeHtml(token)}</span>`;
+  }
+  if (labelDefinitions.has(labelName)) {
+    const line = labelDefinitions.get(labelName);
+    return `<span class="tok-label tok-label-ref" title="${escapeHtml(t("completion.hint.labelDefined", { line }))}">${escapeHtml(token)}</span>`;
+  }
+  return `<span class="tok-label tok-label-missing">${escapeHtml(token)}</span>`;
 }
 
 function syncEditorScroll() {
@@ -3916,7 +3930,7 @@ function updateAutocomplete() {
     item.dataset.active = String(index === activeSuggestionIndex);
     item.innerHTML =
       `<span>${escapeHtml(suggestion.label ?? suggestion.value)}</span>` +
-      `<small>${escapeHtml(t(suggestion.kindKey))} / ${escapeHtml(t(suggestion.hintKey))}</small>`;
+      `<small>${escapeHtml(autocompleteHintText(suggestion))}</small>`;
     elements.autocomplete.append(item);
   });
   const footer = document.createElement("div");
@@ -3925,6 +3939,12 @@ function updateAutocomplete() {
   elements.autocomplete.append(footer);
   elements.autocomplete.hidden = false;
   updateAutocompletePosition(context);
+}
+
+function autocompleteHintText(suggestion) {
+  const kind = t(suggestion.kindKey);
+  const hint = suggestion.hintText ?? t(suggestion.hintKey);
+  return `${kind} / ${hint}`;
 }
 
 function getAutocompleteContext() {
@@ -3991,14 +4011,27 @@ function getAutocompleteContext() {
 function findSuggestions(context) {
   if (context.mode === "label") {
     const prefix = context.prefix.startsWith("@") ? context.prefix.slice(1) : context.prefix;
-    return currentLabels()
+    const suggestions = currentLabelEntries()
       .filter((label) => matchesCompletion(label, prefix))
       .slice(0, 8)
-      .map((label) => ({
+      .map(({ label, line }) => ({
         value: `@${label}`,
+        label: `@${label}`,
         kindKey: "completion.kind.label",
-        hintKey: "completion.label.target",
+        hintText: t("completion.hint.labelDefined", { line }),
       }));
+    if (suggestions.length > 0) {
+      return suggestions;
+    }
+    if (prefix) {
+      return [{
+        value: context.prefix.startsWith("@") ? context.prefix : `@${prefix}`,
+        label: context.prefix.startsWith("@") ? context.prefix : `@${prefix}`,
+        kindKey: "completion.kind.label",
+        hintText: t("completion.hint.labelMissing"),
+      }];
+    }
+    return [];
   }
 
   if (context.mode === "explicit") {
@@ -4326,12 +4359,26 @@ function dedupeSuggestions(items) {
   });
 }
 
+function currentLabelEntries() {
+  return [...labelDefinitions.entries()]
+    .map(([label, line]) => ({ label, line }))
+    .sort((left, right) => left.line - right.line || left.label.localeCompare(right.label));
+}
+
 function currentLabels() {
-  return elements.editor.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => /^@[A-Za-z][A-Za-z0-9_]*$/.test(line))
-    .map((line) => line.slice(1));
+  return currentLabelEntries().map((entry) => entry.label);
+}
+
+function collectLabelDefinitions() {
+  const definitions = new Map();
+  elements.editor.value.split("\n").forEach((line, index) => {
+    const trimmed = line.trim();
+    const match = trimmed.match(/^@([A-Za-z][A-Za-z0-9_]*)$/);
+    if (match && !definitions.has(match[1])) {
+      definitions.set(match[1], index + 1);
+    }
+  });
+  return definitions;
 }
 
 function handleAutocompleteKeydown(event) {

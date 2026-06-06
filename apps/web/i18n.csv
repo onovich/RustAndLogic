@@ -179,6 +179,8 @@ completion.hint.predicate,query predicate,查询谓词
 completion.hint.value,query value,查询参数
 completion.hint.action,action clause,动作片段
 completion.hint.actionArg,action parameter,动作参数
+completion.hint.labelDefined,defined at line {line},已定义于第 {line} 行
+completion.hint.labelMissing,unresolved label reference,未解析的标签引用
 completion.move.forward,Move forward,向前移动
 completion.move.back,Move backward,向后移动
 completion.move.home,Move toward home,朝基地移动
