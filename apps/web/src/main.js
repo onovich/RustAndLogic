@@ -857,6 +857,9 @@ function renderGraphicsTemplates() {
     if (description) {
       button.title = description;
     }
+    const preview = document.createElement("span");
+    preview.className = "visual-template-preview";
+    preview.style.backgroundImage = buildGraphicsTemplatePreview(template);
     const label = document.createElement("span");
     label.className = "visual-template-label";
     label.textContent = getGraphicsTemplateLabel(template);
@@ -871,7 +874,7 @@ function renderGraphicsTemplates() {
       metaParts.push(category);
     }
     meta.textContent = metaParts.join(" // ");
-    button.append(label, meta);
+    button.append(preview, label, meta);
     card.append(button);
     if (isCustomGraphicsTemplate(template)) {
       const deleteButton = document.createElement("button");
@@ -962,6 +965,14 @@ function getGraphicsTemplateCategory(template) {
     return t(template.categoryKey);
   }
   return "";
+}
+
+function buildGraphicsTemplatePreview(template) {
+  if (!template?.visual) {
+    return "none";
+  }
+  const previewUrl = buildEntityVisualDataUrl(`template:${template.id}`, template.visual);
+  return previewUrl ? `url("${previewUrl}")` : "none";
 }
 
 function getGraphicsEntityKind(entityKey = selectedVisualEntityKey) {

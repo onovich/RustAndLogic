@@ -746,6 +746,8 @@ try {
     templateCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template]').length,
     templateNameControl: Boolean(document.querySelector('[data-testid="graphics-template-name"]')),
     saveTemplateControl: Boolean(document.querySelector('[data-testid="graphics-save-template-button"]')),
+    firstTemplatePreview:
+      getComputedStyle(document.querySelector('[data-testid="graphics-templates"] .visual-template-preview')).backgroundImage,
     firstTemplate: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-template") ?? "",
     firstTemplateRecommended: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-recommended") ?? "",
   }));
@@ -756,6 +758,7 @@ try {
     graphicsPreviewState.templateCount < 4 ||
     !graphicsPreviewState.templateNameControl ||
     !graphicsPreviewState.saveTemplateControl ||
+    !graphicsPreviewState.firstTemplatePreview.includes("data:image/svg+xml") ||
     graphicsPreviewState.firstTemplate !== "frameBot" ||
     graphicsPreviewState.firstTemplateRecommended !== "true"
   ) {

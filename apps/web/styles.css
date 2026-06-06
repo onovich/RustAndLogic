@@ -1644,21 +1644,41 @@ textarea[data-invalid="true"] {
 
 .visual-template-button {
   display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-areas:
+    "preview label"
+    "preview meta";
   justify-items: start;
   align-content: center;
-  gap: 1px;
+  column-gap: 7px;
+  row-gap: 1px;
   min-height: 38px;
   padding: 5px 7px;
   text-align: left;
 }
 
+.visual-template-preview {
+  grid-area: preview;
+  align-self: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(51, 38, 28, 0.8);
+  background-color: rgba(10, 5, 3, 0.94);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  box-shadow: inset 0 0 0 1px rgba(255, 216, 173, 0.05);
+}
+
 .visual-template-label {
+  grid-area: label;
   color: var(--text);
   font-size: 0.58rem;
   line-height: 1.15;
 }
 
 .visual-template-meta {
+  grid-area: meta;
   color: var(--muted);
   font-size: 0.5rem;
   line-height: 1.1;
