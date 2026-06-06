@@ -876,6 +876,21 @@ try {
   if (!importedTemplateState.storedTemplatesRaw.includes("Signal Relay") || importedTemplateState.recentTemplates.length < 1) {
     throw new Error(`Expected imported template persistence, got ${JSON.stringify(importedTemplateState)}.`);
   }
+  await page.getByTestId("graphics-export-library-button").click();
+  const exportedTemplateLibrary = await page.getByTestId("graphics-entity-io").inputValue();
+  if (
+    !exportedTemplateLibrary.includes('"kind": "graphics-template-library"') ||
+    !exportedTemplateLibrary.includes('"templates"') ||
+    !exportedTemplateLibrary.includes('"Signal Relay"')
+  ) {
+    throw new Error(`Expected template library export JSON, got: ${exportedTemplateLibrary}`);
+  }
+  await page.getByTestId("graphics-entity-io").fill(exportedTemplateLibrary.replace('"label": "Signal Relay"', '"label": "Signal Bundle"'));
+  await page.getByTestId("graphics-import-template-button").click();
+  await page.waitForFunction(() => {
+    const stored = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+    return stored.includes("Signal Bundle");
+  });
   await page.locator('[data-testid="graphics-templates"] [data-template="signalToken"]').click();
   await page.waitForFunction(() => {
     const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";

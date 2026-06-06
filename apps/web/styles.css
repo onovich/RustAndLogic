@@ -1604,7 +1604,7 @@ textarea[data-invalid="true"] {
 
 .visual-template-create {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) repeat(3, auto);
   gap: 6px;
   min-width: min(100%, 248px);
 }

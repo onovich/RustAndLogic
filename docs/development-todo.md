@@ -131,6 +131,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Group the template library into localized recommendation/category sections so the Studio reads more like a browsable asset catalog.
 - [x] Add template filter controls for fit/current-category browsing so developers can narrow the Studio catalog without losing the grouped library model.
 - [x] Add single-template export/import so Studio templates can move through a portable JSON exchange flow instead of staying trapped in one browser profile.
+- [x] Add full custom-template-library export/import so developers can move whole local asset packs between browsers and machines.
 
 ## Definition Of Done For A Small Item
 
