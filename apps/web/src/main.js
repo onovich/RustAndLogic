@@ -73,6 +73,7 @@ let graphicsEditorConfig = defaultGraphicsEditorConfig();
 let defaultGraphicsTemplates = [];
 let customGraphicsTemplates = [];
 let recentGraphicsTemplateIds = [];
+let graphicsTemplateFilterState = { mode: "all", category: "all" };
 let defaultEntityVisualCatalog = { version: 1, entities: {} };
 let entityVisualCatalog = { version: 1, entities: {} };
 let selectedVisualEntityKey = "";
@@ -82,6 +83,7 @@ const entityVisualDataUrlCache = new Map();
 const entityVisualsKey = "rust-and-logic.entity-visuals.v1";
 const graphicsTemplatesKey = "rust-and-logic.entity-templates.v1";
 const graphicsRecentTemplatesKey = "rust-and-logic.template-history.v1";
+const graphicsTemplateFilterKey = "rust-and-logic.template-filter.v1";
 
 const elements = {
   editor: query("script-editor"),
@@ -173,6 +175,8 @@ const elements = {
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
   graphicsRecentTemplates: query("graphics-recent-templates"),
+  graphicsTemplateModeFilters: query("graphics-template-mode-filters"),
+  graphicsTemplateCategoryFilters: query("graphics-template-category-filters"),
   graphicsTemplates: query("graphics-templates"),
   graphicsTemplateName: query("graphics-template-name"),
   graphicsSaveTemplateButton: query("graphics-save-template-button"),
@@ -218,6 +222,20 @@ function loadRecentGraphicsTemplates() {
   } catch (error) {
     console.warn("Failed to restore recent graphics templates.", error);
     recentGraphicsTemplateIds = [];
+  }
+}
+
+function loadGraphicsTemplateFilterState() {
+  const stored = localStorage.getItem(graphicsTemplateFilterKey);
+  if (!stored) {
+    graphicsTemplateFilterState = { mode: "all", category: "all" };
+    return;
+  }
+  try {
+    graphicsTemplateFilterState = normalizeGraphicsTemplateFilterState(JSON.parse(stored));
+  } catch (error) {
+    console.warn("Failed to restore graphics template filters.", error);
+    graphicsTemplateFilterState = { mode: "all", category: "all" };
   }
 }
 
@@ -692,6 +710,24 @@ function initializeGraphicsEditor() {
     }
     applyEntityTemplate(button.dataset.template ?? "");
   });
+  const handleGraphicsTemplateFilterClick = (event) => {
+    const button = event.target.closest("[data-filter-kind][data-filter-value]");
+    if (!button) {
+      return;
+    }
+    const filterKind = button.dataset.filterKind ?? "";
+    const filterValue = button.dataset.filterValue ?? "all";
+    if (filterKind === "mode") {
+      graphicsTemplateFilterState.mode = filterValue === "fit" ? "fit" : "all";
+    } else if (filterKind === "category") {
+      graphicsTemplateFilterState.category = filterValue || "all";
+    } else {
+      return;
+    }
+    persistGraphicsTemplateFilterState();
+  };
+  elements.graphicsTemplateModeFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
+  elements.graphicsTemplateCategoryFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
   elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
     saveCurrentEntityAsTemplate();
   });
@@ -779,6 +815,12 @@ function persistRecentGraphicsTemplates() {
   renderGraphicsEditor();
 }
 
+function persistGraphicsTemplateFilterState() {
+  graphicsTemplateFilterState = normalizeGraphicsTemplateFilterState(graphicsTemplateFilterState);
+  localStorage.setItem(graphicsTemplateFilterKey, JSON.stringify(graphicsTemplateFilterState));
+  renderGraphicsEditor();
+}
+
 function refreshWorldVisuals() {
   const state = snapshot(game);
   renderGrid(state, state, { animate: false });
@@ -794,6 +836,7 @@ function renderGraphicsEditor() {
   renderGraphicsLayerList();
   renderGraphicsForm();
   renderGraphicsRecentTemplates();
+  renderGraphicsTemplateFilters();
   renderGraphicsTemplates();
   renderGraphicsPresets();
   renderGraphicsSwatches();
@@ -879,8 +922,40 @@ function renderGraphicsTemplates() {
   if (group) {
     group.hidden = false;
   }
-  for (const templateGroup of getGroupedGraphicsTemplates()) {
+  const templateGroups = getGroupedGraphicsTemplates();
+  if (templateGroups.length === 0) {
+    elements.graphicsTemplates.append(createGraphicsTemplateEmptyState());
+    return;
+  }
+  for (const templateGroup of templateGroups) {
     elements.graphicsTemplates.append(createGraphicsTemplateSection(templateGroup));
+  }
+}
+
+function renderGraphicsTemplateFilters() {
+  renderGraphicsTemplateFilterRow(elements.graphicsTemplateModeFilters, getGraphicsTemplateModeOptions());
+  renderGraphicsTemplateFilterRow(elements.graphicsTemplateCategoryFilters, getGraphicsTemplateCategoryOptions());
+}
+
+function renderGraphicsTemplateFilterRow(container, options) {
+  if (!container) {
+    return;
+  }
+  container.replaceChildren();
+  if (!selectedVisualEntityKey || options.length === 0) {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  for (const option of options) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "visual-template-filter-button";
+    button.dataset.filterKind = option.kind;
+    button.dataset.filterValue = option.value;
+    button.dataset.active = String(option.active);
+    button.textContent = option.label;
+    container.append(button);
   }
 }
 
@@ -969,9 +1044,16 @@ function createGraphicsTemplateSection(templateGroup) {
   return section;
 }
 
-function getSortedGraphicsTemplates() {
+function createGraphicsTemplateEmptyState() {
+  const empty = document.createElement("div");
+  empty.className = "visual-template-empty";
+  empty.textContent = t("graphics.templateEmpty");
+  return empty;
+}
+
+function getSortedGraphicsTemplates(templates = getFilteredGraphicsTemplates()) {
   const entityKey = selectedVisualEntityKey;
-  return getAllGraphicsTemplates().sort((left, right) => {
+  return [...templates].sort((left, right) => {
     const leftRecommended = isGraphicsTemplateRecommended(left, entityKey) ? 0 : 1;
     const rightRecommended = isGraphicsTemplateRecommended(right, entityKey) ? 0 : 1;
     if (leftRecommended !== rightRecommended) {
@@ -999,9 +1081,12 @@ function getSortedGraphicsTemplates() {
 }
 
 function getGroupedGraphicsTemplates() {
-  const templates = getSortedGraphicsTemplates();
-  const recommended = templates.filter((template) => isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
-  const remaining = templates.filter((template) => !isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+  const templates = getSortedGraphicsTemplates(getFilteredGraphicsTemplates());
+  const showRecommendedGroup = graphicsTemplateFilterState.mode !== "fit" && graphicsTemplateFilterState.category === "all";
+  const recommended = showRecommendedGroup
+    ? templates.filter((template) => isGraphicsTemplateRecommended(template, selectedVisualEntityKey))
+    : [];
+  const remaining = showRecommendedGroup ? templates.filter((template) => !isGraphicsTemplateRecommended(template, selectedVisualEntityKey)) : templates;
   const groups = [];
   if (recommended.length > 0) {
     groups.push({
@@ -1044,6 +1129,75 @@ function getGroupedGraphicsTemplates() {
   }
 
   return groups;
+}
+
+function getFilteredGraphicsTemplates() {
+  let templates = getTemplatesForFilterMode();
+  if (graphicsTemplateFilterState.category !== "all") {
+    templates = templates.filter((template) => getGraphicsTemplateGroupId(template) === graphicsTemplateFilterState.category);
+  }
+  return templates;
+}
+
+function getTemplatesForFilterMode() {
+  const templates = getAllGraphicsTemplates();
+  if (graphicsTemplateFilterState.mode === "fit") {
+    return templates.filter((template) => isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+  }
+  return templates;
+}
+
+function getGraphicsTemplateModeOptions() {
+  return [
+    {
+      kind: "mode",
+      value: "all",
+      label: t("graphics.templateFilter.all"),
+      active: graphicsTemplateFilterState.mode === "all",
+    },
+    {
+      kind: "mode",
+      value: "fit",
+      label: t("graphics.templateFilter.fit"),
+      active: graphicsTemplateFilterState.mode === "fit",
+    },
+  ];
+}
+
+function getGraphicsTemplateCategoryOptions() {
+  const categories = getAvailableGraphicsTemplateCategories();
+  if (graphicsTemplateFilterState.category !== "all" && !categories.includes(graphicsTemplateFilterState.category)) {
+    graphicsTemplateFilterState.category = "all";
+  }
+  return [
+    {
+      kind: "category",
+      value: "all",
+      label: t("graphics.templateFilter.categoryAll"),
+      active: graphicsTemplateFilterState.category === "all",
+    },
+    ...categories.map((category) => ({
+      kind: "category",
+      value: category,
+      label: getGraphicsTemplateGroupLabel(category),
+      active: graphicsTemplateFilterState.category === category,
+    })),
+  ];
+}
+
+function getAvailableGraphicsTemplateCategories() {
+  const categories = new Set(getTemplatesForFilterMode().map((template) => getGraphicsTemplateGroupId(template)));
+  const ordered = [];
+  for (const groupId of getGraphicsTemplateGroupOrder()) {
+    if (groupId !== "other" && categories.has(groupId)) {
+      ordered.push(groupId);
+      categories.delete(groupId);
+    }
+  }
+  for (const groupId of categories) {
+    ordered.push(groupId);
+  }
+  return ordered;
 }
 
 function isGraphicsTemplateRecommended(template, entityKey) {
@@ -1146,6 +1300,13 @@ function normalizeRecentGraphicsTemplateIds(value) {
     return [];
   }
   return [...new Set(value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim()))].slice(0, 6);
+}
+
+function normalizeGraphicsTemplateFilterState(value) {
+  return {
+    mode: value?.mode === "fit" ? "fit" : "all",
+    category: typeof value?.category === "string" && value.category.trim() ? value.category.trim() : "all",
+  };
 }
 
 function normalizeGraphicsCustomTemplate(template, index) {
@@ -2826,6 +2987,7 @@ await loadI18n();
 await loadAppData();
 loadCustomGraphicsTemplates();
 loadRecentGraphicsTemplates();
+loadGraphicsTemplateFilterState();
 await loadEntityVisualCatalog();
 initializeAppData();
 applyLanguage();

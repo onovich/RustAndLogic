@@ -1625,6 +1625,30 @@ textarea[data-invalid="true"] {
   padding-inline: 8px;
 }
 
+.visual-template-filters,
+.visual-template-filter-row {
+  display: grid;
+  gap: 6px;
+}
+
+.visual-template-filter-row {
+  grid-template-columns: repeat(auto-fit, minmax(58px, max-content));
+}
+
+.visual-template-filter-button {
+  min-height: 22px;
+  padding: 0 7px;
+  font-size: 0.54rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.visual-template-filter-button[data-active="true"] {
+  color: #201006;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .visual-preset-strip button {
   min-height: 22px;
   padding: 0 7px;
@@ -1659,6 +1683,17 @@ textarea[data-invalid="true"] {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
+}
+
+.visual-template-empty {
+  grid-column: 1 / -1;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(51, 38, 28, 0.8);
+  color: var(--muted);
+  font-size: 0.56rem;
 }
 
 .visual-template-button {

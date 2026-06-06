@@ -129,6 +129,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add per-template thumbnail previews so the Studio library can be browsed visually instead of only by label.
 - [x] Add a recent-template strip so developers can quickly reapply the last few visuals they were iterating with.
 - [x] Group the template library into localized recommendation/category sections so the Studio reads more like a browsable asset catalog.
+- [x] Add template filter controls for fit/current-category browsing so developers can narrow the Studio catalog without losing the grouped library model.
 
 ## Definition Of Done For A Small Item
 

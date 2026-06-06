@@ -833,6 +833,27 @@ try {
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }
+  const templateFilterState = await page.evaluate(() => ({
+    modeCount: document.querySelectorAll('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"]').length,
+    categoryCount: document.querySelectorAll('[data-testid="graphics-template-category-filters"] [data-filter-kind="category"]').length,
+  }));
+  if (templateFilterState.modeCount < 2 || templateFilterState.categoryCount < 3) {
+    throw new Error(`Expected graphics template filters, got ${JSON.stringify(templateFilterState)}.`);
+  }
+  await page.locator('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="fit"]').click();
+  await page.waitForFunction(() => {
+    const groups = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-group]')].map((node) => node.getAttribute("data-template-group"));
+    const templates = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template]')].map((node) => node.getAttribute("data-template"));
+    return groups.length === 1 && groups[0] === "structure" && templates.length === 1 && templates[0] === "platedBlock";
+  });
+  await page.locator('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="all"]').click();
+  await page.locator('[data-testid="graphics-template-category-filters"] [data-filter-kind="category"][data-filter-value="pickup"]').click();
+  await page.waitForFunction(() => {
+    const groups = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-group]')].map((node) => node.getAttribute("data-template-group"));
+    const templates = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template]')].map((node) => node.getAttribute("data-template"));
+    return groups.length === 1 && groups[0] === "pickup" && templates.length === 1 && templates[0] === "signalToken";
+  });
+  await page.locator('[data-testid="graphics-template-category-filters"] [data-filter-kind="category"][data-filter-value="all"]').click();
   await page.locator('[data-testid="graphics-templates"] [data-template="signalToken"]').click();
   await page.waitForFunction(() => {
     const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
