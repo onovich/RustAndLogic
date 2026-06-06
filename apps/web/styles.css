@@ -1662,10 +1662,6 @@ textarea[data-invalid="true"] {
   gap: 4px;
 }
 
-.visual-template-card[data-template-source="custom"] {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
 .visual-template-section {
   grid-column: 1 / -1;
   display: grid;
@@ -1747,16 +1743,21 @@ textarea[data-invalid="true"] {
   color: var(--accent);
 }
 
-.visual-template-remove {
-  min-height: 38px;
-  min-width: 24px;
+.visual-template-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.visual-template-action {
+  min-height: 18px;
   padding: 0 6px;
   color: var(--muted);
-  font-size: 0.54rem;
+  font-size: 0.5rem;
   line-height: 1;
 }
 
-.visual-template-remove:hover {
+.visual-template-action:hover {
   color: var(--accent);
 }
 

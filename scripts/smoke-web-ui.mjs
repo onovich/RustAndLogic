@@ -854,6 +854,28 @@ try {
     return groups.length === 1 && groups[0] === "pickup" && templates.length === 1 && templates[0] === "signalToken";
   });
   await page.locator('[data-testid="graphics-template-category-filters"] [data-filter-kind="category"][data-filter-value="all"]').click();
+  await page.locator('[data-testid="graphics-templates"] [data-template-action="export"][data-template-id="signalToken"]').click();
+  const exportedTemplateSource = await page.getByTestId("graphics-entity-io").inputValue();
+  if (!exportedTemplateSource.includes('"kind": "graphics-template"') || !exportedTemplateSource.includes('"label": "Signal Token"')) {
+    throw new Error(`Expected template export JSON, got: ${exportedTemplateSource}`);
+  }
+  await page.getByTestId("graphics-entity-io").fill(
+    exportedTemplateSource
+      .replace('"label": "Signal Token"', '"label": "Signal Relay"')
+      .replace('"description": "Compact circular token suited for pickups and markers."', '"description": "Imported relay token."'),
+  );
+  await page.getByTestId("graphics-import-template-button").click();
+  await page.waitForFunction(() => {
+    const custom = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]')];
+    return custom.some((node) => node.textContent.includes("Signal Relay"));
+  });
+  const importedTemplateState = await page.evaluate(() => ({
+    storedTemplatesRaw: localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "",
+    recentTemplates: [...document.querySelectorAll('[data-testid="graphics-recent-templates"] [data-template]')].map((node) => node.getAttribute("data-template") ?? ""),
+  }));
+  if (!importedTemplateState.storedTemplatesRaw.includes("Signal Relay") || importedTemplateState.recentTemplates.length < 1) {
+    throw new Error(`Expected imported template persistence, got ${JSON.stringify(importedTemplateState)}.`);
+  }
   await page.locator('[data-testid="graphics-templates"] [data-template="signalToken"]').click();
   await page.waitForFunction(() => {
     const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";

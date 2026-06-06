@@ -180,6 +180,7 @@ const elements = {
   graphicsTemplates: query("graphics-templates"),
   graphicsTemplateName: query("graphics-template-name"),
   graphicsSaveTemplateButton: query("graphics-save-template-button"),
+  graphicsImportTemplateButton: query("graphics-import-template-button"),
   graphicsPresets: query("graphics-presets"),
   graphicsFillSwatches: query("graphics-fill-swatches"),
   graphicsTextureSwatches: query("graphics-texture-swatches"),
@@ -687,6 +688,11 @@ function initializeGraphicsEditor() {
     applyShapePreset(button.dataset.preset ?? "");
   });
   elements.graphicsTemplates?.addEventListener("click", (event) => {
+    const exportAction = event.target.closest("[data-template-action='export']");
+    if (exportAction) {
+      exportGraphicsTemplate(exportAction.dataset.templateId ?? "");
+      return;
+    }
     const deleteAction = event.target.closest("[data-template-action='delete']");
     if (deleteAction) {
       removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
@@ -699,6 +705,11 @@ function initializeGraphicsEditor() {
     applyEntityTemplate(button.dataset.template ?? "");
   });
   elements.graphicsRecentTemplates?.addEventListener("click", (event) => {
+    const exportAction = event.target.closest("[data-template-action='export']");
+    if (exportAction) {
+      exportGraphicsTemplate(exportAction.dataset.templateId ?? "");
+      return;
+    }
     const deleteAction = event.target.closest("[data-template-action='delete']");
     if (deleteAction) {
       removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
@@ -730,6 +741,14 @@ function initializeGraphicsEditor() {
   elements.graphicsTemplateCategoryFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
   elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
     saveCurrentEntityAsTemplate();
+  });
+  elements.graphicsImportTemplateButton?.addEventListener("click", () => {
+    importGraphicsTemplate(elements.graphicsEntityIo?.value ?? "");
+  });
+  elements.graphicsEntityIo?.addEventListener("input", () => {
+    if (elements.graphicsImportTemplateButton) {
+      elements.graphicsImportTemplateButton.disabled = !elements.graphicsEntityIo?.value.trim();
+    }
   });
   elements.graphicsTemplateName?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") {
@@ -852,6 +871,9 @@ function renderGraphicsEditor() {
   elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
   if (elements.graphicsSaveTemplateButton) {
     elements.graphicsSaveTemplateButton.disabled = !selectedVisualEntityKey;
+  }
+  if (elements.graphicsImportTemplateButton) {
+    elements.graphicsImportTemplateButton.disabled = !elements.graphicsEntityIo?.value.trim();
   }
   const layerIndex = visual?.layers.findIndex((item) => item.id === selectedVisualLayerId) ?? -1;
   const layerCount = visual?.layers.length ?? 0;
@@ -1015,17 +1037,32 @@ function createGraphicsTemplateCard(template) {
   meta.textContent = metaParts.join(" // ");
   button.append(preview, label, meta);
   card.append(button);
+  card.append(createGraphicsTemplateActionRow(template));
+  return card;
+}
+
+function createGraphicsTemplateActionRow(template) {
+  const actions = document.createElement("div");
+  actions.className = "visual-template-actions";
+  const exportButton = document.createElement("button");
+  exportButton.type = "button";
+  exportButton.className = "visual-template-action";
+  exportButton.dataset.templateAction = "export";
+  exportButton.dataset.templateId = template.id;
+  exportButton.textContent = t("graphics.exportTemplate");
+  exportButton.title = t("graphics.exportTemplate");
+  actions.append(exportButton);
   if (isCustomGraphicsTemplate(template)) {
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
-    deleteButton.className = "visual-template-remove";
+    deleteButton.className = "visual-template-action";
     deleteButton.dataset.templateAction = "delete";
     deleteButton.dataset.templateId = template.id;
     deleteButton.textContent = t("graphics.deleteTemplate");
     deleteButton.title = t("graphics.deleteTemplate");
-    card.append(deleteButton);
+    actions.append(deleteButton);
   }
-  return card;
+  return actions;
 }
 
 function createGraphicsTemplateSection(templateGroup) {
@@ -1325,7 +1362,12 @@ function normalizeGraphicsCustomTemplate(template, index) {
     label,
     description:
       typeof template.description === "string" && template.description.trim() ? template.description.trim() : "",
-    categoryKey: "graphics.templateCategory.custom",
+    categoryKey:
+      typeof template.categoryKey === "string" && template.categoryKey.trim()
+        ? template.categoryKey.trim()
+        : "graphics.templateCategory.custom",
+    categoryLabel:
+      typeof template.categoryLabel === "string" && template.categoryLabel.trim() ? template.categoryLabel.trim() : "",
     entityKinds: Array.isArray(template.entityKinds) ? template.entityKinds.filter((item) => typeof item === "string") : [],
     originEntityKey:
       typeof template.originEntityKey === "string" && template.originEntityKey.trim() ? template.originEntityKey.trim() : "",
@@ -2245,6 +2287,18 @@ function importSelectedEntityVisual(source) {
   }
 }
 
+function exportGraphicsTemplate(templateId) {
+  const template = getAllGraphicsTemplates().find((item) => item.id === templateId);
+  if (!template || !elements.graphicsEntityIo) {
+    return;
+  }
+  elements.graphicsEntityIo.value = JSON.stringify(serializeGraphicsTemplate(template), null, 2);
+  elements.graphicsEntityIo.focus();
+  elements.graphicsEntityIo.select();
+  renderGraphicsEditor();
+  showToast({ title: t("graphics.templateExported"), body: getGraphicsTemplateLabel(template) }, "success");
+}
+
 function applyEntityTemplate(templateId) {
   const entityKey = selectedVisualEntityKey;
   if (!entityKey) {
@@ -2294,13 +2348,42 @@ function saveCurrentEntityAsTemplate() {
   if (!normalizedTemplate) {
     return;
   }
-  customGraphicsTemplates = [normalizedTemplate, ...customGraphicsTemplates];
-  persistCustomGraphicsTemplates();
-  recordRecentGraphicsTemplate(normalizedTemplate.id);
+  upsertCustomGraphicsTemplate(normalizedTemplate);
   if (elements.graphicsTemplateName) {
     elements.graphicsTemplateName.value = "";
   }
   showToast({ title: t("graphics.templateSaved"), body: normalizedTemplate.label }, "success");
+}
+
+function importGraphicsTemplate(source) {
+  try {
+    const parsed = JSON.parse(source);
+    if (parsed?.kind && parsed.kind !== "graphics-template") {
+      throw new Error("Unsupported template payload.");
+    }
+    if (!parsed || typeof parsed !== "object" || !parsed.visual || !Array.isArray(parsed.visual.layers)) {
+      throw new Error("Missing visual.layers in template payload.");
+    }
+    const normalizedTemplate = normalizeGraphicsCustomTemplate(
+      {
+        ...parsed,
+        id: resolveImportedGraphicsTemplateId(parsed),
+        updatedAt: Date.now(),
+      },
+      customGraphicsTemplates.length,
+    );
+    if (!normalizedTemplate) {
+      throw new Error("Template payload could not be normalized.");
+    }
+    upsertCustomGraphicsTemplate(normalizedTemplate);
+    if (elements.graphicsTemplateName && !elements.graphicsTemplateName.value.trim()) {
+      elements.graphicsTemplateName.value = normalizedTemplate.label;
+    }
+    showToast({ title: t("graphics.templateImported"), body: normalizedTemplate.label }, "success");
+  } catch (error) {
+    console.warn("Failed to import graphics template.", error);
+    showToast({ title: t("graphics.templateImportFailed"), body: String(error.message ?? error) }, "failure");
+  }
 }
 
 function recordRecentGraphicsTemplate(templateId) {
@@ -2309,6 +2392,24 @@ function recordRecentGraphicsTemplate(templateId) {
   }
   recentGraphicsTemplateIds = [templateId, ...recentGraphicsTemplateIds.filter((item) => item !== templateId)];
   persistRecentGraphicsTemplates();
+}
+
+function upsertCustomGraphicsTemplate(template) {
+  customGraphicsTemplates = [template, ...customGraphicsTemplates.filter((item) => item.id !== template.id)];
+  persistCustomGraphicsTemplates();
+  recordRecentGraphicsTemplate(template.id);
+}
+
+function resolveImportedGraphicsTemplateId(template) {
+  const desiredId =
+    typeof template?.id === "string" && template.id.trim()
+      ? template.id.trim()
+      : buildCustomTemplateId(template?.originEntityKey ?? selectedVisualEntityKey ?? "template", template?.label ?? "imported");
+  const builtinConflict = defaultGraphicsTemplates.some((item) => item.id === desiredId);
+  if (builtinConflict) {
+    return `custom-import-${Date.now().toString(36)}`;
+  }
+  return desiredId;
 }
 
 function buildDefaultCustomTemplateLabel(entityKey) {
@@ -2339,6 +2440,22 @@ function removeCustomGraphicsTemplate(templateId) {
   persistCustomGraphicsTemplates();
   persistRecentGraphicsTemplates();
   showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(template) }, "success");
+}
+
+function serializeGraphicsTemplate(template) {
+  return {
+    kind: "graphics-template",
+    version: 1,
+    id: template.id,
+    label: getGraphicsTemplateLabel(template),
+    description: getGraphicsTemplateDescription(template),
+    categoryKey: template.categoryKey ?? "graphics.templateCategory.custom",
+    categoryLabel: typeof template.categoryLabel === "string" ? template.categoryLabel : "",
+    entityKinds: Array.isArray(template.entityKinds) ? [...template.entityKinds] : [],
+    originEntityKey: template.originEntityKey ?? "",
+    updatedAt: Number(template.updatedAt ?? Date.now()),
+    visual: cloneJson(template.visual),
+  };
 }
 
 function applyShapePreset(presetId) {

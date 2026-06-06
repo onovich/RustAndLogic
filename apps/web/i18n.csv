@@ -339,10 +339,15 @@ graphics.templateFilter.categoryAll,Any type,全部类别
 graphics.templateNamePlaceholder,Template label,模板名称
 graphics.templateEmpty,No templates under the current filter.,当前筛选下没有模板。
 graphics.saveTemplate,Save_Template,保存模板
+graphics.importTemplate,Import_Template,导入模板
+graphics.exportTemplate,Export,导出
 graphics.deleteTemplate,Del,删
 graphics.templateSaved,Template saved,模板已保存
 graphics.templateDeleted,Template deleted,模板已删除
-graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
+graphics.templateExported,Template exported,模板已导出
+graphics.templateImported,Template imported,模板已导入
+graphics.templateImportFailed,Template import failed,模板导入失败
+graphics.entityIoPlaceholder,"Paste entity visual or template JSON here, then import it.","在这里粘贴实体图形或模板 JSON，然后导入。"
 graphics.importSuccess,Entity imported,实体已导入
 graphics.importFailed,Import failed,导入失败
 graphics.templateApplied,Template applied,模板已套用
