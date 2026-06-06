@@ -818,6 +818,7 @@ try {
     entityName: document.querySelector('[data-testid="graphics-entity-name"]')?.innerText ?? "",
     exportHasWall: document.querySelector('[data-testid="graphics-export"]')?.value.includes('"wall"') ?? false,
     layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
+    templateGroups: [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-group]')].map((node) => node.getAttribute("data-template-group") ?? ""),
     firstTemplate: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-template") ?? "",
     firstTemplateRecommended: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-recommended") ?? "",
   }));
@@ -825,6 +826,8 @@ try {
     !wallGraphicsState.entityName.toUpperCase().includes("WALL") ||
     !wallGraphicsState.exportHasWall ||
     wallGraphicsState.layerCount < 2 ||
+    wallGraphicsState.templateGroups[0] !== "recommended" ||
+    !wallGraphicsState.templateGroups.includes("pickup") ||
     wallGraphicsState.firstTemplate !== "platedBlock" ||
     wallGraphicsState.firstTemplateRecommended !== "true"
   ) {

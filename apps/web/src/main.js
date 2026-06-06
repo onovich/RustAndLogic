@@ -879,8 +879,8 @@ function renderGraphicsTemplates() {
   if (group) {
     group.hidden = false;
   }
-  for (const template of getSortedGraphicsTemplates()) {
-    elements.graphicsTemplates.append(createGraphicsTemplateCard(template));
+  for (const templateGroup of getGroupedGraphicsTemplates()) {
+    elements.graphicsTemplates.append(createGraphicsTemplateSection(templateGroup));
   }
 }
 
@@ -953,6 +953,22 @@ function createGraphicsTemplateCard(template) {
   return card;
 }
 
+function createGraphicsTemplateSection(templateGroup) {
+  const section = document.createElement("section");
+  section.className = "visual-template-section";
+  section.dataset.templateGroup = templateGroup.id;
+  const heading = document.createElement("div");
+  heading.className = "visual-template-section-heading";
+  heading.textContent = templateGroup.label;
+  const strip = document.createElement("div");
+  strip.className = "visual-template-section-grid";
+  for (const template of templateGroup.templates) {
+    strip.append(createGraphicsTemplateCard(template));
+  }
+  section.append(heading, strip);
+  return section;
+}
+
 function getSortedGraphicsTemplates() {
   const entityKey = selectedVisualEntityKey;
   return getAllGraphicsTemplates().sort((left, right) => {
@@ -980,6 +996,54 @@ function getSortedGraphicsTemplates() {
     }
     return getGraphicsTemplateLabel(left).localeCompare(getGraphicsTemplateLabel(right));
   });
+}
+
+function getGroupedGraphicsTemplates() {
+  const templates = getSortedGraphicsTemplates();
+  const recommended = templates.filter((template) => isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+  const remaining = templates.filter((template) => !isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+  const groups = [];
+  if (recommended.length > 0) {
+    groups.push({
+      id: "recommended",
+      label: t("graphics.templateGroup.recommended"),
+      templates: recommended,
+    });
+  }
+
+  const grouped = new Map();
+  for (const template of remaining) {
+    const groupId = getGraphicsTemplateGroupId(template);
+    if (!grouped.has(groupId)) {
+      grouped.set(groupId, []);
+    }
+    grouped.get(groupId).push(template);
+  }
+
+  for (const groupId of getGraphicsTemplateGroupOrder()) {
+    const bucket = grouped.get(groupId);
+    if (!bucket?.length) {
+      continue;
+    }
+    groups.push({
+      id: groupId,
+      label: getGraphicsTemplateGroupLabel(groupId),
+      templates: bucket,
+    });
+  }
+
+  for (const [groupId, bucket] of grouped.entries()) {
+    if (!bucket?.length || groups.some((group) => group.id === groupId)) {
+      continue;
+    }
+    groups.push({
+      id: groupId,
+      label: getGraphicsTemplateGroupLabel(groupId),
+      templates: bucket,
+    });
+  }
+
+  return groups;
 }
 
 function isGraphicsTemplateRecommended(template, entityKey) {
@@ -1033,6 +1097,27 @@ function getGraphicsTemplateCategory(template) {
     return t(template.categoryKey);
   }
   return "";
+}
+
+function getGraphicsTemplateGroupId(template) {
+  const categoryKey = template?.categoryKey ?? "";
+  if (categoryKey.startsWith("graphics.templateCategory.")) {
+    return categoryKey.replace("graphics.templateCategory.", "");
+  }
+  return "other";
+}
+
+function getGraphicsTemplateGroupLabel(groupId) {
+  if (groupId === "recommended") {
+    return t("graphics.templateGroup.recommended");
+  }
+  const key = `graphics.templateCategory.${groupId}`;
+  const translated = t(key);
+  return translated === key ? t("graphics.templateGroup.other") : translated;
+}
+
+function getGraphicsTemplateGroupOrder() {
+  return ["custom", "actor", "pickup", "field", "structure", "anchor", "other"];
 }
 
 function buildGraphicsTemplatePreview(template) {

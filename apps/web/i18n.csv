@@ -331,6 +331,8 @@ graphics.templateCategory.structure,Structure,结构体
 graphics.templateCategory.anchor,Anchor,据点
 graphics.templateCategory.custom,Custom,自定义
 graphics.templateRecommended,Recommended,推荐
+graphics.templateGroup.recommended,Best match,最佳匹配
+graphics.templateGroup.other,Other,其他
 graphics.templateNamePlaceholder,Template label,模板名称
 graphics.saveTemplate,Save_Template,保存模板
 graphics.deleteTemplate,Del,删
