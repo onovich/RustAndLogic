@@ -744,12 +744,16 @@ try {
     previewBackground: getComputedStyle(document.querySelector('[data-testid="graphics-preview"]')).backgroundImage,
     layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
     templateCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template]').length,
+    firstTemplate: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-template") ?? "",
+    firstTemplateRecommended: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-recommended") ?? "",
   }));
   if (
     !graphicsPreviewState.entityName.toUpperCase().includes("ROBOT") ||
     !graphicsPreviewState.previewBackground.includes("data:image/svg+xml") ||
     graphicsPreviewState.layerCount < 1 ||
-    graphicsPreviewState.templateCount < 4
+    graphicsPreviewState.templateCount < 4 ||
+    graphicsPreviewState.firstTemplate !== "frameBot" ||
+    graphicsPreviewState.firstTemplateRecommended !== "true"
   ) {
     throw new Error(`Expected graphics lab preview to initialize, got ${JSON.stringify(graphicsPreviewState)}.`);
   }
@@ -807,11 +811,15 @@ try {
     entityName: document.querySelector('[data-testid="graphics-entity-name"]')?.innerText ?? "",
     exportHasWall: document.querySelector('[data-testid="graphics-export"]')?.value.includes('"wall"') ?? false,
     layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
+    firstTemplate: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-template") ?? "",
+    firstTemplateRecommended: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-recommended") ?? "",
   }));
   if (
     !wallGraphicsState.entityName.toUpperCase().includes("WALL") ||
     !wallGraphicsState.exportHasWall ||
-    wallGraphicsState.layerCount < 2
+    wallGraphicsState.layerCount < 2 ||
+    wallGraphicsState.firstTemplate !== "platedBlock" ||
+    wallGraphicsState.firstTemplateRecommended !== "true"
   ) {
     throw new Error(`Expected wall entity visuals to be authorable, got ${JSON.stringify(wallGraphicsState)}.`);
   }

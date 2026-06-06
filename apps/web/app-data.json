@@ -8,10 +8,24 @@
     }
   },
   "graphicsEditor": {
+    "entityKinds": {
+      "robot": "actor",
+      "enemy": "actor",
+      "scrap": "pickup",
+      "cell": "pickup",
+      "chip": "pickup",
+      "hazard": "field",
+      "obstacle": "structure",
+      "wall": "structure",
+      "base": "anchor"
+    },
     "entityTemplates": [
       {
         "id": "frameBot",
         "labelKey": "graphics.template.frameBot",
+        "descriptionKey": "graphics.templateDesc.frameBot",
+        "categoryKey": "graphics.templateCategory.actor",
+        "entityKinds": ["actor", "anchor"],
         "visual": {
           "canvasSize": 24,
           "layers": [
@@ -52,6 +66,9 @@
       {
         "id": "signalToken",
         "labelKey": "graphics.template.signalToken",
+        "descriptionKey": "graphics.templateDesc.signalToken",
+        "categoryKey": "graphics.templateCategory.pickup",
+        "entityKinds": ["pickup", "anchor"],
         "visual": {
           "canvasSize": 22,
           "layers": [
@@ -88,6 +105,9 @@
       {
         "id": "hazardBeacon",
         "labelKey": "graphics.template.hazardBeacon",
+        "descriptionKey": "graphics.templateDesc.hazardBeacon",
+        "categoryKey": "graphics.templateCategory.field",
+        "entityKinds": ["field"],
         "visual": {
           "canvasSize": 40,
           "layers": [
@@ -133,6 +153,9 @@
       {
         "id": "platedBlock",
         "labelKey": "graphics.template.platedBlock",
+        "descriptionKey": "graphics.templateDesc.platedBlock",
+        "categoryKey": "graphics.templateCategory.structure",
+        "entityKinds": ["structure", "anchor"],
         "visual": {
           "canvasSize": 36,
           "layers": [

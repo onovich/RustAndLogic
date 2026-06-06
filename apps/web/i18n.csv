@@ -319,6 +319,16 @@ graphics.template.frameBot,Frame Bot,框架机体
 graphics.template.signalToken,Signal Token,信号标记
 graphics.template.hazardBeacon,Hazard Beacon,危险信标
 graphics.template.platedBlock,Plated Block,装甲方块
+graphics.templateDesc.frameBot,Layered chassis with an inline identifier glyph.,带内嵌识别字符的分层机体框架。
+graphics.templateDesc.signalToken,Compact circular token suited for pickups and markers.,适合掉落物和标记物的紧凑圆形标记。
+graphics.templateDesc.hazardBeacon,Wide warning field with a bright core beacon.,带明亮核心信标的大范围警示场。
+graphics.templateDesc.platedBlock,Heavy plated block suited for walls and obstacles.,适合墙体和障碍物的厚重装甲块。
+graphics.templateCategory.actor,Actor,角色
+graphics.templateCategory.pickup,Pickup,拾取物
+graphics.templateCategory.field,Field,区域
+graphics.templateCategory.structure,Structure,结构体
+graphics.templateCategory.anchor,Anchor,据点
+graphics.templateRecommended,Recommended,推荐
 graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
 graphics.importSuccess,Entity imported,实体已导入
 graphics.importFailed,Import failed,导入失败

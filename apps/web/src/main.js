@@ -800,13 +800,54 @@ function renderGraphicsTemplates() {
   if (group) {
     group.hidden = false;
   }
-  for (const template of graphicsEditorConfig.entityTemplates ?? []) {
+  for (const template of getSortedGraphicsTemplates()) {
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "visual-template-button";
     button.dataset.template = template.id;
-    button.textContent = t(template.labelKey);
+    button.dataset.recommended = String(isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+    if (template.descriptionKey) {
+      button.title = t(template.descriptionKey);
+    }
+    const label = document.createElement("span");
+    label.className = "visual-template-label";
+    label.textContent = t(template.labelKey);
+    const meta = document.createElement("span");
+    meta.className = "visual-template-meta";
+    const metaParts = [];
+    if (isGraphicsTemplateRecommended(template, selectedVisualEntityKey)) {
+      metaParts.push(t("graphics.templateRecommended"));
+    }
+    if (template.categoryKey) {
+      metaParts.push(t(template.categoryKey));
+    }
+    meta.textContent = metaParts.join(" // ");
+    button.append(label, meta);
     elements.graphicsTemplates.append(button);
   }
+}
+
+function getSortedGraphicsTemplates() {
+  const entityKey = selectedVisualEntityKey;
+  return [...(graphicsEditorConfig.entityTemplates ?? [])].sort((left, right) => {
+    const leftRecommended = isGraphicsTemplateRecommended(left, entityKey) ? 0 : 1;
+    const rightRecommended = isGraphicsTemplateRecommended(right, entityKey) ? 0 : 1;
+    if (leftRecommended !== rightRecommended) {
+      return leftRecommended - rightRecommended;
+    }
+    const leftCategory = t(left.categoryKey ?? "").toUpperCase();
+    const rightCategory = t(right.categoryKey ?? "").toUpperCase();
+    if (leftCategory !== rightCategory) {
+      return leftCategory.localeCompare(rightCategory);
+    }
+    return t(left.labelKey).localeCompare(t(right.labelKey));
+  });
+}
+
+function isGraphicsTemplateRecommended(template, entityKey) {
+  const entityKind = graphicsEditorConfig.entityKinds?.[entityKey] ?? "";
+  const supportedKinds = template?.entityKinds ?? [];
+  return Boolean(entityKind && Array.isArray(supportedKinds) && supportedKinds.includes(entityKind));
 }
 
 function renderGraphicsLayerList() {
@@ -1133,6 +1174,17 @@ function getGraphicsEntityLabel(entityKey) {
 
 function defaultGraphicsEditorConfig() {
   return {
+    entityKinds: {
+      robot: "actor",
+      enemy: "actor",
+      scrap: "pickup",
+      cell: "pickup",
+      chip: "pickup",
+      hazard: "field",
+      obstacle: "structure",
+      wall: "structure",
+      base: "anchor",
+    },
     entityTemplates: [
       {
         id: "frameBot",
@@ -1457,6 +1509,10 @@ function defaultGraphicsEditorConfig() {
 function normalizeGraphicsEditorConfig(config = {}) {
   const fallback = defaultGraphicsEditorConfig();
   return {
+    entityKinds:
+      config.entityKinds && typeof config.entityKinds === "object"
+        ? cloneJson(config.entityKinds)
+        : fallback.entityKinds,
     entityTemplates:
       Array.isArray(config.entityTemplates) && config.entityTemplates.length > 0
         ? cloneJson(config.entityTemplates)
