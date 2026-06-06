@@ -207,10 +207,10 @@ completion.hp.low,HP below threshold,HP 低于阈值
 completion.energy.low,Battery below threshold,电量低于阈值
 completion.damage.any,Damaged this tick,本回合受到伤害
 completion.goto.loop,Go to label,跳转到标签
-completion.iftrue.goto,Go if last check is true,上次查询为真时跳转
-completion.iffalse.goto,Go if last check is false,上次查询为假时跳转
-completion.iftrue.pickup,Pick up if true,为真时拾取
-completion.iffalse.turn,Turn if false,为假时右转
+completion.iftrue.goto,Conditional goto branch,条件成立时跳转
+completion.iffalse.goto,Conditional inverse branch,条件不成立时执行反向分支
+completion.iftrue.pickup,Conditional pickup action,条件成立时执行拾取
+completion.iffalse.turn,Conditional turn action,条件不成立时执行转向
 runtime.title,Runtime_Env,运行时环境
 runtime.haltGeneric,Halt_Reason: Runtime_Block,中断原因：运行受阻
 runtime.recodeGeneric,Re-code logic or clear debris,重写逻辑或先清理障碍

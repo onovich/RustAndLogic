@@ -21,6 +21,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Define a hardware boundary for game/world actions.
 - [x] Add the early `Check(Energy)` query path for low-power return logic.
 - [x] Add tests for compile errors, label resolution, action suspension, and watchdog faults.
+- [x] Replace the player-facing conditional syntax with `If` / `IfNot ... Then ...` sugar while keeping the TapeScript VM core unchanged.
 
 ## Milestone 2: Headless Game Simulation Slice
 

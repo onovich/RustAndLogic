@@ -412,11 +412,11 @@ try {
   const jumpScript = [
     "@Loop",
     "Check().Has(Scrap)",
-    "IfTrue Goto @Loop",
+    "If Check().Has(Scrap) Then Goto @Loop",
   ].join("\n");
   await page.getByTestId("script-editor").fill(jumpScript);
   await page.getByTestId("script-editor").evaluate((editor) => {
-    const offset = editor.value.indexOf("@Loop", editor.value.indexOf("IfTrue"));
+    const offset = editor.value.indexOf("@Loop", editor.value.indexOf("Then"));
     editor.focus();
     editor.setSelectionRange(offset + 2, offset + 2);
   });
@@ -556,12 +556,12 @@ try {
   if (hazardCount === 0) {
     throw new Error("Expected M4 to render visible hazard tiles.");
   }
-  await page.getByTestId("script-editor").fill("Check().Is(Hazard)\nIfTrue Move()");
+  await page.getByTestId("script-editor").fill("If Check().Is(Hazard) Then Move()");
   await page.getByTestId("step-button").click();
   await expectText(page, "robot-position", "R1 // 2,2 E");
   await expectText(page, "hp-value", "7");
   await page.getByTestId("reset-button").click();
-  await page.getByTestId("script-editor").fill(["@Loop", "Check(HP).Below(8)", "IfTrue Repair()", "Move()", "Goto @Loop"].join("\n"));
+  await page.getByTestId("script-editor").fill(["@Loop", "If Check(HP).Below(8) Then Repair()", "Move()", "Goto @Loop"].join("\n"));
   await page.getByTestId("play-button").click();
   await page.getByTestId("runtime-toast").waitFor({ state: "visible" });
   const hazardToast = await page.evaluate(() => ({
@@ -583,7 +583,7 @@ try {
   await page.getByTestId("story-dialogue").waitFor({ state: "hidden" });
   await page.locator('[data-testid="sample-actions"] [data-preset="m2"]').click();
   await page.getByTestId("upgrade-button").click();
-  await expectText(page, "capacity-label", "Capacity 14");
+  await expectText(page, "capacity-label", "Capacity 16");
   await page.getByTestId("reset-button").click();
   await page.locator('[data-testid="stage-actions"] [data-stage="m5"]').click();
   const m5SampleActions = (await page.getByTestId("sample-actions").innerText()).toUpperCase();

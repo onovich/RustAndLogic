@@ -25,8 +25,7 @@ function testCompiler() {
   const program = compileTapeScript(`
 // comments do not consume instruction slots
 @Loop
-Check().Has(Scrap)
-IfTrue Goto @Grab
+If Check().Has(Scrap) Then Goto @Grab
 Move()
 Goto @Loop
 @Grab
@@ -72,16 +71,15 @@ PickUp()
   assert.equal(missingLabel.ok, false);
   assert.match(missingLabel.errors[0].message, /Unknown label/);
 
-  const oldSyntax = compileTapeScript("MoveForward\nCheckScrap\nJumpIfTrue @Loop", { instructionCapacity: 8 });
+  const oldSyntax = compileTapeScript("IfTrue Goto @Loop\nIfFalse Move()", { instructionCapacity: 8 });
   assert.equal(oldSyntax.ok, false);
-  assert.equal(oldSyntax.errors.some((error) => error.message.includes("Unknown instruction: MoveForward")), true);
+  assert.equal(oldSyntax.errors.some((error) => error.message.includes("Unknown instruction: IfTrue")), true);
 }
 
 function testVmExecution() {
   const program = compileTapeScript(`
 @Loop
-Check().Has(Scrap)
-IfTrue Goto @Grab
+If Check().Has(Scrap) Then Goto @Grab
 Move()
 @Grab
 PickUp()
@@ -116,8 +114,7 @@ function testGameSimulation() {
   const game = createGame();
   const source = `@Loop
 PickUp()
-Check().Has(Scrap)
-IfTrue Goto @Loop
+If Check().Has(Scrap) Then Goto @Loop
 Move()
 Turn(Right)
 Goto @Loop`;
@@ -262,7 +259,7 @@ Goto @Loop`;
     deposits: [{ id: "chip-a", type: "chip", x: 3, y: 2 }],
     resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
   });
-  state = deployProgram(hazardQueryGame, "Check().Is(Hazard)\nIfTrue Move()");
+  state = deployProgram(hazardQueryGame, "If Check().Is(Hazard) Then Move()");
   state = stepGame(hazardQueryGame);
   assert.equal(state.vm.cf, true);
   assert.equal(state.robot.x, 2);
@@ -280,20 +277,16 @@ Goto @Loop`;
     resources: { scrap: 1, cells: 0, chips: 0, memoryShards: 1 },
   });
   state = deployProgram(hazardHaulGame, [
-    "Check().Is(Hazard)",
-    "IfFalse Goto @Advance",
-    "Check(HP).Below(7)",
-    "IfTrue Goto @Return",
+    "IfNot Check().Is(Hazard) Then Goto @Advance",
+    "If Check(HP).Below(7) Then Goto @Return",
     "@Advance",
     "Move()",
-    "Check().Has(Chip)",
-    "IfTrue PickUp()",
+    "If Check().Has(Chip) Then PickUp()",
     "@Return",
     "MoveToward(Home)",
     "MoveToward(Home)",
-    "Check(Here).Is(Home)",
-    "IfTrue Unload(Home)",
-    "IfTrue Repair()",
+    "If Check(Here).Is(Home) Then Unload(Home)",
+    "If Check(Here).Is(Home) Then Repair()",
   ].join("\n"));
   state = runGame(hazardHaulGame, 6);
   assert.equal(state.resources.chips, 1);
@@ -311,8 +304,7 @@ Goto @Loop`;
   });
   state = deployProgram(hazardFaultGame, [
     "@Loop",
-    "Check(HP).Below(8)",
-    "IfTrue Repair()",
+    "If Check(HP).Below(8) Then Repair()",
     "Move()",
     "Goto @Loop",
   ].join("\n"));
@@ -481,7 +473,7 @@ Goto @Loop`;
 
   const stockBalancerGame = createGame({
     stageId: "m5",
-    instructionCapacity: 41,
+    instructionCapacity: 45,
     width: 6,
     height: 5,
     base: { x: 0, y: 2 },
@@ -499,14 +491,10 @@ Goto @Loop`;
   });
   state = deployProgram(stockBalancerGame, [
     "@Loop",
-    "Check(Memory).Above(2)",
-    "IfTrue Goto @Done",
-    "Check(Cargo).Any()",
-    "IfTrue Unload(Home)",
-    "Check(Scrap).BelowCost(Craft)",
-    "IfTrue Goto @ScrapRun",
-    "Check(Battery).BelowCost(Craft)",
-    "IfTrue Goto @BatteryRun",
+    "If Check(Memory).Above(2) Then Goto @Done",
+    "If Check(Cargo).Any() Then Unload(Home)",
+    "If Check(Scrap).BelowCost(Craft) Then Goto @ScrapRun",
+    "If Check(Battery).BelowCost(Craft) Then Goto @BatteryRun",
     "Craft(Home)",
     "Goto @Loop",
     "@ScrapRun",
@@ -514,28 +502,29 @@ Goto @Loop`;
     "Move()",
     "@ScrapSeek",
     "Turn(Left)",
-    "Check().Has(Scrap)",
-    "IfTrue PickUp()",
-    "IfTrue Goto @Return",
+    "If Check().Has(Scrap) Then Goto @GrabScrap",
     "Turn(Right)",
     "Move()",
     "Goto @ScrapSeek",
+    "@GrabScrap",
+    "PickUp()",
+    "Goto @Return",
     "@BatteryRun",
     "Turn(Around)",
     "Move()",
     "@BatterySeek",
     "Turn(Right)",
-    "Check().Has(Battery)",
-    "IfTrue PickUp()",
-    "IfTrue Goto @Return",
+    "If Check().Has(Battery) Then Goto @GrabBattery",
     "Turn(Left)",
     "Move()",
     "Goto @BatterySeek",
+    "@GrabBattery",
+    "PickUp()",
+    "Goto @Return",
     "@Return",
-    "Check(Here).Is(Home)",
-    "IfFalse MoveToward(Home)",
-    "IfFalse Goto @Return",
-    "Goto @Loop",
+    "If Check(Here).Is(Home) Then Goto @Loop",
+    "MoveToward(Home)",
+    "Goto @Return",
     "@Done",
     "Wait()",
     "Goto @Done",
@@ -548,7 +537,7 @@ Goto @Loop`;
 
   const combatLoopGame = createGame({
     stageId: "m6",
-    instructionCapacity: 24,
+    instructionCapacity: 28,
     width: 7,
     height: 5,
     base: { x: 0, y: 2 },
@@ -561,27 +550,25 @@ Goto @Loop`;
   });
   state = deployProgram(combatLoopGame, [
     "@Loop",
-    "Check(Cargo).Any()",
-    "IfTrue Goto @Return",
-    "Check().Has(Enemy)",
-    "IfTrue Fire()",
-    "IfTrue Goto @Loop",
-    "Check().Has(Chip)",
-    "IfTrue PickUp()",
-    "IfTrue Goto @Loop",
-    "Check(HP).Below(9)",
-    "IfTrue Goto @Recover",
+    "If Check(Cargo).Any() Then Goto @Return",
+    "If Check().Has(Enemy) Then Goto @Attack",
+    "If Check().Has(Chip) Then Goto @GrabChip",
+    "If Check(HP).Below(9) Then Goto @Recover",
     "Move()",
     "Goto @Loop",
+    "@Attack",
+    "Fire()",
+    "Goto @Loop",
+    "@GrabChip",
+    "PickUp()",
+    "Goto @Loop",
     "@Recover",
-    "Check(Here).Is(Home)",
-    "IfTrue Repair()",
-    "IfFalse MoveToward(Home)",
+    "If Check(Here).Is(Home) Then Repair()",
+    "IfNot Check(Here).Is(Home) Then MoveToward(Home)",
     "Goto @Loop",
     "@Return",
     "MoveToward(Home)",
-    "Check(Here).Is(Home)",
-    "IfTrue Unload(Home)",
+    "If Check(Here).Is(Home) Then Unload(Home)",
     "Goto @Loop",
   ].join("\n"));
   state = runGame(combatLoopGame, 10);

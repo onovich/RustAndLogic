@@ -21,7 +21,7 @@ TapeScript should not depend on game UI, Tauri, rendering, saves, economy, or pr
 
 ## TapeScript Understanding
 
-TapeScript is intentionally minimal: one instruction per line, no nested syntax, no variables, no scopes, and strict top-to-bottom execution. Labels start with `@` and consume instruction-memory capacity just like executable instructions, making control flow a physical resource decision.
+TapeScript is intentionally minimal: one instruction per line, no variables, no scopes, and strict top-to-bottom execution. Public conditionals use compact surface sugar such as `If Check(...).Has(...) Then ...`, but still lower into the same tiny query-and-branch core. Labels start with `@` and consume instruction-memory capacity just like executable instructions, making control flow a physical resource decision.
 
 The original legacy presentation metaphor is retired from the game layer. Player-facing UI, resources, tasks, dialogue, and logs should use script, instruction slot, logic memory, and memory shard language instead. `TapeScript` remains a technical language/runtime boundary name until the language itself is deliberately renamed.
 

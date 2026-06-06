@@ -40,7 +40,9 @@ export function compileTapeScript(source, options = {}) {
       return;
     }
 
-    rows.push({ ...parsed.instruction, source: withoutComment, sourceLine: sourceLine + 1 });
+    for (const instruction of parsed.instructions) {
+      rows.push({ ...instruction, source: withoutComment, sourceLine: sourceLine + 1 });
+    }
   });
 
   if (rows.length > instructionCapacity) {
@@ -187,7 +189,11 @@ export function describeInstruction(instruction) {
     return `Goto @${instruction.label}`;
   }
   if (instruction.type === "conditional") {
-    return `If${instruction.condition === "true" ? "True" : "False"} ${describeInstruction(instruction.inner)}`;
+    if (instruction.query) {
+      const prefix = instruction.condition === "true" ? "If" : "IfNot";
+      return `${prefix} ${describeInstruction(instruction.query)} Then ${describeInstruction(instruction.inner)}`;
+    }
+    return `If ${describeInstruction(instruction.inner)}`;
   }
   if (instruction.type === "query") {
     const target = instruction.target === "Forward" ? "" : instruction.target;
@@ -207,25 +213,36 @@ export function describeInstruction(instruction) {
 }
 
 function parseStatement(source) {
-  const conditional = source.match(/^If(True|False)\s+(.+)$/);
+  const conditional = source.match(/^If(Not)?\s+(.+?)\s+Then\s+(.+)$/);
   if (conditional) {
-    const inner = parseActionOrBranch(conditional[2]);
+    const query = parseQuery(conditional[2]);
+    if (!query) {
+      return { errors: ["If / IfNot requires a Check(...) query before Then."], op: "If" };
+    }
+    if (query.errors.length > 0) {
+      return query;
+    }
+    const inner = parseActionOrBranch(conditional[3]);
     if (inner.errors.length > 0) {
       return inner;
     }
-    return {
-      errors: [],
-      instruction: {
-        type: "conditional",
-        condition: conditional[1] === "True" ? "true" : "false",
-        inner: inner.instruction,
-      },
-    };
+      return {
+        errors: [],
+        instructions: [
+          query.instruction,
+          {
+            type: "conditional",
+            condition: conditional[1] === "Not" ? "false" : "true",
+            query: query.instruction,
+            inner: inner.instructions[0],
+          },
+        ],
+      };
   }
 
   const query = parseQuery(source);
   if (query) {
-    return query;
+    return { errors: query.errors, instructions: query.errors.length > 0 ? [] : [query.instruction], op: query.op };
   }
 
   return parseActionOrBranch(source);
@@ -234,7 +251,7 @@ function parseStatement(source) {
 function parseActionOrBranch(source) {
   const branch = source.match(/^Goto\s+(@[A-Za-z][A-Za-z0-9_]*)$/);
   if (branch) {
-    return { errors: [], instruction: { type: "branch", op: "Goto", label: branch[1].slice(1) } };
+    return { errors: [], instructions: [{ type: "branch", op: "Goto", label: branch[1].slice(1) }] };
   }
   if (source.startsWith("Goto")) {
     return { errors: ["Goto requires one @Label operand."], op: "Goto" };
@@ -271,9 +288,9 @@ function parseAction(source) {
   }
   if (["Wait", "Repair"].includes(call.name)) {
     if (call.arg) {
-      return { errors: [`${call.name}() does not take parameters.`], op: call.name };
+    return { errors: [`${call.name}() does not take parameters.`], op: call.name };
     }
-    return { errors: [], instruction: { type: "action", op: call.name, arg: "" } };
+    return { errors: [], instructions: [{ type: "action", op: call.name, arg: "" }] };
   }
 
   return { errors: [`Unknown instruction: ${call.name}`], op: call.name };
@@ -287,7 +304,7 @@ function singleArgAction(call, defaultArg, allowed) {
   if (!allowed.has(arg)) {
     return { errors: [`Invalid ${call.name}() parameter: ${arg}.`], op: call.name };
   }
-  return { errors: [], instruction: { type: "action", op: call.name, arg } };
+  return { errors: [], instructions: [{ type: "action", op: call.name, arg }] };
 }
 
 function parseQuery(source) {
