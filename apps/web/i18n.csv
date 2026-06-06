@@ -309,6 +309,7 @@ graphics.layerLocked,Locked,锁定
 graphics.layerUnlocked,Editable,可编辑
 graphics.presets,Shape presets,形状预设
 graphics.templates,Entity templates,实体模板
+graphics.recentTemplates,Recent templates,最近使用
 graphics.fillSwatches,Fill swatches,填充色板
 graphics.textureSwatches,Texture swatches,纹理色板
 graphics.preset.panel,Panel,面板

@@ -835,6 +835,10 @@ try {
     const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
     return exportValue.includes('"glyph": "W"') && exportValue.includes('"shape": "circle"');
   });
+  await page.waitForFunction(() => {
+    const recent = document.querySelector('[data-testid="graphics-recent-templates"] [data-template]');
+    return recent?.getAttribute("data-template") === "signalToken";
+  });
   await page.getByTestId("graphics-export-entity-button").click();
   const wallEntityIoAfterTemplate = await page.getByTestId("graphics-entity-io").inputValue();
   if (!wallEntityIoAfterTemplate.includes('"glyph": "W"') || !wallEntityIoAfterTemplate.includes('"shape": "circle"')) {
@@ -850,12 +854,17 @@ try {
     customCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]').length,
     firstCustomLabel:
       document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]')?.innerText ?? "",
+    firstRecentTemplate:
+      document.querySelector('[data-testid="graphics-recent-templates"] [data-template]')?.getAttribute("data-template") ?? "",
     storedTemplatesRaw: localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "",
+    storedRecentRaw: localStorage.getItem("rust-and-logic.template-history.v1") ?? "",
   }));
   if (
     customTemplateState.customCount < 1 ||
     !customTemplateState.firstCustomLabel.toUpperCase().includes("WALL CACHE") ||
-    !customTemplateState.storedTemplatesRaw.includes("Wall Cache")
+    !customTemplateState.storedTemplatesRaw.includes("Wall Cache") ||
+    !customTemplateState.firstRecentTemplate.startsWith("custom-wall-wall-cache-") ||
+    !customTemplateState.storedRecentRaw.includes("custom-wall-wall-cache-")
   ) {
     throw new Error(`Expected custom graphics template persistence, got ${JSON.stringify(customTemplateState)}.`);
   }
@@ -866,7 +875,8 @@ try {
     .click();
   await page.waitForFunction(() => {
     const stored = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
-    return !stored.includes("Wall Cache");
+    const recent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+    return !stored.includes("Wall Cache") && !recent.includes("custom-wall-wall-cache-");
   });
   const graphicsSelectOptions = await page.evaluate(() => {
     const readOptions = (field) =>

@@ -127,6 +127,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add template applicability metadata and recommendation ordering so the Studio template library surfaces better matches for the currently selected entity.
 - [x] Add local custom-template saving so developers can capture the current entity visual into a reusable Studio template library entry.
 - [x] Add per-template thumbnail previews so the Studio library can be browsed visually instead of only by label.
+- [x] Add a recent-template strip so developers can quickly reapply the last few visuals they were iterating with.
 
 ## Definition Of Done For A Small Item
 

@@ -72,6 +72,7 @@ let stageDefinitions = [];
 let graphicsEditorConfig = defaultGraphicsEditorConfig();
 let defaultGraphicsTemplates = [];
 let customGraphicsTemplates = [];
+let recentGraphicsTemplateIds = [];
 let defaultEntityVisualCatalog = { version: 1, entities: {} };
 let entityVisualCatalog = { version: 1, entities: {} };
 let selectedVisualEntityKey = "";
@@ -80,6 +81,7 @@ let graphicsCopyResetTimer = 0;
 const entityVisualDataUrlCache = new Map();
 const entityVisualsKey = "rust-and-logic.entity-visuals.v1";
 const graphicsTemplatesKey = "rust-and-logic.entity-templates.v1";
+const graphicsRecentTemplatesKey = "rust-and-logic.template-history.v1";
 
 const elements = {
   editor: query("script-editor"),
@@ -170,6 +172,7 @@ const elements = {
   graphicsMoveLayerDownButton: query("graphics-move-layer-down-button"),
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
+  graphicsRecentTemplates: query("graphics-recent-templates"),
   graphicsTemplates: query("graphics-templates"),
   graphicsTemplateName: query("graphics-template-name"),
   graphicsSaveTemplateButton: query("graphics-save-template-button"),
@@ -201,6 +204,20 @@ function loadCustomGraphicsTemplates() {
   } catch (error) {
     console.warn("Failed to restore custom graphics templates.", error);
     customGraphicsTemplates = [];
+  }
+}
+
+function loadRecentGraphicsTemplates() {
+  const stored = localStorage.getItem(graphicsRecentTemplatesKey);
+  if (!stored) {
+    recentGraphicsTemplateIds = [];
+    return;
+  }
+  try {
+    recentGraphicsTemplateIds = normalizeRecentGraphicsTemplateIds(JSON.parse(stored));
+  } catch (error) {
+    console.warn("Failed to restore recent graphics templates.", error);
+    recentGraphicsTemplateIds = [];
   }
 }
 
@@ -663,6 +680,18 @@ function initializeGraphicsEditor() {
     }
     applyEntityTemplate(button.dataset.template ?? "");
   });
+  elements.graphicsRecentTemplates?.addEventListener("click", (event) => {
+    const deleteAction = event.target.closest("[data-template-action='delete']");
+    if (deleteAction) {
+      removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
+      return;
+    }
+    const button = event.target.closest("[data-template]");
+    if (!button) {
+      return;
+    }
+    applyEntityTemplate(button.dataset.template ?? "");
+  });
   elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
     saveCurrentEntityAsTemplate();
   });
@@ -744,6 +773,12 @@ function persistCustomGraphicsTemplates() {
   renderGraphicsEditor();
 }
 
+function persistRecentGraphicsTemplates() {
+  recentGraphicsTemplateIds = normalizeRecentGraphicsTemplateIds(recentGraphicsTemplateIds);
+  localStorage.setItem(graphicsRecentTemplatesKey, JSON.stringify(recentGraphicsTemplateIds));
+  renderGraphicsEditor();
+}
+
 function refreshWorldVisuals() {
   const state = snapshot(game);
   renderGrid(state, state, { animate: false });
@@ -758,6 +793,7 @@ function renderGraphicsEditor() {
   renderGraphicsEntityList();
   renderGraphicsLayerList();
   renderGraphicsForm();
+  renderGraphicsRecentTemplates();
   renderGraphicsTemplates();
   renderGraphicsPresets();
   renderGraphicsSwatches();
@@ -844,50 +880,77 @@ function renderGraphicsTemplates() {
     group.hidden = false;
   }
   for (const template of getSortedGraphicsTemplates()) {
-    const card = document.createElement("div");
-    card.className = "visual-template-card";
-    card.dataset.templateSource = getGraphicsTemplateSource(template);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "visual-template-button";
-    button.dataset.template = template.id;
-    button.dataset.templateSource = getGraphicsTemplateSource(template);
-    button.dataset.recommended = String(isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
-    const description = getGraphicsTemplateDescription(template);
-    if (description) {
-      button.title = description;
-    }
-    const preview = document.createElement("span");
-    preview.className = "visual-template-preview";
-    preview.style.backgroundImage = buildGraphicsTemplatePreview(template);
-    const label = document.createElement("span");
-    label.className = "visual-template-label";
-    label.textContent = getGraphicsTemplateLabel(template);
-    const meta = document.createElement("span");
-    meta.className = "visual-template-meta";
-    const metaParts = [];
-    if (isGraphicsTemplateRecommended(template, selectedVisualEntityKey)) {
-      metaParts.push(t("graphics.templateRecommended"));
-    }
-    const category = getGraphicsTemplateCategory(template);
-    if (category) {
-      metaParts.push(category);
-    }
-    meta.textContent = metaParts.join(" // ");
-    button.append(preview, label, meta);
-    card.append(button);
-    if (isCustomGraphicsTemplate(template)) {
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "visual-template-remove";
-      deleteButton.dataset.templateAction = "delete";
-      deleteButton.dataset.templateId = template.id;
-      deleteButton.textContent = t("graphics.deleteTemplate");
-      deleteButton.title = t("graphics.deleteTemplate");
-      card.append(deleteButton);
-    }
-    elements.graphicsTemplates.append(card);
+    elements.graphicsTemplates.append(createGraphicsTemplateCard(template));
   }
+}
+
+function renderGraphicsRecentTemplates() {
+  if (!elements.graphicsRecentTemplates) {
+    return;
+  }
+  elements.graphicsRecentTemplates.replaceChildren();
+  const group = elements.graphicsRecentTemplates.closest(".visual-preset-group");
+  const recentTemplates = getRecentGraphicsTemplates();
+  if (!selectedVisualEntityKey || recentTemplates.length === 0) {
+    elements.graphicsRecentTemplates.hidden = true;
+    if (group) {
+      group.hidden = true;
+    }
+    return;
+  }
+  elements.graphicsRecentTemplates.hidden = false;
+  if (group) {
+    group.hidden = false;
+  }
+  for (const template of recentTemplates) {
+    elements.graphicsRecentTemplates.append(createGraphicsTemplateCard(template));
+  }
+}
+
+function createGraphicsTemplateCard(template) {
+  const card = document.createElement("div");
+  card.className = "visual-template-card";
+  card.dataset.templateSource = getGraphicsTemplateSource(template);
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "visual-template-button";
+  button.dataset.template = template.id;
+  button.dataset.templateSource = getGraphicsTemplateSource(template);
+  button.dataset.recommended = String(isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
+  const description = getGraphicsTemplateDescription(template);
+  if (description) {
+    button.title = description;
+  }
+  const preview = document.createElement("span");
+  preview.className = "visual-template-preview";
+  preview.style.backgroundImage = buildGraphicsTemplatePreview(template);
+  const label = document.createElement("span");
+  label.className = "visual-template-label";
+  label.textContent = getGraphicsTemplateLabel(template);
+  const meta = document.createElement("span");
+  meta.className = "visual-template-meta";
+  const metaParts = [];
+  if (isGraphicsTemplateRecommended(template, selectedVisualEntityKey)) {
+    metaParts.push(t("graphics.templateRecommended"));
+  }
+  const category = getGraphicsTemplateCategory(template);
+  if (category) {
+    metaParts.push(category);
+  }
+  meta.textContent = metaParts.join(" // ");
+  button.append(preview, label, meta);
+  card.append(button);
+  if (isCustomGraphicsTemplate(template)) {
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "visual-template-remove";
+    deleteButton.dataset.templateAction = "delete";
+    deleteButton.dataset.templateId = template.id;
+    deleteButton.textContent = t("graphics.deleteTemplate");
+    deleteButton.title = t("graphics.deleteTemplate");
+    card.append(deleteButton);
+  }
+  return card;
 }
 
 function getSortedGraphicsTemplates() {
@@ -923,6 +986,11 @@ function isGraphicsTemplateRecommended(template, entityKey) {
   const entityKind = getGraphicsEntityKind(entityKey);
   const supportedKinds = template?.entityKinds ?? [];
   return Boolean(entityKind && Array.isArray(supportedKinds) && supportedKinds.includes(entityKind));
+}
+
+function getRecentGraphicsTemplates() {
+  const templatesById = new Map(getAllGraphicsTemplates().map((template) => [template.id, template]));
+  return recentGraphicsTemplateIds.map((templateId) => templatesById.get(templateId)).filter(Boolean);
 }
 
 function getAllGraphicsTemplates() {
@@ -986,6 +1054,13 @@ function normalizeGraphicsCustomTemplates(value) {
   return value
     .map((template, index) => normalizeGraphicsCustomTemplate(template, index))
     .filter(Boolean);
+}
+
+function normalizeRecentGraphicsTemplateIds(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return [...new Set(value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim()))].slice(0, 6);
 }
 
 function normalizeGraphicsCustomTemplate(template, index) {
@@ -1946,6 +2021,7 @@ function applyEntityTemplate(templateId) {
   };
   ensureSelectedVisualLayer();
   persistEntityVisualCatalog();
+  recordRecentGraphicsTemplate(template.id);
   showToast({ title: t("graphics.templateApplied"), body: getGraphicsTemplateLabel(template) }, "success");
 }
 
@@ -1974,10 +2050,19 @@ function saveCurrentEntityAsTemplate() {
   }
   customGraphicsTemplates = [normalizedTemplate, ...customGraphicsTemplates];
   persistCustomGraphicsTemplates();
+  recordRecentGraphicsTemplate(normalizedTemplate.id);
   if (elements.graphicsTemplateName) {
     elements.graphicsTemplateName.value = "";
   }
   showToast({ title: t("graphics.templateSaved"), body: normalizedTemplate.label }, "success");
+}
+
+function recordRecentGraphicsTemplate(templateId) {
+  if (!templateId) {
+    return;
+  }
+  recentGraphicsTemplateIds = [templateId, ...recentGraphicsTemplateIds.filter((item) => item !== templateId)];
+  persistRecentGraphicsTemplates();
 }
 
 function buildDefaultCustomTemplateLabel(entityKey) {
@@ -2004,7 +2089,9 @@ function removeCustomGraphicsTemplate(templateId) {
     return;
   }
   customGraphicsTemplates = customGraphicsTemplates.filter((item) => item.id !== templateId);
+  recentGraphicsTemplateIds = recentGraphicsTemplateIds.filter((item) => item !== templateId);
   persistCustomGraphicsTemplates();
+  persistRecentGraphicsTemplates();
   showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(template) }, "success");
 }
 
@@ -2653,6 +2740,7 @@ updateControls = function updateControlsPatched() {
 await loadI18n();
 await loadAppData();
 loadCustomGraphicsTemplates();
+loadRecentGraphicsTemplates();
 await loadEntityVisualCatalog();
 initializeAppData();
 applyLanguage();
