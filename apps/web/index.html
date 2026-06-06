@@ -221,8 +221,17 @@
                 <div class="visual-editor-form" data-testid="graphics-form"></div>
                 <div class="visual-assist-grid">
                   <div class="visual-preset-group">
-                    <div class="section-heading compact-heading">
+                    <div class="section-heading compact-heading visual-template-heading">
                       <h3 data-i18n="graphics.templates"></h3>
+                      <div class="visual-template-create">
+                        <input
+                          data-testid="graphics-template-name"
+                          type="text"
+                          spellcheck="false"
+                          data-i18n-attr="placeholder:graphics.templateNamePlaceholder;aria-label:graphics.templateNamePlaceholder"
+                        />
+                        <button data-testid="graphics-save-template-button" data-i18n="graphics.saveTemplate" type="button"></button>
+                      </div>
                     </div>
                     <div class="visual-preset-strip" data-testid="graphics-templates"></div>
                   </div>

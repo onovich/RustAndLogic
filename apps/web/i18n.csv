@@ -328,7 +328,13 @@ graphics.templateCategory.pickup,Pickup,拾取物
 graphics.templateCategory.field,Field,区域
 graphics.templateCategory.structure,Structure,结构体
 graphics.templateCategory.anchor,Anchor,据点
+graphics.templateCategory.custom,Custom,自定义
 graphics.templateRecommended,Recommended,推荐
+graphics.templateNamePlaceholder,Template label,模板名称
+graphics.saveTemplate,Save_Template,保存模板
+graphics.deleteTemplate,Del,删
+graphics.templateSaved,Template saved,模板已保存
+graphics.templateDeleted,Template deleted,模板已删除
 graphics.entityIoPlaceholder,"Paste one entity visual JSON here, then import into the selected entity.","在这里粘贴单个实体的图形 JSON，然后导入到当前选中实体。"
 graphics.importSuccess,Entity imported,实体已导入
 graphics.importFailed,Import failed,导入失败

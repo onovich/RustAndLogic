@@ -70,6 +70,8 @@ let scriptPresets = [];
 let taskDefinitions = [];
 let stageDefinitions = [];
 let graphicsEditorConfig = defaultGraphicsEditorConfig();
+let defaultGraphicsTemplates = [];
+let customGraphicsTemplates = [];
 let defaultEntityVisualCatalog = { version: 1, entities: {} };
 let entityVisualCatalog = { version: 1, entities: {} };
 let selectedVisualEntityKey = "";
@@ -77,6 +79,7 @@ let selectedVisualLayerId = "";
 let graphicsCopyResetTimer = 0;
 const entityVisualDataUrlCache = new Map();
 const entityVisualsKey = "rust-and-logic.entity-visuals.v1";
+const graphicsTemplatesKey = "rust-and-logic.entity-templates.v1";
 
 const elements = {
   editor: query("script-editor"),
@@ -168,6 +171,8 @@ const elements = {
   graphicsDeleteLayerButton: query("graphics-delete-layer-button"),
   graphicsForm: query("graphics-form"),
   graphicsTemplates: query("graphics-templates"),
+  graphicsTemplateName: query("graphics-template-name"),
+  graphicsSaveTemplateButton: query("graphics-save-template-button"),
   graphicsPresets: query("graphics-presets"),
   graphicsFillSwatches: query("graphics-fill-swatches"),
   graphicsTextureSwatches: query("graphics-texture-swatches"),
@@ -183,6 +188,20 @@ async function loadI18n() {
 
 async function loadAppData() {
   appData = JSON.parse(await loadTextAsset(["/apps/web/app-data.json", "./app-data.json"]));
+}
+
+function loadCustomGraphicsTemplates() {
+  const stored = localStorage.getItem(graphicsTemplatesKey);
+  if (!stored) {
+    customGraphicsTemplates = [];
+    return;
+  }
+  try {
+    customGraphicsTemplates = normalizeGraphicsCustomTemplates(JSON.parse(stored));
+  } catch (error) {
+    console.warn("Failed to restore custom graphics templates.", error);
+    customGraphicsTemplates = [];
+  }
 }
 
 async function loadEntityVisualCatalog() {
@@ -362,6 +381,7 @@ function initializeAppData() {
   taskDefinitions = appData.taskDefinitions ?? appData.tasks ?? [];
   stageDefinitions = appData.stages ?? [];
   graphicsEditorConfig = normalizeGraphicsEditorConfig(appData.graphicsEditor);
+  defaultGraphicsTemplates = cloneJson(graphicsEditorConfig.entityTemplates ?? []);
   currentStageId = stageDefinitions[0]?.id ?? null;
   flow = {};
   scriptActions = new Set(appData.script?.syntax?.actions ?? []);
@@ -632,11 +652,26 @@ function initializeGraphicsEditor() {
     applyShapePreset(button.dataset.preset ?? "");
   });
   elements.graphicsTemplates?.addEventListener("click", (event) => {
+    const deleteAction = event.target.closest("[data-template-action='delete']");
+    if (deleteAction) {
+      removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
+      return;
+    }
     const button = event.target.closest("[data-template]");
     if (!button) {
       return;
     }
     applyEntityTemplate(button.dataset.template ?? "");
+  });
+  elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
+    saveCurrentEntityAsTemplate();
+  });
+  elements.graphicsTemplateName?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    saveCurrentEntityAsTemplate();
   });
   const handleGraphicsSwatchClick = (event) => {
     const button = event.target.closest("[data-swatch-kind]");
@@ -704,6 +739,11 @@ function persistEntityVisualCatalog() {
   refreshWorldVisuals();
 }
 
+function persistCustomGraphicsTemplates() {
+  localStorage.setItem(graphicsTemplatesKey, JSON.stringify(customGraphicsTemplates));
+  renderGraphicsEditor();
+}
+
 function refreshWorldVisuals() {
   const state = snapshot(game);
   renderGrid(state, state, { animate: false });
@@ -731,6 +771,9 @@ function renderGraphicsEditor() {
     elements.graphicsEntityIo.placeholder = t("graphics.entityIoPlaceholder");
   }
   elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
+  if (elements.graphicsSaveTemplateButton) {
+    elements.graphicsSaveTemplateButton.disabled = !selectedVisualEntityKey;
+  }
   const layerIndex = visual?.layers.findIndex((item) => item.id === selectedVisualLayerId) ?? -1;
   const layerCount = visual?.layers.length ?? 0;
   const selectedLayer = visual?.layers.find((item) => item.id === selectedVisualLayerId) ?? null;
@@ -801,53 +844,162 @@ function renderGraphicsTemplates() {
     group.hidden = false;
   }
   for (const template of getSortedGraphicsTemplates()) {
+    const card = document.createElement("div");
+    card.className = "visual-template-card";
+    card.dataset.templateSource = getGraphicsTemplateSource(template);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "visual-template-button";
     button.dataset.template = template.id;
+    button.dataset.templateSource = getGraphicsTemplateSource(template);
     button.dataset.recommended = String(isGraphicsTemplateRecommended(template, selectedVisualEntityKey));
-    if (template.descriptionKey) {
-      button.title = t(template.descriptionKey);
+    const description = getGraphicsTemplateDescription(template);
+    if (description) {
+      button.title = description;
     }
     const label = document.createElement("span");
     label.className = "visual-template-label";
-    label.textContent = t(template.labelKey);
+    label.textContent = getGraphicsTemplateLabel(template);
     const meta = document.createElement("span");
     meta.className = "visual-template-meta";
     const metaParts = [];
     if (isGraphicsTemplateRecommended(template, selectedVisualEntityKey)) {
       metaParts.push(t("graphics.templateRecommended"));
     }
-    if (template.categoryKey) {
-      metaParts.push(t(template.categoryKey));
+    const category = getGraphicsTemplateCategory(template);
+    if (category) {
+      metaParts.push(category);
     }
     meta.textContent = metaParts.join(" // ");
     button.append(label, meta);
-    elements.graphicsTemplates.append(button);
+    card.append(button);
+    if (isCustomGraphicsTemplate(template)) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "visual-template-remove";
+      deleteButton.dataset.templateAction = "delete";
+      deleteButton.dataset.templateId = template.id;
+      deleteButton.textContent = t("graphics.deleteTemplate");
+      deleteButton.title = t("graphics.deleteTemplate");
+      card.append(deleteButton);
+    }
+    elements.graphicsTemplates.append(card);
   }
 }
 
 function getSortedGraphicsTemplates() {
   const entityKey = selectedVisualEntityKey;
-  return [...(graphicsEditorConfig.entityTemplates ?? [])].sort((left, right) => {
+  return getAllGraphicsTemplates().sort((left, right) => {
     const leftRecommended = isGraphicsTemplateRecommended(left, entityKey) ? 0 : 1;
     const rightRecommended = isGraphicsTemplateRecommended(right, entityKey) ? 0 : 1;
     if (leftRecommended !== rightRecommended) {
       return leftRecommended - rightRecommended;
     }
-    const leftCategory = t(left.categoryKey ?? "").toUpperCase();
-    const rightCategory = t(right.categoryKey ?? "").toUpperCase();
+    const leftSource = getGraphicsTemplateSource(left) === "custom" ? 0 : 1;
+    const rightSource = getGraphicsTemplateSource(right) === "custom" ? 0 : 1;
+    if (leftSource !== rightSource) {
+      return leftSource - rightSource;
+    }
+    if (leftSource === 0 && rightSource === 0) {
+      const leftUpdated = Number(left.updatedAt ?? 0);
+      const rightUpdated = Number(right.updatedAt ?? 0);
+      if (leftUpdated !== rightUpdated) {
+        return rightUpdated - leftUpdated;
+      }
+    }
+    const leftCategory = getGraphicsTemplateCategory(left).toUpperCase();
+    const rightCategory = getGraphicsTemplateCategory(right).toUpperCase();
     if (leftCategory !== rightCategory) {
       return leftCategory.localeCompare(rightCategory);
     }
-    return t(left.labelKey).localeCompare(t(right.labelKey));
+    return getGraphicsTemplateLabel(left).localeCompare(getGraphicsTemplateLabel(right));
   });
 }
 
 function isGraphicsTemplateRecommended(template, entityKey) {
-  const entityKind = graphicsEditorConfig.entityKinds?.[entityKey] ?? "";
+  const entityKind = getGraphicsEntityKind(entityKey);
   const supportedKinds = template?.entityKinds ?? [];
   return Boolean(entityKind && Array.isArray(supportedKinds) && supportedKinds.includes(entityKind));
+}
+
+function getAllGraphicsTemplates() {
+  return [
+    ...customGraphicsTemplates.map((template) => ({ ...template, source: "custom" })),
+    ...defaultGraphicsTemplates.map((template) => ({ ...template, source: "builtin" })),
+  ];
+}
+
+function getGraphicsTemplateSource(template) {
+  return template?.source === "custom" ? "custom" : "builtin";
+}
+
+function isCustomGraphicsTemplate(template) {
+  return getGraphicsTemplateSource(template) === "custom";
+}
+
+function getGraphicsTemplateLabel(template) {
+  if (typeof template?.label === "string" && template.label.trim()) {
+    return template.label.trim();
+  }
+  return t(template?.labelKey ?? "");
+}
+
+function getGraphicsTemplateDescription(template) {
+  if (typeof template?.description === "string" && template.description.trim()) {
+    return template.description.trim();
+  }
+  if (template?.descriptionKey) {
+    return t(template.descriptionKey);
+  }
+  return "";
+}
+
+function getGraphicsTemplateCategory(template) {
+  if (typeof template?.categoryLabel === "string" && template.categoryLabel.trim()) {
+    return template.categoryLabel.trim();
+  }
+  if (template?.categoryKey) {
+    return t(template.categoryKey);
+  }
+  return "";
+}
+
+function getGraphicsEntityKind(entityKey = selectedVisualEntityKey) {
+  return graphicsEditorConfig.entityKinds?.[entityKey] ?? "";
+}
+
+function normalizeGraphicsCustomTemplates(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((template, index) => normalizeGraphicsCustomTemplate(template, index))
+    .filter(Boolean);
+}
+
+function normalizeGraphicsCustomTemplate(template, index) {
+  if (!template || typeof template !== "object" || !template.visual || !Array.isArray(template.visual.layers)) {
+    return null;
+  }
+  const label =
+    typeof template.label === "string" && template.label.trim()
+      ? template.label.trim()
+      : `Template ${String(index + 1).padStart(2, "0")}`;
+  return {
+    id:
+      typeof template.id === "string" && template.id.trim()
+        ? template.id.trim()
+        : `custom-template-${String(index + 1).padStart(2, "0")}`,
+    label,
+    description:
+      typeof template.description === "string" && template.description.trim() ? template.description.trim() : "",
+    categoryKey: "graphics.templateCategory.custom",
+    entityKinds: Array.isArray(template.entityKinds) ? template.entityKinds.filter((item) => typeof item === "string") : [],
+    originEntityKey:
+      typeof template.originEntityKey === "string" && template.originEntityKey.trim() ? template.originEntityKey.trim() : "",
+    updatedAt: Number.isFinite(Number(template.updatedAt)) ? Number(template.updatedAt) : 0,
+    visual: cloneJson(template.visual),
+  };
 }
 
 function renderGraphicsLayerList() {
@@ -1766,7 +1918,7 @@ function applyEntityTemplate(templateId) {
   if (!entityKey) {
     return;
   }
-  const template = (graphicsEditorConfig.entityTemplates ?? []).find((item) => item.id === templateId);
+  const template = getAllGraphicsTemplates().find((item) => item.id === templateId);
   if (!template?.visual) {
     return;
   }
@@ -1783,7 +1935,66 @@ function applyEntityTemplate(templateId) {
   };
   ensureSelectedVisualLayer();
   persistEntityVisualCatalog();
-  showToast({ title: t("graphics.templateApplied"), body: t(template.labelKey) }, "success");
+  showToast({ title: t("graphics.templateApplied"), body: getGraphicsTemplateLabel(template) }, "success");
+}
+
+function saveCurrentEntityAsTemplate() {
+  const entityKey = selectedVisualEntityKey;
+  const visual = getSelectedEntityVisual();
+  if (!entityKey || !visual) {
+    return;
+  }
+  const nextLabel = elements.graphicsTemplateName?.value.trim() || buildDefaultCustomTemplateLabel(entityKey);
+  const normalizedTemplate = normalizeGraphicsCustomTemplate(
+    {
+      id: buildCustomTemplateId(entityKey, nextLabel),
+      label: nextLabel,
+      description: getGraphicsEntityLabel(entityKey),
+      categoryKey: "graphics.templateCategory.custom",
+      entityKinds: getGraphicsEntityKind(entityKey) ? [getGraphicsEntityKind(entityKey)] : [],
+      originEntityKey: entityKey,
+      updatedAt: Date.now(),
+      visual: cloneJson(visual),
+    },
+    customGraphicsTemplates.length,
+  );
+  if (!normalizedTemplate) {
+    return;
+  }
+  customGraphicsTemplates = [normalizedTemplate, ...customGraphicsTemplates];
+  persistCustomGraphicsTemplates();
+  if (elements.graphicsTemplateName) {
+    elements.graphicsTemplateName.value = "";
+  }
+  showToast({ title: t("graphics.templateSaved"), body: normalizedTemplate.label }, "success");
+}
+
+function buildDefaultCustomTemplateLabel(entityKey) {
+  const entityLabel = getGraphicsEntityLabel(entityKey);
+  const similarCount = customGraphicsTemplates.filter((template) => template.originEntityKey === entityKey).length + 1;
+  return `${entityLabel} // ${String(similarCount).padStart(2, "0")}`;
+}
+
+function buildCustomTemplateId(entityKey, label) {
+  const slug = String(label)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 24);
+  return `custom-${entityKey}-${slug || "template"}-${Date.now().toString(36)}`;
+}
+
+function removeCustomGraphicsTemplate(templateId) {
+  if (!templateId) {
+    return;
+  }
+  const template = customGraphicsTemplates.find((item) => item.id === templateId);
+  if (!template) {
+    return;
+  }
+  customGraphicsTemplates = customGraphicsTemplates.filter((item) => item.id !== templateId);
+  persistCustomGraphicsTemplates();
+  showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(template) }, "success");
 }
 
 function applyShapePreset(presetId) {
@@ -2430,6 +2641,7 @@ updateControls = function updateControlsPatched() {
 
 await loadI18n();
 await loadAppData();
+loadCustomGraphicsTemplates();
 await loadEntityVisualCatalog();
 initializeAppData();
 applyLanguage();

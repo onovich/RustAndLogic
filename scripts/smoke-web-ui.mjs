@@ -744,6 +744,8 @@ try {
     previewBackground: getComputedStyle(document.querySelector('[data-testid="graphics-preview"]')).backgroundImage,
     layerCount: document.querySelectorAll('[data-testid="graphics-layer-list"] [data-layer-id]').length,
     templateCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template]').length,
+    templateNameControl: Boolean(document.querySelector('[data-testid="graphics-template-name"]')),
+    saveTemplateControl: Boolean(document.querySelector('[data-testid="graphics-save-template-button"]')),
     firstTemplate: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-template") ?? "",
     firstTemplateRecommended: document.querySelector('[data-testid="graphics-templates"] [data-template]')?.getAttribute("data-recommended") ?? "",
   }));
@@ -752,6 +754,8 @@ try {
     !graphicsPreviewState.previewBackground.includes("data:image/svg+xml") ||
     graphicsPreviewState.layerCount < 1 ||
     graphicsPreviewState.templateCount < 4 ||
+    !graphicsPreviewState.templateNameControl ||
+    !graphicsPreviewState.saveTemplateControl ||
     graphicsPreviewState.firstTemplate !== "frameBot" ||
     graphicsPreviewState.firstTemplateRecommended !== "true"
   ) {
@@ -833,6 +837,34 @@ try {
   if (!wallEntityIoAfterTemplate.includes('"glyph": "W"') || !wallEntityIoAfterTemplate.includes('"shape": "circle"')) {
     throw new Error(`Expected entity template application to rewrite current visual, got: ${wallEntityIoAfterTemplate}`);
   }
+  await page.getByTestId("graphics-template-name").fill("Wall Cache");
+  await page.getByTestId("graphics-save-template-button").click();
+  await page.waitForFunction(() => {
+    const custom = document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]');
+    return custom && custom.textContent.includes("Wall Cache");
+  });
+  const customTemplateState = await page.evaluate(() => ({
+    customCount: document.querySelectorAll('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]').length,
+    firstCustomLabel:
+      document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]')?.innerText ?? "",
+    storedTemplatesRaw: localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "",
+  }));
+  if (
+    customTemplateState.customCount < 1 ||
+    !customTemplateState.firstCustomLabel.toUpperCase().includes("WALL CACHE") ||
+    !customTemplateState.storedTemplatesRaw.includes("Wall Cache")
+  ) {
+    throw new Error(`Expected custom graphics template persistence, got ${JSON.stringify(customTemplateState)}.`);
+  }
+  await page
+    .locator('[data-testid="graphics-templates"] .visual-template-card[data-template-source="custom"]')
+    .first()
+    .locator('[data-template-action="delete"]')
+    .click();
+  await page.waitForFunction(() => {
+    const stored = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+    return !stored.includes("Wall Cache");
+  });
   const graphicsSelectOptions = await page.evaluate(() => {
     const readOptions = (field) =>
       [...document.querySelectorAll(`[data-testid="graphics-form"] [data-field="${field}"] option`)].map((node) => node.value);
