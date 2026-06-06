@@ -1,11 +1,93 @@
-const ACTION_NAMES = new Set(["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"]);
-const DIRECTION_ARGS = new Set(["Forward", "Back"]);
-const TURN_ARGS = new Set(["Left", "Right", "Around"]);
-const ITEM_ARGS = new Set(["Scrap", "Battery", "Chip"]);
-const ENTITY_ARGS = new Set(["Enemy"]);
-const TERRAIN_ARGS = new Set(["Wall", "Home", "Hazard"]);
-const RESOURCE_CHECK_TARGETS = new Set(["Scrap", "Battery", "Chip", "Memory"]);
-const CHECK_TARGETS = new Set(["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage", ...RESOURCE_CHECK_TARGETS]);
+const ACTION_NAME_LIST = ["Move", "MoveToward", "Turn", "PickUp", "Drop", "Unload", "Craft", "Fire", "Wait", "Repair"];
+const DIRECTION_ARG_LIST = ["Forward", "Back"];
+const TURN_ARG_LIST = ["Left", "Right", "Around"];
+const ITEM_ARG_LIST = ["Scrap", "Battery", "Chip"];
+const ENTITY_ARG_LIST = ["Enemy"];
+const TERRAIN_ARG_LIST = ["Wall", "Home", "Hazard"];
+const RESOURCE_CHECK_TARGET_LIST = ["Scrap", "Battery", "Chip", "Memory"];
+const CHECK_TARGET_LIST = ["Forward", "Here", "Home", "Cargo", "HP", "Energy", "Damage", ...RESOURCE_CHECK_TARGET_LIST];
+
+const ACTION_NAMES = new Set(ACTION_NAME_LIST);
+const DIRECTION_ARGS = new Set(DIRECTION_ARG_LIST);
+const TURN_ARGS = new Set(TURN_ARG_LIST);
+const ITEM_ARGS = new Set(ITEM_ARG_LIST);
+const ENTITY_ARGS = new Set(ENTITY_ARG_LIST);
+const TERRAIN_ARGS = new Set(TERRAIN_ARG_LIST);
+const RESOURCE_CHECK_TARGETS = new Set(RESOURCE_CHECK_TARGET_LIST);
+const CHECK_TARGETS = new Set(CHECK_TARGET_LIST);
+
+export const TAPE_SCRIPT_EDITOR_MODEL = Object.freeze({
+  conditionals: Object.freeze(["If", "IfNot", "Then"]),
+  actions: Object.freeze([...ACTION_NAME_LIST]),
+  actionArgs: Object.freeze({
+    Move: Object.freeze([...DIRECTION_ARG_LIST]),
+    MoveToward: Object.freeze(["Home"]),
+    Turn: Object.freeze([...TURN_ARG_LIST]),
+    PickUp: Object.freeze(["Forward"]),
+    Drop: Object.freeze(["Forward"]),
+    Unload: Object.freeze(["Home"]),
+    Craft: Object.freeze(["Home"]),
+    Fire: Object.freeze(["Forward"]),
+    Wait: Object.freeze([]),
+    Repair: Object.freeze([]),
+  }),
+  checkTargets: Object.freeze([...CHECK_TARGET_LIST]),
+  checkPredicates: Object.freeze({
+    Forward: Object.freeze(["Has", "Is", "IsEmpty"]),
+    Here: Object.freeze(["Is"]),
+    Home: Object.freeze(["Is"]),
+    Cargo: Object.freeze(["Has", "Any", "IsFull"]),
+    HP: Object.freeze(["Below", "Above"]),
+    Energy: Object.freeze(["Below", "Above"]),
+    Damage: Object.freeze(["Below", "Above"]),
+    Scrap: Object.freeze(["Below", "Above", "BelowCost"]),
+    Battery: Object.freeze(["Below", "Above", "BelowCost"]),
+    Chip: Object.freeze(["Below", "Above", "BelowCost"]),
+    Memory: Object.freeze(["Below", "Above", "BelowCost"]),
+  }),
+});
+
+export function getTapeScriptCheckPredicates(target = "Forward") {
+  return TAPE_SCRIPT_EDITOR_MODEL.checkPredicates[target] ?? [];
+}
+
+export function getTapeScriptCheckValues(target = "Forward", predicate = "") {
+  if (predicate === "Has") {
+    if (target === "Cargo") {
+      return [...ITEM_ARG_LIST];
+    }
+    return [...ITEM_ARG_LIST, ...ENTITY_ARG_LIST];
+  }
+  if (predicate === "Is") {
+    if (target === "Here" || target === "Home") {
+      return ["Home"];
+    }
+    return [...TERRAIN_ARG_LIST];
+  }
+  if (predicate === "BelowCost") {
+    return ["Craft"];
+  }
+  if (predicate === "Below" || predicate === "Above") {
+    if (target === "Energy") {
+      return ["40", "80"];
+    }
+    if (target === "HP") {
+      return ["30", "70"];
+    }
+    if (target === "Damage") {
+      return ["0"];
+    }
+    if (target === "Memory") {
+      return ["2"];
+    }
+    return ["0", "1", "2"];
+  }
+  return [];
+}
+
+export function getTapeScriptActionArgs(action = "") {
+  return TAPE_SCRIPT_EDITOR_MODEL.actionArgs[action] ?? [];
+}
 
 export function compileTapeScript(source, options = {}) {
   const instructionCapacity = options.instructionCapacity ?? 8;

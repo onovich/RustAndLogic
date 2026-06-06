@@ -9,7 +9,13 @@ import {
   upgradeHardware,
   expandLogicMemory,
 } from "../../../packages/game-sim/index.js";
-import { compileTapeScript } from "../../../packages/tapescript-runtime/index.js";
+import {
+  compileTapeScript,
+  TAPE_SCRIPT_EDITOR_MODEL,
+  getTapeScriptActionArgs,
+  getTapeScriptCheckPredicates,
+  getTapeScriptCheckValues,
+} from "../../../packages/tapescript-runtime/index.js";
 
 let game = createGame();
 let previousState = null;
@@ -3909,7 +3915,7 @@ function updateAutocomplete() {
     item.dataset.index = String(index);
     item.dataset.active = String(index === activeSuggestionIndex);
     item.innerHTML =
-      `<span>${escapeHtml(suggestion.value)}</span>` +
+      `<span>${escapeHtml(suggestion.label ?? suggestion.value)}</span>` +
       `<small>${escapeHtml(t(suggestion.kindKey))} / ${escapeHtml(t(suggestion.hintKey))}</small>`;
     elements.autocomplete.append(item);
   });
@@ -3933,6 +3939,7 @@ function getAutocompleteContext() {
   const lineEnd = lineEndIndex >= 0 ? lineEndIndex : editor.value.length;
   const line = editor.value.slice(lineStart, lineEnd);
   const beforeToken = editor.value.slice(lineStart, range.start);
+  const prefixText = editor.value.slice(lineStart, editor.selectionStart);
   const token = range.token;
   const lineNumber = editor.value.slice(0, range.start).split("\n").length;
   const column = range.start - lineStart;
@@ -3942,7 +3949,32 @@ function getAutocompleteContext() {
   }
 
   const labelContext = token.startsWith("@") || /\bGoto\s+@?[A-Za-z0-9_]*$/.test(beforeToken.trimStart());
-  if (!token && !labelContext) {
+  if (labelContext) {
+    return {
+      range,
+      prefix: token,
+      line,
+      lineNumber,
+      column,
+      mode: "label",
+    };
+  }
+
+  const explicitContext = getExplicitAutocompleteContext({
+    line,
+    lineStart,
+    lineNumber,
+    column,
+    range,
+    token,
+    beforeToken,
+    prefixText,
+  });
+  if (explicitContext) {
+    return explicitContext;
+  }
+
+  if (!token) {
     return null;
   }
 
@@ -3952,7 +3984,7 @@ function getAutocompleteContext() {
     line,
     lineNumber,
     column,
-    mode: labelContext ? "label" : "instruction",
+    mode: "instruction",
   };
 }
 
@@ -3967,6 +3999,16 @@ function findSuggestions(context) {
         kindKey: "completion.kind.label",
         hintKey: "completion.label.target",
       }));
+  }
+
+  if (context.mode === "explicit") {
+    const contextual = context.suggestions
+      .filter((item) => matchesCompletion(item.matchText ?? item.value, context.prefix))
+      .slice(0, 8);
+    const fallback = scriptCompletions
+      .filter((item) => matchesCompletion(item.value, context.prefix))
+      .slice(0, 8);
+    return dedupeSuggestions([...contextual, ...fallback]).slice(0, 8);
   }
 
   return scriptCompletions
@@ -3992,6 +4034,244 @@ function splitCompletionSegments(value) {
   return (value.match(/[A-Za-z][A-Za-z0-9_]*/g) ?? [])
     .flatMap((segment) => segment.split(/(?=[A-Z])|_/))
     .filter(Boolean);
+}
+
+function getExplicitAutocompleteContext(context) {
+  const { line, lineStart, lineNumber, column, range, token, beforeToken, prefixText } = context;
+  const trimmedPrefix = prefixText.trimStart();
+
+  if (/^I[A-Za-z]*$/i.test(trimmedPrefix)) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: token || trimmedPrefix,
+      suggestions: createAutocompleteSuggestions(
+        TAPE_SCRIPT_EDITOR_MODEL.conditionals.map((keyword) => ({
+          value: `${keyword} `,
+          label: keyword,
+          kindKey: "completion.kind.keyword",
+          hintKey: "completion.hint.keyword",
+        })),
+      ),
+    });
+  }
+
+  const queryPrefixMatch = trimmedPrefix.match(/^(If|IfNot)\s+([A-Za-z0-9_]*)$/);
+  if (queryPrefixMatch) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: queryPrefixMatch[2].trim(),
+      suggestions: createAutocompleteSuggestions([{
+        value: "Check()",
+        label: "Check()",
+        kindKey: "completion.kind.query",
+        hintKey: "completion.hint.query",
+        matchText: "Check",
+      }]),
+    });
+  }
+
+  const targetMatch = prefixText.match(/Check\(([^()]*)$/);
+  if (targetMatch) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: targetMatch[1].trim(),
+      suggestions: createAutocompleteSuggestions(
+        TAPE_SCRIPT_EDITOR_MODEL.checkTargets.map((target) => ({
+          value: target,
+          kindKey: "completion.kind.query",
+          hintKey: "completion.hint.target",
+        })),
+      ),
+    });
+  }
+
+  const predicateArgMatch = prefixText.match(/Check\(([^()]*)\)\.([A-Za-z][A-Za-z0-9_]*)\(([^()]*)$/);
+  if (predicateArgMatch) {
+    const target = predicateArgMatch[1].trim() || "Forward";
+    const predicate = predicateArgMatch[2];
+    const values = getTapeScriptCheckValues(target, predicate);
+    if (values.length > 0) {
+      return explicitAutocompleteContext({
+        context,
+        prefix: predicateArgMatch[3].trim(),
+        suggestions: createAutocompleteSuggestions(
+          values.map((value) => ({
+            value,
+            kindKey: "completion.kind.query",
+            hintKey: "completion.hint.value",
+          })),
+        ),
+      });
+    }
+  }
+
+  const predicateMatch = prefixText.match(/Check\(([^()]*)\)\.([A-Za-z0-9_]*)$/);
+  if (predicateMatch) {
+    const target = predicateMatch[1].trim() || "Forward";
+    const predicates = getTapeScriptCheckPredicates(target);
+    if (predicates.length > 0) {
+      return explicitAutocompleteContext({
+        context,
+        prefix: predicateMatch[2].trim(),
+        suggestions: createAutocompleteSuggestions(
+          predicates.map((predicate) => ({
+            value: predicateCallSnippet(predicate),
+            label: predicateCallSnippet(predicate),
+            kindKey: "completion.kind.query",
+            hintKey: "completion.hint.predicate",
+            matchText: predicate,
+          })),
+        ),
+      });
+    }
+  }
+
+  const thenMatch = prefixText.match(/(?:^|\s)(If|IfNot)\s+Check\([^()]*\)\.[A-Za-z][A-Za-z0-9_]*\([^()]*\)\s+([A-Za-z]*)$/);
+  if (thenMatch) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: thenMatch[2].trim(),
+      suggestions: createAutocompleteSuggestions([{
+        value: "Then ",
+        label: "Then",
+        kindKey: "completion.kind.keyword",
+        hintKey: "completion.hint.keyword",
+      }]),
+    });
+  }
+
+  const actionAfterThenMatch = prefixText.match(/\bThen\s+([A-Za-z0-9_]*)$/);
+  if (actionAfterThenMatch) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: actionAfterThenMatch[1].trim(),
+      suggestions: actionKeywordSuggestions(),
+    });
+  }
+
+  const actionArgMatch = prefixText.match(/\b([A-Za-z][A-Za-z0-9_]*)\(([^()]*)$/);
+  if (actionArgMatch) {
+    const action = actionArgMatch[1];
+    const args = getTapeScriptActionArgs(action);
+    if (args.length > 0) {
+      return explicitAutocompleteContext({
+        context,
+        prefix: actionArgMatch[2].trim(),
+        suggestions: createAutocompleteSuggestions(
+          args.map((value) => ({
+            value,
+            kindKey: "completion.kind.action",
+            hintKey: "completion.hint.actionArg",
+          })),
+        ),
+      });
+    }
+  }
+
+  if (/^[A-Za-z0-9_]*$/.test(trimmedPrefix) && !trimmedPrefix.includes(" ")) {
+    return explicitAutocompleteContext({
+      context,
+      prefix: token || trimmedPrefix,
+      suggestions: [
+        ...createAutocompleteSuggestions(
+          TAPE_SCRIPT_EDITOR_MODEL.conditionals.map((keyword) => ({
+            value: `${keyword} `,
+            label: keyword,
+            kindKey: "completion.kind.keyword",
+            hintKey: "completion.hint.keyword",
+          })),
+        ),
+        ...createAutocompleteSuggestions([{
+          value: "Goto ",
+          label: "Goto",
+          kindKey: "completion.kind.branch",
+          hintKey: "completion.goto.loop",
+        }, {
+          value: "Check()",
+          label: "Check()",
+          kindKey: "completion.kind.query",
+          hintKey: "completion.hint.query",
+          matchText: "Check",
+        }]),
+        ...actionKeywordSuggestions(),
+      ],
+    });
+  }
+
+  return null;
+}
+
+function explicitAutocompleteContext({ context, prefix, suggestions }) {
+  const { range, line, lineNumber, column } = context;
+  return {
+    range,
+    prefix,
+    line,
+    lineNumber,
+    column,
+    mode: "explicit",
+    suggestions,
+  };
+}
+
+function predicateCallSnippet(predicate) {
+  return `${predicate}()`;
+}
+
+function actionInsertSnippet(action) {
+  if (action === "Move") {
+    return "Move()";
+  }
+  if (action === "MoveToward") {
+    return "MoveToward(Home)";
+  }
+  if (action === "Turn") {
+    return "Turn()";
+  }
+  if (["PickUp", "Drop", "Fire", "Wait", "Repair"].includes(action)) {
+    return `${action}()`;
+  }
+  if (action === "Unload" || action === "Craft") {
+    return `${action}(Home)`;
+  }
+  return `${action}()`;
+}
+
+function actionKeywordSuggestions() {
+  return createAutocompleteSuggestions([
+    {
+      value: "Goto ",
+      label: "Goto",
+      kindKey: "completion.kind.branch",
+      hintKey: "completion.goto.loop",
+    },
+    ...TAPE_SCRIPT_EDITOR_MODEL.actions.map((action) => ({
+      value: actionInsertSnippet(action),
+      label: actionInsertSnippet(action),
+      kindKey: "completion.kind.action",
+      hintKey: "completion.hint.action",
+      matchText: action,
+    })),
+  ]);
+}
+
+function createAutocompleteSuggestions(items) {
+  return items.map((item) => ({
+    matchText: item.matchText ?? item.label ?? item.value,
+    ...item,
+  }));
+}
+
+function dedupeSuggestions(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = `${item.value}::${item.kindKey}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function currentLabels() {

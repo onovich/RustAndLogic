@@ -358,14 +358,49 @@ try {
   }
 
   const originalScript = await page.getByTestId("script-editor").inputValue();
-  await page.getByTestId("script-editor").fill("Che");
+  await page.getByTestId("script-editor").fill("If ");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
-  const checkSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
-  if (!checkSuggestion.includes("CHECK().HAS(SCRAP)")) {
-    throw new Error(`Expected Check().Has(Scrap) suggestion for Che, got: ${checkSuggestion}`);
+  const conditionalSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!conditionalSuggestion.includes("CHECK()")) {
+    throw new Error(`Expected Check() suggestion after If, got: ${conditionalSuggestion}`);
   }
   await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
-  await expectValue(page, "script-editor", "Check().Has(Scrap)");
+  await expectValue(page, "script-editor", "If Check()");
+
+  await page.getByTestId("script-editor").fill("If Check(Ca");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const targetSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!targetSuggestion.includes("CARGO")) {
+    throw new Error(`Expected Cargo target suggestion inside Check(...), got: ${targetSuggestion}`);
+  }
+
+  await page.getByTestId("script-editor").fill("If Check(Cargo).");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const predicateSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!predicateSuggestion.includes("ANY()") || !predicateSuggestion.includes("ISFULL()")) {
+    throw new Error(`Expected Cargo predicate suggestions after Check(Cargo)., got: ${predicateSuggestion}`);
+  }
+
+  await page.getByTestId("script-editor").fill("If Check().Has(");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const valueSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!valueSuggestion.includes("SCRAP") || !valueSuggestion.includes("BATTERY")) {
+    throw new Error(`Expected Check().Has(...) value suggestions, got: ${valueSuggestion}`);
+  }
+
+  await page.getByTestId("script-editor").fill("If Check().Has(Scrap) ");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const thenSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!thenSuggestion.includes("THEN")) {
+    throw new Error(`Expected Then suggestion after a completed If query, got: ${thenSuggestion}`);
+  }
+
+  await page.getByTestId("script-editor").fill("If Check().Has(Scrap) Then Mo");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const actionSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!actionSuggestion.includes("MOVE()") || !actionSuggestion.includes("MOVETOWARD(HOME)")) {
+    throw new Error(`Expected action suggestions after Then, got: ${actionSuggestion}`);
+  }
 
   await page.getByTestId("script-editor").fill("Back");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });

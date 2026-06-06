@@ -169,8 +169,16 @@ story.prompt.begin,[ Click to begin idle mode ],[ 点击进入挂机模式 ]
 completion.kind.action,Action,动作
 completion.kind.query,Query,查询
 completion.kind.branch,Branch,分支
+completion.kind.keyword,Keyword,关键字
 completion.kind.label,Label,标签
 completion.label.target,jump target,跳转目标
+completion.hint.keyword,syntax keyword,语法关键字
+completion.hint.query,query clause,查询片段
+completion.hint.target,query target,查询目标
+completion.hint.predicate,query predicate,查询谓词
+completion.hint.value,query value,查询参数
+completion.hint.action,action clause,动作片段
+completion.hint.actionArg,action parameter,动作参数
 completion.move.forward,Move forward,向前移动
 completion.move.back,Move backward,向后移动
 completion.move.home,Move toward home,朝基地移动
