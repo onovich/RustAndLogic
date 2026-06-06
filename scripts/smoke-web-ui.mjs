@@ -388,6 +388,16 @@ try {
   if (!targetSuggestion.includes("CARGO")) {
     throw new Error(`Expected Cargo target suggestion inside Check(...), got: ${targetSuggestion}`);
   }
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "If Check(Cargo).");
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("ANY()");
+  });
+  const chainedPredicateSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!chainedPredicateSuggestion.includes("ANY()") || !chainedPredicateSuggestion.includes("ISFULL()")) {
+    throw new Error(`Expected predicate suggestions immediately after inserting Cargo target, got: ${chainedPredicateSuggestion}`);
+  }
 
   await page.getByTestId("script-editor").fill("If Check(Cargo).");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
@@ -395,12 +405,34 @@ try {
   if (!predicateSuggestion.includes("ANY()") || !predicateSuggestion.includes("ISFULL()")) {
     throw new Error(`Expected Cargo predicate suggestions after Check(Cargo)., got: ${predicateSuggestion}`);
   }
+  await page.getByTestId("script-editor").fill("If Check(Cargo).A");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "If Check(Cargo).Any() Then ");
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("MOVE()");
+  });
+  const postPredicateActionSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!postPredicateActionSuggestion.includes("MOVE()") || !postPredicateActionSuggestion.includes("GOTO")) {
+    throw new Error(`Expected action suggestions immediately after completing a zero-arg predicate, got: ${postPredicateActionSuggestion}`);
+  }
 
   await page.getByTestId("script-editor").fill("If Check().Has(");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
   const valueSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
   if (!valueSuggestion.includes("SCRAP") || !valueSuggestion.includes("BATTERY")) {
     throw new Error(`Expected Check().Has(...) value suggestions, got: ${valueSuggestion}`);
+  }
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "If Check().Has(Scrap) Then ");
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("MOVE()");
+  });
+  const postValueActionSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!postValueActionSuggestion.includes("MOVE()") || !postValueActionSuggestion.includes("GOTO")) {
+    throw new Error(`Expected action suggestions immediately after filling a query value, got: ${postValueActionSuggestion}`);
   }
 
   await page.getByTestId("script-editor").fill("If Check().Has(Scrap) ");

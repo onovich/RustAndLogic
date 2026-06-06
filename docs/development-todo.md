@@ -104,6 +104,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add the first M6 combat slice with live hostile entities, real `Fire()` resolution, and a guarded-chip intercept script path.
 - [x] Upgrade the TapeScript editor autocomplete from whole-line templates to context-aware segmented suggestions for `If` / `Check` / `Then` / targets / predicates / parameters / actions.
 - [x] Chain TapeScript editor autocomplete steps so inserted `Check()` / `Move()` / `Turn()` / `Goto @` snippets place the caret in the next useful slot and immediately surface the next-stage suggestions.
+- [x] Extend TapeScript editor autocomplete to carry `Check(target)` selections into predicates and to finish conditional queries into `Then`-stage action suggestions.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

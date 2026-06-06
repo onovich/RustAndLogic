@@ -4060,6 +4060,7 @@ function getExplicitAutocompleteContext(context) {
     return explicitAutocompleteContext({
       context,
       prefix: queryPrefixMatch[2].trim(),
+      slot: "ifQueryStart",
       suggestions: createAutocompleteSuggestions([{
         value: "Check()",
         label: "Check()",
@@ -4078,6 +4079,7 @@ function getExplicitAutocompleteContext(context) {
     return explicitAutocompleteContext({
       context,
       prefix: targetMatch[1].trim(),
+      slot: "checkTarget",
       suggestions: createAutocompleteSuggestions(
         TAPE_SCRIPT_EDITOR_MODEL.checkTargets.map((target) => ({
           value: target,
@@ -4097,6 +4099,7 @@ function getExplicitAutocompleteContext(context) {
       return explicitAutocompleteContext({
         context,
         prefix: predicateArgMatch[3].trim(),
+        slot: "checkValue",
         suggestions: createAutocompleteSuggestions(
           values.map((value) => ({
             value,
@@ -4116,6 +4119,7 @@ function getExplicitAutocompleteContext(context) {
       return explicitAutocompleteContext({
         context,
         prefix: predicateMatch[2].trim(),
+        slot: "checkPredicate",
         suggestions: createAutocompleteSuggestions(
           predicates.map((predicate) => ({
             value: predicateCallSnippet(predicate),
@@ -4135,6 +4139,7 @@ function getExplicitAutocompleteContext(context) {
     return explicitAutocompleteContext({
       context,
       prefix: thenMatch[2].trim(),
+      slot: "ifThen",
       suggestions: createAutocompleteSuggestions([{
         value: "Then ",
         label: "Then",
@@ -4149,6 +4154,7 @@ function getExplicitAutocompleteContext(context) {
     return explicitAutocompleteContext({
       context,
       prefix: actionAfterThenMatch[1].trim(),
+      slot: "actionAfterThen",
       suggestions: actionKeywordSuggestions(),
     });
   }
@@ -4161,6 +4167,7 @@ function getExplicitAutocompleteContext(context) {
       return explicitAutocompleteContext({
         context,
         prefix: actionArgMatch[2].trim(),
+        slot: "actionArg",
         suggestions: createAutocompleteSuggestions(
           args.map((value) => ({
             value,
@@ -4211,7 +4218,7 @@ function getExplicitAutocompleteContext(context) {
   return null;
 }
 
-function explicitAutocompleteContext({ context, prefix, suggestions }) {
+function explicitAutocompleteContext({ context, prefix, suggestions, slot = "" }) {
   const { range, line, lineNumber, column } = context;
   return {
     range,
@@ -4220,6 +4227,7 @@ function explicitAutocompleteContext({ context, prefix, suggestions }) {
     lineNumber,
     column,
     mode: "explicit",
+    slot,
     suggestions,
   };
 }
@@ -4235,6 +4243,12 @@ function predicateSnippetMeta(predicate) {
       selectionStartOffset: inside,
       selectionEndOffset: inside,
       triggerAutocomplete: true,
+      requiresQueryValue: true,
+    };
+  }
+  if (["Any", "IsFull", "IsEmpty"].includes(predicate)) {
+    return {
+      completesQueryImmediately: true,
     };
   }
   return {};
@@ -4358,12 +4372,90 @@ function applySuggestion(index) {
     const selectionEnd = context.range.start + (suggestion.selectionEndOffset ?? suggestion.selectionStartOffset);
     elements.editor.setSelectionRange(selectionStart, selectionEnd);
   }
+  const shouldTriggerAutocomplete = applySuggestionFollowup(suggestion, context) || suggestion.triggerAutocomplete;
   elements.editor.focus();
   hideAutocomplete();
   updateEditorTools();
-  if (suggestion.triggerAutocomplete) {
+  if (shouldTriggerAutocomplete) {
     requestAnimationFrame(() => updateAutocomplete());
   }
+}
+
+function applySuggestionFollowup(suggestion, context) {
+  if (context.mode !== "explicit") {
+    return false;
+  }
+
+  if (context.slot === "checkTarget") {
+    advanceCheckTargetSlot();
+    return true;
+  }
+
+  if (context.slot === "checkValue") {
+    return finalizeQueryAfterSelection(context);
+  }
+
+  if (context.slot === "checkPredicate" && suggestion.completesQueryImmediately) {
+    return finalizeQueryAfterSelection(context);
+  }
+
+  if (context.slot === "actionArg") {
+    advancePastClosingParen();
+    return false;
+  }
+
+  return false;
+}
+
+function advanceCheckTargetSlot() {
+  const caret = elements.editor.selectionStart;
+  const nextChar = elements.editor.value[caret];
+  if (nextChar === ")") {
+    if (elements.editor.value[caret + 1] !== ".") {
+      elements.editor.setRangeText(".", caret + 1, caret + 1, "end");
+    } else {
+      elements.editor.setSelectionRange(caret + 2, caret + 2);
+    }
+    return;
+  }
+  elements.editor.setRangeText(").", caret, caret, "end");
+}
+
+function finalizeQueryAfterSelection(context) {
+  const conditionalLine = context.line.trimStart().startsWith("If ") || context.line.trimStart().startsWith("IfNot ");
+  if (!conditionalLine) {
+    advancePastClosingParen();
+    return false;
+  }
+
+  const caret = elements.editor.selectionStart;
+  if (elements.editor.value[caret] === ")" || elements.editor.value[caret - 1] === ")") {
+    const afterClose = elements.editor.value[caret] === ")" ? caret + 1 : caret;
+    const tail = elements.editor.value.slice(afterClose);
+    const existingThen = tail.match(/^\s+Then\s+/);
+    if (existingThen) {
+      const next = afterClose + existingThen[0].length;
+      elements.editor.setSelectionRange(next, next);
+      return true;
+    }
+    elements.editor.setRangeText(" Then ", afterClose, afterClose, "end");
+    return true;
+  }
+
+  elements.editor.setRangeText(") Then ", caret, caret, "end");
+  return true;
+}
+
+function advancePastClosingParen() {
+  const caret = elements.editor.selectionStart;
+  if (elements.editor.value[caret] === ")") {
+    elements.editor.setSelectionRange(caret + 1, caret + 1);
+    return;
+  }
+  if (elements.editor.value[caret - 1] === ")") {
+    return;
+  }
+  elements.editor.setRangeText(")", caret, caret, "end");
 }
 
 function hideAutocomplete() {
