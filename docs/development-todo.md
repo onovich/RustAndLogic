@@ -103,6 +103,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Tune the M5 recovery lane energy budget so the cost-aware sample can complete the farthest scrap return and finish the second craft.
 - [x] Add the first M6 combat slice with live hostile entities, real `Fire()` resolution, and a guarded-chip intercept script path.
 - [x] Upgrade the TapeScript editor autocomplete from whole-line templates to context-aware segmented suggestions for `If` / `Check` / `Then` / targets / predicates / parameters / actions.
+- [x] Chain TapeScript editor autocomplete steps so inserted `Check()` / `Move()` / `Turn()` / `Goto @` snippets place the caret in the next useful slot and immediately surface the next-stage suggestions.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

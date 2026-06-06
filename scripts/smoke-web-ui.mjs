@@ -366,6 +366,21 @@ try {
   }
   await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
   await expectValue(page, "script-editor", "If Check()");
+  const checkCaret = await page.getByTestId("script-editor").evaluate((editor) => ({
+    start: editor.selectionStart,
+    end: editor.selectionEnd,
+  }));
+  if (checkCaret.start !== 9 || checkCaret.end !== 9) {
+    throw new Error(`Expected Check() autocomplete to place caret inside parentheses, got: ${JSON.stringify(checkCaret)}`);
+  }
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("FORWARD");
+  });
+  const chainedTargetSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!chainedTargetSuggestion.includes("FORWARD") || !chainedTargetSuggestion.includes("CARGO")) {
+    throw new Error(`Expected target suggestions immediately after inserting Check(), got: ${chainedTargetSuggestion}`);
+  }
 
   await page.getByTestId("script-editor").fill("If Check(Ca");
   await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
@@ -400,6 +415,40 @@ try {
   const actionSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
   if (!actionSuggestion.includes("MOVE()") || !actionSuggestion.includes("MOVETOWARD(HOME)")) {
     throw new Error(`Expected action suggestions after Then, got: ${actionSuggestion}`);
+  }
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "If Check().Has(Scrap) Then Move()");
+  const moveCaret = await page.getByTestId("script-editor").evaluate((editor) => ({
+    start: editor.selectionStart,
+    end: editor.selectionEnd,
+  }));
+  if (moveCaret.start !== moveCaret.end || moveCaret.start !== "If Check().Has(Scrap) Then Move(".length) {
+    throw new Error(`Expected Move() autocomplete to place caret inside parentheses, got: ${JSON.stringify(moveCaret)}`);
+  }
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("BACK");
+  });
+  const moveArgSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!moveArgSuggestion.includes("FORWARD") || !moveArgSuggestion.includes("BACK")) {
+    throw new Error(`Expected move argument suggestions after inserting Move(), got: ${moveArgSuggestion}`);
+  }
+
+  await page.getByTestId("script-editor").fill("@Loop\nIf Check().Has(Scrap) Then Go");
+  await page.locator('[data-testid="script-autocomplete"]').waitFor({ state: "visible" });
+  const gotoSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!gotoSuggestion.includes("GOTO")) {
+    throw new Error(`Expected Goto suggestion after Then Go, got: ${gotoSuggestion}`);
+  }
+  await page.locator('[data-testid="script-autocomplete"] [data-index="0"]').click();
+  await expectValue(page, "script-editor", "@Loop\nIf Check().Has(Scrap) Then Goto @");
+  await page.waitForFunction(() => {
+    const root = document.querySelector('[data-testid="script-autocomplete"]');
+    return !root?.hidden && root?.innerText.includes("@LOOP");
+  });
+  const gotoLabelSuggestion = (await page.getByTestId("script-autocomplete").innerText()).toUpperCase();
+  if (!gotoLabelSuggestion.includes("@LOOP")) {
+    throw new Error(`Expected immediate label suggestions after inserting Goto @, got: ${gotoLabelSuggestion}`);
   }
 
   await page.getByTestId("script-editor").fill("Back");

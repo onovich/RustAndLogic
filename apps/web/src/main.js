@@ -4066,6 +4066,9 @@ function getExplicitAutocompleteContext(context) {
         kindKey: "completion.kind.query",
         hintKey: "completion.hint.query",
         matchText: "Check",
+        selectionStartOffset: 6,
+        selectionEndOffset: 6,
+        triggerAutocomplete: true,
       }]),
     });
   }
@@ -4120,6 +4123,7 @@ function getExplicitAutocompleteContext(context) {
             kindKey: "completion.kind.query",
             hintKey: "completion.hint.predicate",
             matchText: predicate,
+            ...predicateSnippetMeta(predicate),
           })),
         ),
       });
@@ -4182,16 +4186,22 @@ function getExplicitAutocompleteContext(context) {
           })),
         ),
         ...createAutocompleteSuggestions([{
-          value: "Goto ",
+          value: "Goto @",
           label: "Goto",
           kindKey: "completion.kind.branch",
           hintKey: "completion.goto.loop",
+          selectionStartOffset: 6,
+          selectionEndOffset: 6,
+          triggerAutocomplete: true,
         }, {
           value: "Check()",
           label: "Check()",
           kindKey: "completion.kind.query",
           hintKey: "completion.hint.query",
           matchText: "Check",
+          selectionStartOffset: 6,
+          selectionEndOffset: 6,
+          triggerAutocomplete: true,
         }]),
         ...actionKeywordSuggestions(),
       ],
@@ -4218,6 +4228,18 @@ function predicateCallSnippet(predicate) {
   return `${predicate}()`;
 }
 
+function predicateSnippetMeta(predicate) {
+  if (["Has", "Is", "Below", "Above", "BelowCost"].includes(predicate)) {
+    const inside = predicate.length + 1;
+    return {
+      selectionStartOffset: inside,
+      selectionEndOffset: inside,
+      triggerAutocomplete: true,
+    };
+  }
+  return {};
+}
+
 function actionInsertSnippet(action) {
   if (action === "Move") {
     return "Move()";
@@ -4240,10 +4262,13 @@ function actionInsertSnippet(action) {
 function actionKeywordSuggestions() {
   return createAutocompleteSuggestions([
     {
-      value: "Goto ",
+      value: "Goto @",
       label: "Goto",
       kindKey: "completion.kind.branch",
       hintKey: "completion.goto.loop",
+      selectionStartOffset: 6,
+      selectionEndOffset: 6,
+      triggerAutocomplete: true,
     },
     ...TAPE_SCRIPT_EDITOR_MODEL.actions.map((action) => ({
       value: actionInsertSnippet(action),
@@ -4251,8 +4276,21 @@ function actionKeywordSuggestions() {
       kindKey: "completion.kind.action",
       hintKey: "completion.hint.action",
       matchText: action,
+      ...actionSnippetMeta(action),
     })),
   ]);
+}
+
+function actionSnippetMeta(action) {
+  if (action === "Move" || action === "Turn") {
+    const inside = action.length + 1;
+    return {
+      selectionStartOffset: inside,
+      selectionEndOffset: inside,
+      triggerAutocomplete: true,
+    };
+  }
+  return {};
 }
 
 function createAutocompleteSuggestions(items) {
@@ -4315,9 +4353,17 @@ function applySuggestion(index) {
     return;
   }
   elements.editor.setRangeText(suggestion.value, context.range.start, context.range.end, "end");
+  if (Number.isFinite(suggestion.selectionStartOffset)) {
+    const selectionStart = context.range.start + suggestion.selectionStartOffset;
+    const selectionEnd = context.range.start + (suggestion.selectionEndOffset ?? suggestion.selectionStartOffset);
+    elements.editor.setSelectionRange(selectionStart, selectionEnd);
+  }
   elements.editor.focus();
   hideAutocomplete();
   updateEditorTools();
+  if (suggestion.triggerAutocomplete) {
+    requestAnimationFrame(() => updateAutocomplete());
+  }
 }
 
 function hideAutocomplete() {
