@@ -87,6 +87,14 @@ body {
   cursor: crosshair;
 }
 
+body[data-booting="true"] {
+  overflow: hidden;
+}
+
+body[data-booting="true"] .app-shell {
+  opacity: 0;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -118,6 +126,77 @@ pre,
 input,
 summary {
   font: inherit;
+}
+
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(13, 8, 5, 0.94), rgba(7, 3, 2, 0.98)),
+    var(--bg-deep);
+}
+
+.boot-overlay[hidden] {
+  display: none !important;
+}
+
+.boot-panel {
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 48px));
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(242, 141, 53, 0.42);
+  background: rgba(13, 8, 5, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(242, 141, 53, 0.08),
+    0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.boot-kicker,
+.boot-progress {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.boot-title {
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 5px var(--accent-glow);
+}
+
+.boot-stage {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.boot-meter {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(51, 38, 28, 0.92);
+  background: rgba(10, 5, 3, 0.96);
+}
+
+.boot-meter-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background:
+    linear-gradient(90deg, rgba(166, 79, 33, 0.96), rgba(242, 141, 53, 0.96));
+  box-shadow: 0 0 8px var(--accent-glow);
+  transition: width 180ms ease;
 }
 
 button {

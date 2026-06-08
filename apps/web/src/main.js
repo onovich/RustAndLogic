@@ -194,9 +194,43 @@ const elements = {
   graphicsTextureSwatches: query("graphics-texture-swatches"),
   graphicsEntityIo: query("graphics-entity-io"),
   graphicsExport: query("graphics-export"),
+  bootOverlay: query("boot-overlay"),
+  bootKicker: query("boot-kicker"),
+  bootTitle: query("boot-title"),
+  bootStage: query("boot-stage"),
+  bootProgress: query("boot-progress"),
+  bootProgressBar: query("boot-progress-bar"),
 };
 
 let i18n = { en: {}, zh: {} };
+
+function setBootProgress(progress, stageText = "", options = {}) {
+  const clamped = Math.max(0, Math.min(1, progress));
+  const percent = Math.round(clamped * 100);
+  if (elements.bootProgressBar) {
+    elements.bootProgressBar.style.width = `${percent}%`;
+  }
+  if (elements.bootProgress) {
+    elements.bootProgress.textContent = `${percent}%`;
+  }
+  if (options.useLocalizedCopy && elements.bootKicker && elements.bootTitle && elements.bootStage) {
+    elements.bootKicker.textContent = t("boot.kicker");
+    elements.bootTitle.textContent = t("boot.title");
+    elements.bootStage.textContent = stageText || t("boot.stage.ready");
+    return;
+  }
+  if (stageText && elements.bootStage) {
+    elements.bootStage.textContent = stageText;
+  }
+}
+
+function finishBootSequence() {
+  document.body.dataset.booting = "false";
+  document.body.setAttribute("aria-busy", "false");
+  if (elements.bootOverlay) {
+    elements.bootOverlay.hidden = true;
+  }
+}
 
 async function loadI18n() {
   i18n = parseI18nCsv(await loadTextAsset(["/apps/web/i18n.csv", "./i18n.csv"]));
@@ -3251,12 +3285,16 @@ updateControls = function updateControlsPatched() {
   renderSampleActions();
 };
 
+setBootProgress(0.08, "Preparing simulation shell...");
 await loadI18n();
+setBootProgress(0.24, t("boot.stage.localization"), { useLocalizedCopy: true });
 await loadAppData();
+setBootProgress(0.48, t("boot.stage.data"), { useLocalizedCopy: true });
 loadCustomGraphicsTemplates();
 loadRecentGraphicsTemplates();
 loadGraphicsTemplateFilterState();
 await loadEntityVisualCatalog();
+setBootProgress(0.72, t("boot.stage.visuals"), { useLocalizedCopy: true });
 initializeAppData();
 applyLanguage();
 updateSidebarToggles();
@@ -3265,6 +3303,12 @@ renderGraphicsEditor();
 applyCanvasTransform();
 renderStoryDialogue();
 render(snapshot(game), { animate: false });
+setBootProgress(1, t("boot.stage.ready"), { useLocalizedCopy: true });
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    finishBootSequence();
+  });
+});
 
 function render(state, options = {}) {
   const beforeState = previousState;

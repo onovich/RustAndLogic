@@ -107,6 +107,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extend TapeScript editor autocomplete to carry `Check(target)` selections into predicates and to finish conditional queries into `Then`-stage action suggestions.
 - [x] Add label-aware editor guidance so `Goto @...` autocomplete surfaces defined labels with line metadata and the highlighter distinguishes label definitions, resolved references, and missing references.
 - [x] Lock TapeScript editing to the stopped state, make pause/resume continue from the current VM position, and make stop reset only the stage simulation instead of overwriting the current script.
+- [x] Add a startup loading overlay so the player never sees the pre-hydration map shell drift into the fully loaded stage state.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

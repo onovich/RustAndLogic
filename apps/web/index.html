@@ -6,7 +6,18 @@
     <title>Rust & Logic Web UI</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
-  <body>
+  <body data-booting="true" aria-busy="true">
+    <div class="boot-overlay" data-testid="boot-overlay" role="status" aria-live="polite">
+      <div class="boot-panel">
+        <span class="boot-kicker" data-testid="boot-kicker">SYSTEM BOOT</span>
+        <strong class="boot-title" data-testid="boot-title">Loading Rust &amp; Logic</strong>
+        <p class="boot-stage" data-testid="boot-stage">Preparing simulation shell...</p>
+        <div class="boot-meter" aria-hidden="true">
+          <span class="boot-meter-fill" data-testid="boot-progress-bar"></span>
+        </div>
+        <span class="boot-progress" data-testid="boot-progress">0%</span>
+      </div>
+    </div>
     <main class="app-shell">
       <aside class="location-sidebar" aria-label="Current location" data-i18n-attr="aria-label:location.aria">
         <div class="location-column">

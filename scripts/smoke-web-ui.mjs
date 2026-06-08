@@ -32,6 +32,14 @@ try {
     const bodyText = await page.locator("body").innerText().catch(() => "");
     throw new Error(`App did not initialize: ${error.message} Browser errors: ${pageErrors.join(" | ")} Body: ${bodyText.slice(0, 500)}`);
   });
+  await page.getByTestId("boot-overlay").waitFor({ state: "hidden", timeout: 10000 });
+  const bootState = await page.evaluate(() => ({
+    booting: document.body.dataset.booting,
+    busy: document.body.getAttribute("aria-busy"),
+  }));
+  if (bootState.booting !== "false" || bootState.busy !== "false") {
+    throw new Error(`Expected boot overlay to finish before interaction, got ${JSON.stringify(bootState)}.`);
+  }
 
   const fontStackCheck = await page.evaluate(() => {
     const body = getComputedStyle(document.body).fontFamily;
