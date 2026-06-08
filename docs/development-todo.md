@@ -113,6 +113,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Keep the simulation authoritative when Tauri arrives.
 - [x] Keep Web/WASM and desktop IPC boundaries explicit.
 - [x] Add a GitHub Pages deployment path for the current Web UI harness.
+- [x] Serve the GitHub Pages build directly from the repository root path and preserve the `blog.onovich.com` custom-domain artifact during deployment.
 - [ ] Document release and packaging commands once a desktop shell exists.
 
 ## Milestone 5: Developer Visual Authoring Tooling
