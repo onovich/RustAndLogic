@@ -418,6 +418,46 @@ function applyStageConfiguration(stageId, options = {}) {
   return state;
 }
 
+function resetStageSimulation(options = {}) {
+  const stage = getStageDefinition(currentStageId);
+  if (!stage) {
+    return snapshot(game);
+  }
+
+  storyPages = stage.storyPages ?? appData.storyPages ?? [];
+  seenTeachingMoments = new Set();
+  flow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
+  game = createStageGame(stage.id);
+  previousState = null;
+  deployedSource = "";
+  hideRuntimeToast();
+  resetCameraIntro();
+
+  if (options.resetStory) {
+    storyIndex = 0;
+    storyActive = true;
+  } else {
+    storyActive = false;
+    if (elements.stage) {
+      elements.stage.dataset.mode = "idle";
+    }
+    if (elements.storyDialogue) {
+      elements.storyDialogue.hidden = true;
+    }
+  }
+
+  updateEditorTools();
+  hideAutocomplete();
+  renderStageCopy();
+  renderScriptGuidance();
+  renderFlowList();
+  renderStageActions();
+  renderSampleActions();
+  const state = snapshot(game);
+  render(state, { animate: false });
+  return state;
+}
+
 function initializeAppData() {
   storyPages = appData.storyPages ?? [];
   speeds = appData.playback?.speeds ?? [1];
@@ -2971,10 +3011,9 @@ elements.languageSwitch?.addEventListener("click", (event) => {
 });
 elements.stageActions?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-stage]");
-  if (!button) {
+  if (!button || playbackMode !== "stopped") {
     return;
   }
-  stopPlayback(false);
   applyStageConfiguration(button.dataset.stage, { resetStory: true });
 });
 elements.localizationButton?.addEventListener("click", () => {
@@ -3127,7 +3166,7 @@ elements.load.addEventListener("click", () => {
 });
 elements.reset.addEventListener("click", () => {
   stopPlayback(false);
-  applyStageConfiguration(currentStageId);
+  resetStageSimulation();
 });
 initializeGraphicsEditor();
 
@@ -3159,6 +3198,7 @@ applyLanguage = function applyLanguagePatched() {
 };
 
 updateControls = function updateControlsPatched() {
+  const editorLocked = storyActive || playbackMode !== "stopped";
   elements.play.textContent =
     playbackMode === "playing" ? t("action.pause") : playbackMode === "paused" ? t("action.resume") : t("action.play");
   elements.step.textContent = t("action.frame");
@@ -3202,6 +3242,13 @@ updateControls = function updateControlsPatched() {
     elements.weaponUpgrade.dataset.stageEnabled = String(stageUpgradeEnabled("weapon"));
     elements.weaponUpgrade.disabled = storyActive || !stageUpgradeEnabled("weapon");
   }
+  if (elements.editor) {
+    elements.editor.readOnly = editorLocked;
+    elements.editor.dataset.locked = String(editorLocked);
+    elements.editor.setAttribute("aria-readonly", String(editorLocked));
+  }
+  renderStageActions();
+  renderSampleActions();
 };
 
 await loadI18n();
@@ -3582,7 +3629,7 @@ function stopPlayback(resetMode = true) {
   clearPlaybackTimer();
   hideRuntimeToast();
   if (resetMode) {
-    applyStageConfiguration(currentStageId);
+    resetStageSimulation();
   } else {
     updateControls();
   }
@@ -3696,6 +3743,7 @@ function renderStageActions() {
     button.type = "button";
     button.dataset.stage = stage.id;
     button.dataset.active = String(stage.id === currentStageId);
+    button.disabled = playbackMode !== "stopped";
     button.textContent = t(stage.labelKey);
     elements.stageActions.append(button);
   }
@@ -3711,6 +3759,7 @@ function renderSampleActions() {
     button.type = "button";
     button.dataset.preset = preset.id;
     button.dataset.active = String(preset.id === currentPresetId);
+    button.disabled = playbackMode !== "stopped";
     button.textContent = t(preset.labelKey);
     button.addEventListener("click", () => loadScriptPreset(preset.id));
     elements.sampleActions.append(button);
@@ -3718,11 +3767,13 @@ function renderSampleActions() {
 }
 
 function loadScriptPreset(presetId) {
+  if (playbackMode !== "stopped") {
+    return;
+  }
   const preset = scriptPresets.find((item) => item.id === presetId);
   if (!preset) {
     return;
   }
-  stopPlayback(false);
   elements.editor.value = (preset.lines ?? []).join("\n");
   currentPresetId = preset.id;
   deployedSource = "";

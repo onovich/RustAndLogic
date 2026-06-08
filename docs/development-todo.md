@@ -106,6 +106,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Chain TapeScript editor autocomplete steps so inserted `Check()` / `Move()` / `Turn()` / `Goto @` snippets place the caret in the next useful slot and immediately surface the next-stage suggestions.
 - [x] Extend TapeScript editor autocomplete to carry `Check(target)` selections into predicates and to finish conditional queries into `Then`-stage action suggestions.
 - [x] Add label-aware editor guidance so `Goto @...` autocomplete surfaces defined labels with line metadata and the highlighter distinguishes label definitions, resolved references, and missing references.
+- [x] Lock TapeScript editing to the stopped state, make pause/resume continue from the current VM position, and make stop reset only the stage simulation instead of overwriting the current script.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

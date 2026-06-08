@@ -522,6 +522,7 @@ try {
   if (definedLabelTokens === 0 || resolvedLabelTokens === 0) {
     throw new Error(`Expected editor to distinguish label definitions and resolved references, got def=${definedLabelTokens} ref=${resolvedLabelTokens}.`);
   }
+  await page.getByTestId("reset-button").click();
 
   const badScript = `${originalScript}\nBogus`;
   await page.getByTestId("script-editor").fill(badScript);
@@ -860,6 +861,59 @@ try {
   await expectText(page, "play-button", "Pause");
   await page.getByTestId("reset-button").click();
   await expectText(page, "tick", "0");
+
+  const runtimeControlScript = ["Turn(Right)", "Move()", "Wait()"].join("\n");
+  await page.getByTestId("script-editor").fill(runtimeControlScript);
+  await page.getByTestId("play-button").click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="robot-position"]')?.innerText.trim() === "R1 // 1,2 S",
+  );
+  await page.getByTestId("play-button").click();
+  await expectText(page, "play-button", "Resume");
+  const pausedRuntimeState = await page.evaluate(() => ({
+    tick: document.querySelector('[data-testid="tick"]')?.innerText.trim() ?? "",
+    position: document.querySelector('[data-testid="robot-position"]')?.innerText.trim() ?? "",
+    editorValue: document.querySelector('[data-testid="script-editor"]')?.value ?? "",
+    readOnly: document.querySelector('[data-testid="script-editor"]')?.readOnly ?? false,
+  }));
+  if (
+    pausedRuntimeState.tick !== "1" ||
+    pausedRuntimeState.position !== "R1 // 1,2 S" ||
+    pausedRuntimeState.editorValue !== runtimeControlScript ||
+    !pausedRuntimeState.readOnly
+  ) {
+    throw new Error(`Expected paused runtime state to preserve VM position and lock the editor, got ${JSON.stringify(pausedRuntimeState)}.`);
+  }
+  await page.getByTestId("script-editor").focus();
+  await page.keyboard.type("X");
+  await expectValue(page, "script-editor", runtimeControlScript);
+  await page.getByTestId("play-button").click();
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="robot-position"]')?.innerText.trim() === "R1 // 1,3 S",
+  );
+  const resumedRuntimeState = await page.evaluate(() => ({
+    tick: document.querySelector('[data-testid="tick"]')?.innerText.trim() ?? "",
+    position: document.querySelector('[data-testid="robot-position"]')?.innerText.trim() ?? "",
+  }));
+  if (resumedRuntimeState.tick !== "2" || resumedRuntimeState.position !== "R1 // 1,3 S") {
+    throw new Error(`Expected resume to continue from the paused VM step instead of restarting, got ${JSON.stringify(resumedRuntimeState)}.`);
+  }
+  await page.getByTestId("play-button").click();
+  await page.getByTestId("reset-button").click();
+  const resetRuntimeState = await page.evaluate(() => ({
+    tick: document.querySelector('[data-testid="tick"]')?.innerText.trim() ?? "",
+    position: document.querySelector('[data-testid="robot-position"]')?.innerText.trim() ?? "",
+    editorValue: document.querySelector('[data-testid="script-editor"]')?.value ?? "",
+    readOnly: document.querySelector('[data-testid="script-editor"]')?.readOnly ?? false,
+  }));
+  if (
+    resetRuntimeState.tick !== "0" ||
+    resetRuntimeState.position !== "R1 // 1,2 E" ||
+    resetRuntimeState.editorValue !== runtimeControlScript ||
+    resetRuntimeState.readOnly
+  ) {
+    throw new Error(`Expected stop to reset only the scene state and unlock the same script, got ${JSON.stringify(resetRuntimeState)}.`);
+  }
 
   await page.getByTestId("devlog-toggle").click();
   const devLogState = await page.evaluate(() => {
