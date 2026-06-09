@@ -1,3 +1,5 @@
+import { buildCustomTemplateId } from "./templates.js";
+
 export function getAllGraphicsTemplates(customTemplates = [], defaultTemplates = []) {
   return [
     ...customTemplates.map((template) => ({ ...template, source: "custom" })),
@@ -75,6 +77,81 @@ export function getRecentGraphicsTemplates(recentTemplateIds, templates) {
   return (Array.isArray(recentTemplateIds) ? recentTemplateIds : [])
     .map((templateId) => templatesById.get(templateId))
     .filter(Boolean);
+}
+
+export function recordRecentGraphicsTemplateId(recentTemplateIds, templateId) {
+  const currentIds = Array.isArray(recentTemplateIds) ? recentTemplateIds : [];
+  if (!templateId) {
+    return [...currentIds];
+  }
+  return [templateId, ...currentIds.filter((item) => item !== templateId)];
+}
+
+export function recordRecentGraphicsTemplateIds(recentTemplateIds, templateIds) {
+  const currentIds = Array.isArray(recentTemplateIds) ? recentTemplateIds : [];
+  if (!Array.isArray(templateIds) || templateIds.length === 0) {
+    return [...currentIds];
+  }
+  const uniqueIds = [...new Set(templateIds.filter(Boolean))];
+  return [...uniqueIds, ...currentIds.filter((item) => !uniqueIds.includes(item))];
+}
+
+export function upsertGraphicsTemplate(templates, template) {
+  const currentTemplates = Array.isArray(templates) ? templates : [];
+  if (!template?.id) {
+    return [...currentTemplates];
+  }
+  return [template, ...currentTemplates.filter((item) => item.id !== template.id)];
+}
+
+export function upsertGraphicsTemplates(templates, nextTemplates) {
+  const currentTemplates = Array.isArray(templates) ? templates : [];
+  if (!Array.isArray(nextTemplates) || nextTemplates.length === 0) {
+    return [...currentTemplates];
+  }
+  const importedIds = new Set(nextTemplates.map((template) => template.id).filter(Boolean));
+  return [...nextTemplates, ...currentTemplates.filter((item) => !importedIds.has(item.id))];
+}
+
+export function removeGraphicsTemplateById(templates, recentTemplateIds, templateId) {
+  const currentTemplates = Array.isArray(templates) ? templates : [];
+  const currentRecentIds = Array.isArray(recentTemplateIds) ? recentTemplateIds : [];
+  const template = currentTemplates.find((item) => item.id === templateId) ?? null;
+  if (!template) {
+    return {
+      template: null,
+      templates: [...currentTemplates],
+      recentTemplateIds: [...currentRecentIds],
+    };
+  }
+  return {
+    template,
+    templates: currentTemplates.filter((item) => item.id !== templateId),
+    recentTemplateIds: currentRecentIds.filter((item) => item !== templateId),
+  };
+}
+
+export function resolveGraphicsTemplateImportId(template, options = {}) {
+  const selectedEntityKey = options.selectedEntityKey ?? "template";
+  const desiredId =
+    typeof template?.id === "string" && template.id.trim()
+      ? template.id.trim()
+      : buildCustomTemplateId(
+          template?.originEntityKey ?? selectedEntityKey ?? "template",
+          template?.label ?? "imported",
+          resolveNow(options.now),
+        );
+  const builtinConflict = (Array.isArray(options.defaultTemplates) ? options.defaultTemplates : []).some((item) => item.id === desiredId);
+  if (builtinConflict) {
+    return `custom-import-${resolveNow(options.now).toString(36)}`;
+  }
+  return desiredId;
+}
+
+export function buildGraphicsTemplateDefaultLabel(entityLabel, templates, entityKey) {
+  const similarCount =
+    (Array.isArray(templates) ? templates : []).filter((template) => template.originEntityKey === entityKey).length + 1;
+  return `${entityLabel} // ${String(similarCount).padStart(2, "0")}`;
 }
 
 export function getGroupedGraphicsTemplates(templates, filterState, entityKind, translate = (key) => key) {
@@ -236,4 +313,8 @@ export function getAvailableGraphicsTemplateCategories(templates, filterState, e
     ordered.push(groupId);
   }
   return ordered;
+}
+
+function resolveNow(now) {
+  return typeof now === "function" ? now() : Number(now ?? Date.now());
 }

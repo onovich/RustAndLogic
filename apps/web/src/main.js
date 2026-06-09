@@ -47,6 +47,7 @@ import {
 import {
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateModeOptions,
+  buildGraphicsTemplateDefaultLabel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateCategory,
@@ -58,6 +59,12 @@ import {
   isCustomGraphicsTemplate,
   isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  recordRecentGraphicsTemplateId,
+  recordRecentGraphicsTemplateIds,
+  removeGraphicsTemplateById,
+  resolveGraphicsTemplateImportId,
+  upsertGraphicsTemplate,
+  upsertGraphicsTemplates,
 } from "./graphics-studio/template-library.js";
 import {
   loadCustomGraphicsTemplatesFromStorage,
@@ -1648,7 +1655,7 @@ function recordRecentGraphicsTemplate(templateId) {
   if (!templateId) {
     return;
   }
-  recentGraphicsTemplateIds = [templateId, ...recentGraphicsTemplateIds.filter((item) => item !== templateId)];
+  recentGraphicsTemplateIds = recordRecentGraphicsTemplateId(recentGraphicsTemplateIds, templateId);
   persistRecentGraphicsTemplates();
 }
 
@@ -1656,11 +1663,7 @@ function recordRecentGraphicsTemplates(templateIds) {
   if (!Array.isArray(templateIds) || templateIds.length === 0) {
     return;
   }
-  const uniqueIds = [...new Set(templateIds.filter(Boolean))];
-  recentGraphicsTemplateIds = [
-    ...uniqueIds,
-    ...recentGraphicsTemplateIds.filter((item) => !uniqueIds.includes(item)),
-  ];
+  recentGraphicsTemplateIds = recordRecentGraphicsTemplateIds(recentGraphicsTemplateIds, templateIds);
   persistRecentGraphicsTemplates();
 }
 
@@ -1672,7 +1675,7 @@ function graphicsTemplateSerializationOptions() {
 }
 
 function upsertCustomGraphicsTemplate(template) {
-  customGraphicsTemplates = [template, ...customGraphicsTemplates.filter((item) => item.id !== template.id)];
+  customGraphicsTemplates = upsertGraphicsTemplate(customGraphicsTemplates, template);
   persistCustomGraphicsTemplates();
   recordRecentGraphicsTemplate(template.id);
 }
@@ -1681,43 +1684,36 @@ function upsertCustomGraphicsTemplates(templates) {
   if (!Array.isArray(templates) || templates.length === 0) {
     return;
   }
-  const importedIds = new Set(templates.map((template) => template.id));
-  customGraphicsTemplates = [...templates, ...customGraphicsTemplates.filter((item) => !importedIds.has(item.id))];
+  customGraphicsTemplates = upsertGraphicsTemplates(customGraphicsTemplates, templates);
   persistCustomGraphicsTemplates();
   recordRecentGraphicsTemplates(templates.map((template) => template.id));
 }
 
 function resolveImportedGraphicsTemplateId(template) {
-  const desiredId =
-    typeof template?.id === "string" && template.id.trim()
-      ? template.id.trim()
-      : buildCustomTemplateId(template?.originEntityKey ?? selectedVisualEntityKey ?? "template", template?.label ?? "imported");
-  const builtinConflict = defaultGraphicsTemplates.some((item) => item.id === desiredId);
-  if (builtinConflict) {
-    return `custom-import-${Date.now().toString(36)}`;
-  }
-  return desiredId;
+  return resolveGraphicsTemplateImportId(template, {
+    defaultTemplates: defaultGraphicsTemplates,
+    selectedEntityKey: selectedVisualEntityKey,
+    now: Date.now,
+  });
 }
 
 function buildDefaultCustomTemplateLabel(entityKey) {
-  const entityLabel = getGraphicsEntityLabel(entityKey);
-  const similarCount = customGraphicsTemplates.filter((template) => template.originEntityKey === entityKey).length + 1;
-  return `${entityLabel} // ${String(similarCount).padStart(2, "0")}`;
+  return buildGraphicsTemplateDefaultLabel(getGraphicsEntityLabel(entityKey), customGraphicsTemplates, entityKey);
 }
 
 function removeCustomGraphicsTemplate(templateId) {
   if (!templateId) {
     return;
   }
-  const template = customGraphicsTemplates.find((item) => item.id === templateId);
-  if (!template) {
+  const result = removeGraphicsTemplateById(customGraphicsTemplates, recentGraphicsTemplateIds, templateId);
+  if (!result.template) {
     return;
   }
-  customGraphicsTemplates = customGraphicsTemplates.filter((item) => item.id !== templateId);
-  recentGraphicsTemplateIds = recentGraphicsTemplateIds.filter((item) => item !== templateId);
+  customGraphicsTemplates = result.templates;
+  recentGraphicsTemplateIds = result.recentTemplateIds;
   persistCustomGraphicsTemplates();
   persistRecentGraphicsTemplates();
-  showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(template, t) }, "success");
+  showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(result.template, t) }, "success");
 }
 
 function applyShapePreset(presetId) {

@@ -55,6 +55,7 @@ import {
 } from "../apps/web/src/graphics-studio/swatches.js";
 import {
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateModeOptions,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
@@ -70,6 +71,12 @@ import {
   isCustomGraphicsTemplate,
   isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  recordRecentGraphicsTemplateId,
+  recordRecentGraphicsTemplateIds,
+  removeGraphicsTemplateById,
+  resolveGraphicsTemplateImportId,
+  upsertGraphicsTemplate,
+  upsertGraphicsTemplates,
 } from "../apps/web/src/graphics-studio/template-library.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
@@ -635,6 +642,46 @@ function testGraphicsTemplateLibraryHelpers() {
       { kind: "category", value: "custom", label: "Custom", active: true },
     ],
   );
+
+  assert.deepEqual(recordRecentGraphicsTemplateId(["a", "b", "a"], "b"), ["b", "a", "a"]);
+  assert.deepEqual(recordRecentGraphicsTemplateId(["a"], ""), ["a"]);
+  assert.deepEqual(recordRecentGraphicsTemplateIds(["a", "b", "c"], ["b", "d", "b", ""]), ["b", "d", "a", "c"]);
+  assert.deepEqual(upsertGraphicsTemplate([{ id: "a", label: "Old" }], { id: "a", label: "New" }), [
+    { id: "a", label: "New" },
+  ]);
+  assert.deepEqual(
+    upsertGraphicsTemplates(
+      [
+        { id: "a", label: "Old A" },
+        { id: "b", label: "Old B" },
+      ],
+      [
+        { id: "b", label: "New B" },
+        { id: "c", label: "New C" },
+      ],
+    ),
+    [
+      { id: "b", label: "New B" },
+      { id: "c", label: "New C" },
+      { id: "a", label: "Old A" },
+    ],
+  );
+  assert.deepEqual(removeGraphicsTemplateById([{ id: "a" }, { id: "b" }], ["b", "a"], "b"), {
+    template: { id: "b" },
+    templates: [{ id: "a" }],
+    recentTemplateIds: ["a"],
+  });
+  assert.deepEqual(removeGraphicsTemplateById([{ id: "a" }], ["a"], "missing"), {
+    template: null,
+    templates: [{ id: "a" }],
+    recentTemplateIds: ["a"],
+  });
+  assert.equal(
+    resolveGraphicsTemplateImportId({ id: "frameBot", label: "Frame Bot" }, { defaultTemplates, selectedEntityKey: "robot", now: () => 46656 }),
+    "custom-import-1000",
+  );
+  assert.equal(resolveGraphicsTemplateImportId({ label: "Imported Template" }, { selectedEntityKey: "robot", now: () => 1 }), "custom-robot-imported-template-1");
+  assert.equal(buildGraphicsTemplateDefaultLabel("Robot", [{ originEntityKey: "robot" }, { originEntityKey: "scrap" }], "robot"), "Robot // 02");
 }
 
 function createMemoryStorage() {
