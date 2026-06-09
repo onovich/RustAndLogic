@@ -102,6 +102,7 @@ import {
 } from "./runtime-teaching.js";
 import {
   buildPlaybackControlModel,
+  formatPlaybackControlText,
   getSpeedProfile,
   playbackScheduleDelay,
 } from "./runtime-controls.js";
@@ -2062,31 +2063,30 @@ updateControls = function updateControlsPatched() {
       weapon: stageUpgradeEnabled("weapon"),
     },
   });
-  elements.play.textContent = t(controls.playLabelKey);
-  elements.step.textContent = t(controls.stepLabelKey);
-  elements.reset.textContent = t(controls.resetLabelKey);
+  const controlText = formatPlaybackControlText(controls, t);
+  elements.play.textContent = controlText.playLabel;
+  elements.step.textContent = controlText.stepLabel;
+  elements.reset.textContent = controlText.resetLabel;
   elements.play.disabled = controls.playDisabled;
   elements.step.disabled = controls.stepDisabled;
   elements.speed.disabled = controls.speedDisabled;
-  elements.speed.textContent = controls.speedLabel;
-  elements.play.title = t("action.play");
-  elements.step.title = t(controls.stepLabelKey);
-  elements.reset.title = t(controls.resetLabelKey);
-  elements.speed.title = t("action.speed", { speed: controls.speedLabel });
+  elements.speed.textContent = controlText.speedLabel;
+  elements.play.title = controlText.playTitle;
+  elements.step.title = controlText.stepTitle;
+  elements.reset.title = controlText.resetTitle;
+  elements.speed.title = controlText.speedTitle;
   elements.play.dataset.active = String(controls.playActive);
   elements.speed.dataset.active = String(controls.speedActive);
   if (elements.settingsToggle) {
-    elements.settingsToggle.textContent = t("settings.title");
+    elements.settingsToggle.textContent = controlText.settingsLabel;
     elements.settingsToggle.dataset.active = String(controls.settingsActive);
   }
   if (elements.devlogToggle) {
-    elements.devlogToggle.textContent = t(controls.devlogLabelKey);
+    elements.devlogToggle.textContent = controlText.devlogLabel;
     elements.devlogToggle.dataset.active = String(controls.devlogActive);
   }
   if (elements.localizationButton) {
-    elements.localizationButton.textContent = t("action.localizationMode", {
-      mode: t(controls.languageModeKey),
-    });
+    elements.localizationButton.textContent = controlText.localizationLabel;
   }
   if (elements.upgrade) {
     elements.upgrade.dataset.stageEnabled = String(controls.upgrades.memory.stageEnabled);

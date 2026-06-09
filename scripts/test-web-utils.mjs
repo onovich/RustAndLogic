@@ -122,6 +122,7 @@ import {
 } from "../apps/web/src/runtime-teaching.js";
 import {
   buildPlaybackControlModel,
+  formatPlaybackControlText,
   getSpeedProfile,
   playbackScheduleDelay,
 } from "../apps/web/src/runtime-controls.js";
@@ -593,6 +594,40 @@ function testRuntimeControlHelpers() {
   });
   assert.equal(buildPlaybackControlModel({ playbackMode: "paused", storyActive: true }).playLabelKey, "action.resume");
   assert.equal(buildPlaybackControlModel({ playbackMode: "stopped", storyActive: false }).editorLocked, false);
+  const translateControls = (key, values = {}) => {
+    const text = {
+      "action.play": "Play",
+      "action.pause": "Pause",
+      "action.frame": "Step",
+      "action.stop": "Stop",
+      "action.speed": "Speed {speed}",
+      "action.devLogOpen": "Dev log open",
+      "action.localizationMode": "Language {mode}",
+      "language.mode.zh": "Chinese",
+      "settings.title": "Settings",
+    }[key] ?? key;
+    return Object.entries(values).reduce((result, [name, value]) => result.replaceAll(`{${name}}`, String(value)), text);
+  };
+  assert.deepEqual(formatPlaybackControlText({
+    playLabelKey: "action.pause",
+    stepLabelKey: "action.frame",
+    resetLabelKey: "action.stop",
+    speedLabel: "10X",
+    devlogLabelKey: "action.devLogOpen",
+    languageModeKey: "language.mode.zh",
+  }, translateControls), {
+    playLabel: "Pause",
+    stepLabel: "Step",
+    resetLabel: "Stop",
+    playTitle: "Play",
+    stepTitle: "Step",
+    resetTitle: "Stop",
+    speedLabel: "10X",
+    speedTitle: "Speed 10X",
+    settingsLabel: "Settings",
+    devlogLabel: "Dev log open",
+    localizationLabel: "Language Chinese",
+  });
   assert.deepEqual(getSpeedProfile([1, 5, 10], { 1: { interval: 720, duration: 420 }, 10: { interval: 90, duration: 70 } }, 2), {
     interval: 90,
     duration: 70,

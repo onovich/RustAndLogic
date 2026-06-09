@@ -26,6 +26,25 @@ export function buildPlaybackControlModel(options = {}) {
   };
 }
 
+export function formatPlaybackControlText(controls = {}, translate = identityTranslate) {
+  const speedLabel = controls.speedLabel ?? "";
+  return {
+    playLabel: translate(controls.playLabelKey),
+    stepLabel: translate(controls.stepLabelKey),
+    resetLabel: translate(controls.resetLabelKey),
+    playTitle: translate("action.play"),
+    stepTitle: translate(controls.stepLabelKey),
+    resetTitle: translate(controls.resetLabelKey),
+    speedLabel,
+    speedTitle: translate("action.speed", { speed: speedLabel }),
+    settingsLabel: translate("settings.title"),
+    devlogLabel: translate(controls.devlogLabelKey),
+    localizationLabel: translate("action.localizationMode", {
+      mode: translate(controls.languageModeKey),
+    }),
+  };
+}
+
 export function getSpeedProfile(speeds, profiles, speedIndex) {
   const speed = speeds[speedIndex];
   return profiles[speed];
@@ -41,4 +60,8 @@ function buildUpgradeControlModel(stageEnabled, storyActive) {
     stageEnabled: enabled,
     disabled: storyActive || !enabled,
   };
+}
+
+function identityTranslate(key) {
+  return key;
 }
