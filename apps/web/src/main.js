@@ -83,6 +83,7 @@ import {
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
+import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
@@ -211,7 +212,7 @@ const canvasState = {
 const saveKey = "rust-and-logic.save.v1";
 const languageKey = "rust-and-logic.language";
 let languageMode = detectLanguageMode();
-let language = resolveLanguage(languageMode);
+let language = resolveLanguage(languageMode, getNavigatorLanguages());
 let speeds = [1];
 let speedProfiles = { 1: { interval: 720, duration: 420 } };
 let scriptActions = new Set();
@@ -1803,32 +1804,20 @@ function applyEntityVisual(node, entityKey) {
 }
 
 function setLanguageMode(mode) {
-  languageMode = mode === "en" || mode === "zh" ? mode : "auto";
-  language = resolveLanguage(languageMode);
+  languageMode = normalizeLanguageMode(mode);
+  language = resolveLanguage(languageMode, getNavigatorLanguages());
   localStorage.setItem(languageKey, languageMode);
   applyLanguage();
   updateEditorTools();
   render(snapshot(game));
 }
 
-function nextLanguageMode(mode) {
-  return mode === "auto" ? "en" : mode === "en" ? "zh" : "auto";
-}
-
-function resolveLanguage(mode) {
-  if (mode === "en" || mode === "zh") {
-    return mode;
-  }
-  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
-  return languages.some((item) => item?.toLowerCase().startsWith("zh")) ? "zh" : "en";
-}
-
 function detectLanguageMode() {
-  const saved = localStorage.getItem(languageKey);
-  if (saved === "auto" || saved === "zh" || saved === "en") {
-    return saved;
-  }
-  return "auto";
+  return normalizeLanguageMode(localStorage.getItem(languageKey));
+}
+
+function getNavigatorLanguages() {
+  return navigator.languages?.length ? navigator.languages : [navigator.language];
 }
 
 function updateSidebarToggles() {

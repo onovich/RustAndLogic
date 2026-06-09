@@ -54,6 +54,11 @@ import {
   buildTextureSwatches,
 } from "../apps/web/src/graphics-studio/swatches.js";
 import {
+  nextLanguageMode,
+  normalizeLanguageMode,
+  resolveLanguage,
+} from "../apps/web/src/language.js";
+import {
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateModeOptions,
@@ -184,6 +189,7 @@ import { cloneJson } from "../apps/web/src/utils/json.js";
 testCsvParsing();
 testI18nParsing();
 testJsonClone();
+testLanguageHelpers();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
 testRuntimeFlowHelpers();
@@ -230,6 +236,24 @@ function testJsonClone() {
   clone.list.push("b");
   assert.equal(source.nested.value, 1);
   assert.deepEqual(source.list, ["a"]);
+}
+
+function testLanguageHelpers() {
+  assert.equal(normalizeLanguageMode("auto"), "auto");
+  assert.equal(normalizeLanguageMode("en"), "en");
+  assert.equal(normalizeLanguageMode("zh"), "zh");
+  assert.equal(normalizeLanguageMode("fr"), "auto");
+  assert.equal(normalizeLanguageMode(null), "auto");
+  assert.equal(nextLanguageMode("auto"), "en");
+  assert.equal(nextLanguageMode("en"), "zh");
+  assert.equal(nextLanguageMode("zh"), "auto");
+  assert.equal(nextLanguageMode("unknown"), "auto");
+  assert.equal(resolveLanguage("en", ["zh-CN"]), "en");
+  assert.equal(resolveLanguage("zh", ["en-US"]), "zh");
+  assert.equal(resolveLanguage("auto", ["en-US", "zh-CN"]), "zh");
+  assert.equal(resolveLanguage("auto", ["ja-JP", "en-US"]), "en");
+  assert.equal(resolveLanguage("auto", "zh-Hans-CN"), "zh");
+  assert.equal(resolveLanguage("invalid", []), "en");
 }
 
 function testStageHelpers() {
