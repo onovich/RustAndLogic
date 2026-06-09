@@ -78,12 +78,28 @@ import {
   upsertGraphicsTemplate,
   upsertGraphicsTemplates,
 } from "../apps/web/src/graphics-studio/template-library.js";
+import {
+  buildStageFlow,
+  buildTeachingMomentKey,
+  getStageCompletionTasks,
+  getStageDefinition,
+  getStageRecommendedPreset,
+  getStageRecommendedSpeed,
+  getStageSamplePresets,
+  getStageSpeedIndex,
+  getStageTaskDefinitions,
+  getStageTeachingMoments,
+  getStageUi,
+  getStageVisibleFacilities,
+  isStageUpgradeEnabled,
+} from "../apps/web/src/stages.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
 testCsvParsing();
 testI18nParsing();
 testJsonClone();
+testStageHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
@@ -121,6 +137,60 @@ function testJsonClone() {
   clone.list.push("b");
   assert.equal(source.nested.value, 1);
   assert.deepEqual(source.list, ["a"]);
+}
+
+function testStageHelpers() {
+  const tasks = [
+    { id: "boot", labelKey: "task.boot" },
+    { id: "collect", labelKey: "task.collect" },
+    { id: "return", labelKey: "task.return" },
+  ];
+  const presets = [
+    { id: "safe", lines: ["Move()"] },
+    { id: "fast", lines: ["Turn(Right)"] },
+  ];
+  const stages = [
+    {
+      id: "m1",
+      presetId: "safe",
+      taskIds: ["boot", "missing", "collect"],
+      completionTaskIds: ["collect", "return"],
+      teachingMoments: { success: [{ id: "first" }], failure: [{ id: "stuck" }] },
+      ui: {
+        recommendedSpeed: 5,
+        enabledUpgrades: ["memory", "armor"],
+        visibleFacilities: ["charger"],
+        samplePresetIds: ["fast", "missing"],
+        recommendedPresetId: "fast",
+      },
+    },
+    { id: "m2", taskIds: ["return"], ui: {} },
+  ];
+
+  assert.equal(getStageDefinition(stages, "m1").id, "m1");
+  assert.equal(getStageDefinition(stages, "missing").id, "m1");
+  assert.equal(getStageDefinition([], "missing"), null);
+  assert.deepEqual(getStageTaskDefinitions(stages[0], tasks).map((task) => task.id), ["boot", "collect"]);
+  assert.deepEqual(buildStageFlow(stages[0], tasks), { boot: false, collect: false });
+  assert.deepEqual(getStageUi(stages[0]), stages[0].ui);
+  assert.deepEqual(getStageUi(null), {});
+  assert.equal(getStageRecommendedSpeed(stages[0], [1, 5, 10]), 5);
+  assert.equal(getStageRecommendedSpeed({ ui: { recommendedSpeed: 99 } }, [1, 5, 10]), 1);
+  assert.equal(getStageSpeedIndex(stages[0], [1, 5, 10]), 1);
+  assert.equal(getStageSpeedIndex({ ui: { recommendedSpeed: 99 } }, [1, 5, 10]), 0);
+  assert.equal(isStageUpgradeEnabled("memory", stages[0]), true);
+  assert.equal(isStageUpgradeEnabled("weapon", stages[0]), false);
+  assert.deepEqual([...getStageVisibleFacilities(stages[0])], ["charger"]);
+  assert.deepEqual([...getStageVisibleFacilities({ ui: {} })], ["charger", "repairBay", "fabricator"]);
+  assert.deepEqual(getStageCompletionTasks(stages[0], tasks).map((task) => task.id), ["collect", "return"]);
+  assert.deepEqual(getStageSamplePresets(stages[0], presets).map((preset) => preset.id), ["fast"]);
+  assert.deepEqual(getStageSamplePresets({ ui: {} }, presets), presets);
+  assert.equal(getStageRecommendedPreset(stages[0], presets).id, "fast");
+  assert.equal(getStageRecommendedPreset({ presetId: "safe", ui: {} }, presets).id, "safe");
+  assert.equal(getStageRecommendedPreset({ presetId: "missing", ui: {} }, presets), null);
+  assert.deepEqual(getStageTeachingMoments(stages[0], "success"), [{ id: "first" }]);
+  assert.deepEqual(getStageTeachingMoments(stages[0], "unknown"), []);
+  assert.equal(buildTeachingMomentKey("m1", "success", "first"), "m1:success:first");
 }
 
 function testGraphicsConfigHelpers() {

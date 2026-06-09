@@ -17,6 +17,7 @@ $files = @(
   "apps/web/src/graphics-studio/swatches.js",
   "apps/web/src/graphics-studio/template-library.js",
   "apps/web/src/graphics-studio/templates.js",
+  "apps/web/src/stages.js",
   "apps/web/src/utils/assets.js",
   "apps/web/src/utils/csv.js",
   "apps/web/src/utils/json.js",

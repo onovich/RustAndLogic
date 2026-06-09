@@ -83,6 +83,21 @@ import {
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
+import {
+  buildStageFlow,
+  buildTeachingMomentKey,
+  getStageCompletionTasks as selectStageCompletionTasks,
+  getStageDefinition as selectStageDefinition,
+  getStageRecommendedPreset as selectStageRecommendedPreset,
+  getStageRecommendedSpeed as selectStageRecommendedSpeed,
+  getStageSamplePresets as selectStageSamplePresets,
+  getStageSpeedIndex as selectStageSpeedIndex,
+  getStageTaskDefinitions as selectStageTaskDefinitions,
+  getStageTeachingMoments as selectStageTeachingMoments,
+  getStageUi as selectStageUi,
+  getStageVisibleFacilities,
+  isStageUpgradeEnabled,
+} from "./stages.js";
 
 let game = createGame();
 let previousState = null;
@@ -338,14 +353,11 @@ async function loadEntityVisualCatalog() {
 }
 
 function getStageDefinition(stageId = currentStageId) {
-  return stageDefinitions.find((stage) => stage.id === stageId) ?? stageDefinitions[0] ?? null;
+  return selectStageDefinition(stageDefinitions, stageId);
 }
 
 function getStageTaskDefinitions(stage = getStageDefinition()) {
-  const taskIds = stage?.taskIds ?? [];
-  return taskIds
-    .map((taskId) => taskDefinitions.find((task) => task.id === taskId))
-    .filter(Boolean);
+  return selectStageTaskDefinitions(stage, taskDefinitions);
 }
 
 function createStageGame(stageId = currentStageId) {
@@ -354,63 +366,43 @@ function createStageGame(stageId = currentStageId) {
 }
 
 function getStageUi(stage = getStageDefinition()) {
-  return stage?.ui ?? {};
+  return selectStageUi(stage);
 }
 
 function getStageRecommendedSpeed(stage = getStageDefinition()) {
-  const recommended = Number(getStageUi(stage).recommendedSpeed);
-  return speeds.includes(recommended) ? recommended : speeds[0];
+  return selectStageRecommendedSpeed(stage, speeds);
 }
 
 function setStageRecommendedSpeed(stage = getStageDefinition()) {
-  const recommended = getStageRecommendedSpeed(stage);
-  const nextIndex = speeds.indexOf(recommended);
-  speedIndex = nextIndex >= 0 ? nextIndex : 0;
+  speedIndex = selectStageSpeedIndex(stage, speeds);
 }
 
 function stageUpgradeEnabled(module, stage = getStageDefinition()) {
-  const enabled = getStageUi(stage).enabledUpgrades ?? [];
-  if (module === "memory") {
-    return enabled.includes("memory");
-  }
-  return enabled.includes(module);
+  return isStageUpgradeEnabled(module, stage);
 }
 
 function stageVisibleFacilities(stage = getStageDefinition()) {
-  const visible = getStageUi(stage).visibleFacilities;
-  return Array.isArray(visible) && visible.length > 0
-    ? new Set(visible)
-    : new Set(["charger", "repairBay", "fabricator"]);
+  return getStageVisibleFacilities(stage);
 }
 
 function getStageCompletionTasks(stage = getStageDefinition()) {
-  const completionIds = stage?.completionTaskIds ?? [];
-  return completionIds
-    .map((taskId) => taskDefinitions.find((task) => task.id === taskId))
-    .filter(Boolean);
+  return selectStageCompletionTasks(stage, taskDefinitions);
 }
 
 function getStageSamplePresets(stage = getStageDefinition()) {
-  const sampleIds = getStageUi(stage).samplePresetIds;
-  if (!Array.isArray(sampleIds) || sampleIds.length === 0) {
-    return scriptPresets;
-  }
-  return sampleIds
-    .map((presetId) => scriptPresets.find((preset) => preset.id === presetId))
-    .filter(Boolean);
+  return selectStageSamplePresets(stage, scriptPresets);
 }
 
 function getStageRecommendedPreset(stage = getStageDefinition()) {
-  const recommendedId = getStageUi(stage).recommendedPresetId ?? stage?.presetId;
-  return scriptPresets.find((preset) => preset.id === recommendedId) ?? null;
+  return selectStageRecommendedPreset(stage, scriptPresets);
 }
 
 function getStageTeachingMoments(kind, stage = getStageDefinition()) {
-  return stage?.teachingMoments?.[kind] ?? [];
+  return selectStageTeachingMoments(stage, kind);
 }
 
 function teachingMomentKey(stageId, kind, momentId) {
-  return `${stageId}:${kind}:${momentId}`;
+  return buildTeachingMomentKey(stageId, kind, momentId);
 }
 
 function resetCameraIntro() {
@@ -440,8 +432,7 @@ function applyStageConfiguration(stageId, options = {}) {
   storyPages = stage.storyPages ?? appData.storyPages ?? [];
   seenTeachingMoments = new Set();
   setStageRecommendedSpeed(stage);
-  const nextFlow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
-  flow = nextFlow;
+  flow = buildStageFlow(stage, taskDefinitions);
   game = createStageGame(stage.id);
   previousState = null;
   deployedSource = "";
@@ -481,7 +472,7 @@ function resetStageSimulation(options = {}) {
 
   storyPages = stage.storyPages ?? appData.storyPages ?? [];
   seenTeachingMoments = new Set();
-  flow = Object.fromEntries(getStageTaskDefinitions(stage).map((task) => [task.id, false]));
+  flow = buildStageFlow(stage, taskDefinitions);
   game = createStageGame(stage.id);
   previousState = null;
   deployedSource = "";
@@ -1947,7 +1938,7 @@ elements.load.addEventListener("click", () => {
   currentStageId = loadedStage?.id ?? currentStageId;
   storyPages = loadedStage?.storyPages ?? appData.storyPages ?? [];
   setStageRecommendedSpeed(loadedStage);
-  flow = Object.fromEntries(getStageTaskDefinitions(loadedStage).map((task) => [task.id, false]));
+  flow = buildStageFlow(loadedStage, taskDefinitions);
   previousState = null;
   resetCameraIntro();
   renderFlowList();
