@@ -98,6 +98,7 @@ import {
   updateRuntimeFlow,
 } from "./runtime-flow.js";
 import {
+  formatTeachingMomentDisplay,
   selectFailureTeachingMoment,
   selectSuccessTeachingMoment,
 } from "./runtime-teaching.js";
@@ -2323,7 +2324,7 @@ function maybeShowSuccessTeachingMoment(flowBefore) {
   );
   if (selected) {
     seenTeachingMoments.add(selected.key);
-    showToast({ title: t(selected.moment.titleKey), body: t(selected.moment.bodyKey) }, "success");
+    showToast(formatTeachingMomentDisplay(selected.moment, t), "success");
   }
 }
 
@@ -2337,7 +2338,7 @@ function consumeFailureTeachingMoment(cause) {
   );
   if (selected) {
     seenTeachingMoments.add(selected.key);
-    return { title: t(selected.moment.titleKey), body: t(selected.moment.bodyKey) };
+    return formatTeachingMomentDisplay(selected.moment, t);
   }
   return null;
 }

@@ -29,3 +29,14 @@ export function selectFailureTeachingMoment(stage, moments, cause, seenKeys = ne
   }
   return null;
 }
+
+export function formatTeachingMomentDisplay(moment = {}, translate = identityTranslate) {
+  return {
+    title: moment.titleKey ? translate(moment.titleKey) : "",
+    body: moment.bodyKey ? translate(moment.bodyKey) : "",
+  };
+}
+
+function identityTranslate(key) {
+  return key;
+}

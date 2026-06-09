@@ -118,6 +118,7 @@ import {
   updateRuntimeFlow,
 } from "../apps/web/src/runtime-flow.js";
 import {
+  formatTeachingMomentDisplay,
   selectFailureTeachingMoment,
   selectSuccessTeachingMoment,
 } from "../apps/web/src/runtime-teaching.js";
@@ -554,8 +555,8 @@ function testRuntimeFlowHelpers() {
 function testRuntimeTeachingHelpers() {
   const stage = { id: "m2" };
   const successMoments = [
-    { id: "deploy", taskId: "deploy", titleKey: "success.deploy.title" },
-    { id: "collect", taskId: "collect", titleKey: "success.collect.title" },
+    { id: "deploy", taskId: "deploy", titleKey: "success.deploy.title", bodyKey: "success.deploy.body" },
+    { id: "collect", taskId: "collect", titleKey: "success.collect.title", bodyKey: "success.collect.body" },
   ];
   assert.deepEqual(
     selectSuccessTeachingMoment(stage, successMoments, { deploy: false, collect: false }, { deploy: true, collect: false }),
@@ -582,6 +583,16 @@ function testRuntimeTeachingHelpers() {
     moment: failureMoments[1],
   });
   assert.equal(selectFailureTeachingMoment(stage, failureMoments, "power", new Set(["m2:failure:power"])), null);
+  const translateTeaching = (key) =>
+    ({
+      "success.deploy.title": "Script deployed",
+      "success.deploy.body": "The first loop is alive.",
+    })[key] ?? key;
+  assert.deepEqual(formatTeachingMomentDisplay(successMoments[0], translateTeaching), {
+    title: "Script deployed",
+    body: "The first loop is alive.",
+  });
+  assert.deepEqual(formatTeachingMomentDisplay({}, translateTeaching), { title: "", body: "" });
 }
 
 function testRuntimeControlHelpers() {
