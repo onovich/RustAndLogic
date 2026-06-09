@@ -80,6 +80,7 @@ import {
 } from "../apps/web/src/graphics-studio/template-library.js";
 import {
   buildStageActionItems,
+  buildStageCopyModel,
   buildStageFlow,
   buildStageSampleActionItems,
   buildTeachingMomentKey,
@@ -223,9 +224,16 @@ function testStageHelpers() {
     {
       id: "m1",
       labelKey: "stage.m1",
+      location: {
+        kindKey: "location.kind.m1",
+        nameKey: "location.name.m1",
+        descriptionKey: "location.description.m1",
+      },
       presetId: "safe",
       taskIds: ["boot", "missing", "collect"],
       completionTaskIds: ["collect", "return"],
+      resourceGuidanceKey: "stage.guidance.m1",
+      scriptGuidanceKey: "script.guidance.m1",
       teachingMoments: { success: [{ id: "first" }], failure: [{ id: "stuck" }] },
       ui: {
         recommendedSpeed: 5,
@@ -241,6 +249,20 @@ function testStageHelpers() {
   assert.equal(getStageDefinition(stages, "m1").id, "m1");
   assert.equal(getStageDefinition(stages, "missing").id, "m1");
   assert.equal(getStageDefinition([], "missing"), null);
+  assert.deepEqual(buildStageCopyModel(stages[0]), {
+    locationKindKey: "location.kind.m1",
+    locationNameKey: "location.name.m1",
+    locationDescriptionKey: "location.description.m1",
+    resourceGuidanceKey: "stage.guidance.m1",
+    scriptGuidanceKey: "script.guidance.m1",
+  });
+  assert.deepEqual(buildStageCopyModel(null), {
+    locationKindKey: "location.kind",
+    locationNameKey: "world.title",
+    locationDescriptionKey: "location.description",
+    resourceGuidanceKey: "",
+    scriptGuidanceKey: "",
+  });
   assert.deepEqual(getStageTaskDefinitions(stages[0], tasks).map((task) => task.id), ["boot", "collect"]);
   assert.deepEqual(buildStageFlow(stages[0], tasks), { boot: false, collect: false });
   assert.deepEqual(getStageUi(stages[0]), stages[0].ui);

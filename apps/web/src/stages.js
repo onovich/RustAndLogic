@@ -13,6 +13,17 @@ export function buildStageFlow(stage, taskDefinitions) {
   return Object.fromEntries(getStageTaskDefinitions(stage, taskDefinitions).map((task) => [task.id, false]));
 }
 
+export function buildStageCopyModel(stage) {
+  const location = stage?.location ?? {};
+  return {
+    locationKindKey: location.kindKey ?? "location.kind",
+    locationNameKey: location.nameKey ?? "world.title",
+    locationDescriptionKey: location.descriptionKey ?? "location.description",
+    resourceGuidanceKey: stage?.resourceGuidanceKey ?? "",
+    scriptGuidanceKey: stage?.scriptGuidanceKey ?? "",
+  };
+}
+
 export function getStageUi(stage) {
   return stage?.ui ?? {};
 }

@@ -132,6 +132,7 @@ import {
 } from "./editor-highlight.js";
 import {
   buildStageActionItems,
+  buildStageCopyModel,
   buildStageFlow,
   buildStageSampleActionItems,
   getStageCompletionTasks as selectStageCompletionTasks,
@@ -2467,19 +2468,18 @@ function renderFlowSummary() {
 }
 
 function renderStageCopy() {
-  const stage = getStageDefinition();
-  const location = stage?.location ?? {};
+  const copy = buildStageCopyModel(getStageDefinition());
   if (elements.locationKind) {
-    elements.locationKind.textContent = t(location.kindKey ?? "location.kind");
+    elements.locationKind.textContent = t(copy.locationKindKey);
   }
   if (elements.locationName) {
-    elements.locationName.textContent = t(location.nameKey ?? "world.title");
+    elements.locationName.textContent = t(copy.locationNameKey);
   }
   if (elements.locationDescription) {
-    elements.locationDescription.textContent = t(location.descriptionKey ?? "location.description");
+    elements.locationDescription.textContent = t(copy.locationDescriptionKey);
   }
   if (elements.resourceGuidance) {
-    elements.resourceGuidance.textContent = stage?.resourceGuidanceKey ? t(stage.resourceGuidanceKey) : "";
+    elements.resourceGuidance.textContent = copy.resourceGuidanceKey ? t(copy.resourceGuidanceKey) : "";
   }
 }
 
@@ -2487,8 +2487,8 @@ function renderScriptGuidance() {
   if (!elements.scriptGuidance) {
     return;
   }
-  const stage = getStageDefinition();
-  elements.scriptGuidance.textContent = stage?.scriptGuidanceKey ? t(stage.scriptGuidanceKey) : "";
+  const copy = buildStageCopyModel(getStageDefinition());
+  elements.scriptGuidance.textContent = copy.scriptGuidanceKey ? t(copy.scriptGuidanceKey) : "";
 }
 
 function renderStageActions() {
