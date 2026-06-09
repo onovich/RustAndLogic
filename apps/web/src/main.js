@@ -88,7 +88,11 @@ import {
   detectRuntimeCause,
   shouldAutoPause,
 } from "./runtime-feedback.js";
-import { updateRuntimeFlow } from "./runtime-flow.js";
+import {
+  formatRuntimeFlowProgress,
+  selectRuntimeFlowSummary,
+  updateRuntimeFlow,
+} from "./runtime-flow.js";
 import {
   selectFailureTeachingMoment,
   selectSuccessTeachingMoment,
@@ -2155,7 +2159,7 @@ function render(state, options = {}) {
   }
 
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
-  elements.flowProgress.textContent = `${Object.values(flow).filter(Boolean).length}/${Object.keys(flow).length}`;
+  elements.flowProgress.textContent = formatRuntimeFlowProgress(flow);
 
   renderStageCopy();
   renderGrid(state, beforeState, options);
@@ -2445,18 +2449,16 @@ function renderFlowSummary() {
   if (!elements.flowSummary) {
     return;
   }
-  const completionTasks = getStageCompletionTasks();
-  if (completionTasks.length === 0) {
+  const summary = selectRuntimeFlowSummary(getStageCompletionTasks(), flow);
+  if (summary.state === "none") {
     elements.flowSummary.textContent = t("flow.summary.none");
     return;
   }
-  const firstPending = completionTasks.find((task) => !flow[task.id]);
-  if (!firstPending) {
-    const lastTask = completionTasks[completionTasks.length - 1];
-    elements.flowSummary.textContent = t("flow.summary.complete", { label: t(lastTask.labelKey) });
+  if (summary.state === "complete") {
+    elements.flowSummary.textContent = t("flow.summary.complete", { label: t(summary.task.labelKey) });
     return;
   }
-  elements.flowSummary.textContent = t("flow.summary.pending", { label: t(firstPending.labelKey) });
+  elements.flowSummary.textContent = t("flow.summary.pending", { label: t(summary.task.labelKey) });
 }
 
 function renderStageCopy() {

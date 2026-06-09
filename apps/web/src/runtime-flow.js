@@ -35,6 +35,33 @@ export function updateRuntimeFlow(flow = {}, beforeState, state = {}) {
   return nextFlow;
 }
 
+export function runtimeFlowProgress(flow = {}) {
+  const values = Object.values(flow);
+  return {
+    completed: values.filter(Boolean).length,
+    total: values.length,
+  };
+}
+
+export function formatRuntimeFlowProgress(flow = {}) {
+  const progress = runtimeFlowProgress(flow);
+  return `${progress.completed}/${progress.total}`;
+}
+
+export function selectRuntimeFlowSummary(completionTasks = [], flow = {}) {
+  if (completionTasks.length === 0) {
+    return { state: "none", task: null };
+  }
+  const firstPending = completionTasks.find((task) => !flow[task.id]);
+  if (firstPending) {
+    return { state: "pending", task: firstPending };
+  }
+  return {
+    state: "complete",
+    task: completionTasks[completionTasks.length - 1] ?? null,
+  };
+}
+
 export function storedInventoryTotal(resources = {}) {
   return (resources.scrap ?? 0) + (resources.cells ?? 0) + (resources.chips ?? 0);
 }

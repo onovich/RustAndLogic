@@ -99,7 +99,10 @@ import {
   shouldAutoPause,
 } from "../apps/web/src/runtime-feedback.js";
 import {
+  formatRuntimeFlowProgress,
   isRobotHome,
+  runtimeFlowProgress,
+  selectRuntimeFlowSummary,
   storedInventoryTotal,
   updateRuntimeFlow,
 } from "../apps/web/src/runtime-flow.js";
@@ -321,6 +324,21 @@ function testRuntimeFlowHelpers() {
   });
   assert.deepEqual(updateRuntimeFlow({ craft: false }, null, { resources: { memoryShards: 2 } }), { craft: true });
   assert.deepEqual(updateRuntimeFlow({ combat: true }, before, { enemies: [] }), { combat: true });
+  assert.deepEqual(runtimeFlowProgress({ deploy: true, collect: false, unload: true }), { completed: 2, total: 3 });
+  assert.equal(formatRuntimeFlowProgress({ deploy: true, collect: false, unload: true }), "2/3");
+  const completionTasks = [
+    { id: "deploy", labelKey: "task.deploy" },
+    { id: "collect", labelKey: "task.collect" },
+  ];
+  assert.deepEqual(selectRuntimeFlowSummary([], {}), { state: "none", task: null });
+  assert.deepEqual(selectRuntimeFlowSummary(completionTasks, { deploy: true, collect: false }), {
+    state: "pending",
+    task: completionTasks[1],
+  });
+  assert.deepEqual(selectRuntimeFlowSummary(completionTasks, { deploy: true, collect: true }), {
+    state: "complete",
+    task: completionTasks[1],
+  });
   assert.equal(storedInventoryTotal({ scrap: 2, cells: 3, chips: 4 }), 9);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 2, y: 1 } }), true);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 1, y: 1 } }), false);
