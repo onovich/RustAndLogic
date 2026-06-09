@@ -94,6 +94,11 @@ import {
   selectSuccessTeachingMoment,
 } from "./runtime-teaching.js";
 import {
+  buildPlaybackControlModel,
+  getSpeedProfile,
+  playbackScheduleDelay,
+} from "./runtime-controls.js";
+import {
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
   dedupeSuggestions,
@@ -2018,54 +2023,61 @@ applyLanguage = function applyLanguagePatched() {
 };
 
 updateControls = function updateControlsPatched() {
-  const editorLocked = storyActive || playbackMode !== "stopped";
-  elements.play.textContent =
-    playbackMode === "playing" ? t("action.pause") : playbackMode === "paused" ? t("action.resume") : t("action.play");
-  elements.step.textContent = t("action.frame");
-  elements.reset.textContent = t("action.stop");
-  elements.play.disabled = storyActive;
-  if (!storyActive && playbackMode !== "stopped") {
-    elements.play.disabled = false;
-  }
-  elements.step.disabled = storyActive;
-  elements.speed.disabled = storyActive;
-  elements.speed.textContent = `${speeds[speedIndex]}X`;
+  const controls = buildPlaybackControlModel({
+    playbackMode,
+    storyActive,
+    speed: speeds[speedIndex],
+    settingsOpen: elements.settingsPanel?.dataset.open === "true",
+    devOpen: elements.devPanel?.dataset.open === "true",
+    languageMode,
+    stageEnabled: {
+      memory: stageUpgradeEnabled("memory"),
+      armor: stageUpgradeEnabled("armor"),
+      weapon: stageUpgradeEnabled("weapon"),
+    },
+  });
+  elements.play.textContent = t(controls.playLabelKey);
+  elements.step.textContent = t(controls.stepLabelKey);
+  elements.reset.textContent = t(controls.resetLabelKey);
+  elements.play.disabled = controls.playDisabled;
+  elements.step.disabled = controls.stepDisabled;
+  elements.speed.disabled = controls.speedDisabled;
+  elements.speed.textContent = controls.speedLabel;
   elements.play.title = t("action.play");
-  elements.step.title = t("action.frame");
-  elements.reset.title = t("action.stop");
-  elements.speed.title = t("action.speed", { speed: `${speeds[speedIndex]}X` });
-  elements.play.dataset.active = String(playbackMode === "playing");
-  elements.speed.dataset.active = String(playbackMode !== "stopped");
+  elements.step.title = t(controls.stepLabelKey);
+  elements.reset.title = t(controls.resetLabelKey);
+  elements.speed.title = t("action.speed", { speed: controls.speedLabel });
+  elements.play.dataset.active = String(controls.playActive);
+  elements.speed.dataset.active = String(controls.speedActive);
   if (elements.settingsToggle) {
     elements.settingsToggle.textContent = t("settings.title");
-    elements.settingsToggle.dataset.active = String(elements.settingsPanel?.dataset.open === "true");
+    elements.settingsToggle.dataset.active = String(controls.settingsActive);
   }
   if (elements.devlogToggle) {
-    const devOpen = elements.devPanel?.dataset.open === "true";
-    elements.devlogToggle.textContent = t(devOpen ? "action.devLogOpen" : "action.devLogClosed");
-    elements.devlogToggle.dataset.active = String(devOpen);
+    elements.devlogToggle.textContent = t(controls.devlogLabelKey);
+    elements.devlogToggle.dataset.active = String(controls.devlogActive);
   }
   if (elements.localizationButton) {
     elements.localizationButton.textContent = t("action.localizationMode", {
-      mode: t(`language.mode.${languageMode}`),
+      mode: t(controls.languageModeKey),
     });
   }
   if (elements.upgrade) {
-    elements.upgrade.dataset.stageEnabled = String(stageUpgradeEnabled("memory"));
-    elements.upgrade.disabled = storyActive || !stageUpgradeEnabled("memory");
+    elements.upgrade.dataset.stageEnabled = String(controls.upgrades.memory.stageEnabled);
+    elements.upgrade.disabled = controls.upgrades.memory.disabled;
   }
   if (elements.armorUpgrade) {
-    elements.armorUpgrade.dataset.stageEnabled = String(stageUpgradeEnabled("armor"));
-    elements.armorUpgrade.disabled = storyActive || !stageUpgradeEnabled("armor");
+    elements.armorUpgrade.dataset.stageEnabled = String(controls.upgrades.armor.stageEnabled);
+    elements.armorUpgrade.disabled = controls.upgrades.armor.disabled;
   }
   if (elements.weaponUpgrade) {
-    elements.weaponUpgrade.dataset.stageEnabled = String(stageUpgradeEnabled("weapon"));
-    elements.weaponUpgrade.disabled = storyActive || !stageUpgradeEnabled("weapon");
+    elements.weaponUpgrade.dataset.stageEnabled = String(controls.upgrades.weapon.stageEnabled);
+    elements.weaponUpgrade.disabled = controls.upgrades.weapon.disabled;
   }
   if (elements.editor) {
-    elements.editor.readOnly = editorLocked;
-    elements.editor.dataset.locked = String(editorLocked);
-    elements.editor.setAttribute("aria-readonly", String(editorLocked));
+    elements.editor.readOnly = controls.editorLocked;
+    elements.editor.dataset.locked = String(controls.editorLocked);
+    elements.editor.setAttribute("aria-readonly", String(controls.editorLocked));
   }
   renderStageActions();
   renderSampleActions();
@@ -2237,7 +2249,7 @@ function schedulePlayback() {
   playbackTimer = window.setTimeout(() => {
     advanceFrame();
     schedulePlayback();
-  }, Math.max(profile.interval, profile.duration + 20));
+  }, playbackScheduleDelay(profile));
 }
 
 function pauseForBlock(state) {
@@ -2400,7 +2412,7 @@ function clearPlaybackTimer() {
 }
 
 function currentSpeedProfile() {
-  return speedProfiles[speeds[speedIndex]];
+  return getSpeedProfile(speeds, speedProfiles, speedIndex);
 }
 
 function updateControls() {

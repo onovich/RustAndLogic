@@ -108,6 +108,11 @@ import {
   selectSuccessTeachingMoment,
 } from "../apps/web/src/runtime-teaching.js";
 import {
+  buildPlaybackControlModel,
+  getSpeedProfile,
+  playbackScheduleDelay,
+} from "../apps/web/src/runtime-controls.js";
+import {
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -143,6 +148,7 @@ testStageHelpers();
 testRuntimeFeedbackHelpers();
 testRuntimeFlowHelpers();
 testRuntimeTeachingHelpers();
+testRuntimeControlHelpers();
 testEditorAutocompleteHelpers();
 testEditorTextHelpers();
 testEditorHighlightHelpers();
@@ -351,6 +357,46 @@ function testRuntimeTeachingHelpers() {
     moment: failureMoments[1],
   });
   assert.equal(selectFailureTeachingMoment(stage, failureMoments, "power", new Set(["m2:failure:power"])), null);
+}
+
+function testRuntimeControlHelpers() {
+  assert.deepEqual(buildPlaybackControlModel({
+    playbackMode: "playing",
+    storyActive: false,
+    speed: 10,
+    settingsOpen: true,
+    devOpen: false,
+    languageMode: "zh",
+    stageEnabled: { memory: true, armor: false, weapon: true },
+  }), {
+    editorLocked: true,
+    playLabelKey: "action.pause",
+    stepLabelKey: "action.frame",
+    resetLabelKey: "action.stop",
+    playDisabled: false,
+    stepDisabled: false,
+    speedDisabled: false,
+    speedLabel: "10X",
+    playActive: true,
+    speedActive: true,
+    settingsActive: true,
+    devlogActive: false,
+    devlogLabelKey: "action.devLogClosed",
+    languageModeKey: "language.mode.zh",
+    upgrades: {
+      memory: { stageEnabled: true, disabled: false },
+      armor: { stageEnabled: false, disabled: true },
+      weapon: { stageEnabled: true, disabled: false },
+    },
+  });
+  assert.equal(buildPlaybackControlModel({ playbackMode: "paused", storyActive: true }).playLabelKey, "action.resume");
+  assert.equal(buildPlaybackControlModel({ playbackMode: "stopped", storyActive: false }).editorLocked, false);
+  assert.deepEqual(getSpeedProfile([1, 5, 10], { 1: { interval: 720, duration: 420 }, 10: { interval: 90, duration: 70 } }, 2), {
+    interval: 90,
+    duration: 70,
+  });
+  assert.equal(playbackScheduleDelay({ interval: 90, duration: 130 }), 150);
+  assert.equal(playbackScheduleDelay({ interval: 170, duration: 130 }), 170);
 }
 
 function testEditorAutocompleteHelpers() {

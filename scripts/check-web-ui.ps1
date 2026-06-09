@@ -20,6 +20,7 @@ $files = @(
   "apps/web/src/graphics-studio/swatches.js",
   "apps/web/src/graphics-studio/template-library.js",
   "apps/web/src/graphics-studio/templates.js",
+  "apps/web/src/runtime-controls.js",
   "apps/web/src/runtime-feedback.js",
   "apps/web/src/runtime-flow.js",
   "apps/web/src/runtime-teaching.js",
