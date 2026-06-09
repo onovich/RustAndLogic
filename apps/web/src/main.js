@@ -23,6 +23,12 @@ import {
   normalizeColorValue,
 } from "./graphics-studio/entity-visuals.js";
 import {
+  buildGraphicsSelectOptions,
+  coerceGraphicsFieldValue,
+  resolveGraphicsFieldValue,
+  shouldRenderGraphicsField,
+} from "./graphics-studio/form-schema.js";
+import {
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -1484,21 +1490,6 @@ function renderGraphicsFieldSchema(scope, source, schema) {
   }
 }
 
-function shouldRenderGraphicsField(fieldConfig, source) {
-  const condition = fieldConfig.showWhen;
-  if (!condition) {
-    return true;
-  }
-  const currentValue = source?.[condition.field];
-  if (Object.prototype.hasOwnProperty.call(condition, "equals")) {
-    return currentValue === condition.equals;
-  }
-  if (Object.prototype.hasOwnProperty.call(condition, "notEquals")) {
-    return currentValue !== condition.notEquals;
-  }
-  return true;
-}
-
 function appendGraphicsFieldFromSchema(scope, source, fieldConfig) {
   const label = t(fieldConfig.labelKey ?? fieldConfig.field);
   const value = resolveGraphicsFieldValue(source, fieldConfig);
@@ -1508,7 +1499,7 @@ function appendGraphicsFieldFromSchema(scope, source, fieldConfig) {
       field: fieldConfig.field,
       label,
       value,
-      options: buildGraphicsSelectOptions(graphicsEditorConfig[fieldConfig.optionsKey]),
+      options: buildGraphicsSelectOptions(graphicsEditorConfig[fieldConfig.optionsKey], t),
     });
     return;
   }
@@ -1523,17 +1514,6 @@ function appendGraphicsFieldFromSchema(scope, source, fieldConfig) {
     max: fieldConfig.max,
     step: fieldConfig.step,
   });
-}
-
-function resolveGraphicsFieldValue(source, fieldConfig) {
-  const rawValue = source?.[fieldConfig.field];
-  if (fieldConfig.type === "color") {
-    return normalizeColorValue(rawValue, fieldConfig.fallback ?? "#000000");
-  }
-  if (rawValue === undefined || rawValue === null) {
-    return fieldConfig.defaultValue ?? "";
-  }
-  return rawValue;
 }
 
 function appendGraphicsField({
@@ -1594,27 +1574,6 @@ function appendGraphicsSelectField({ scope, field, label, value, options }) {
   }
   wrapper.append(labelNode, select);
   elements.graphicsForm.append(wrapper);
-}
-
-function buildGraphicsSelectOptions(options) {
-  return (Array.isArray(options) ? options : [])
-    .filter((option) => option && typeof option.value === "string")
-    .map((option) => ({
-      value: option.value,
-      label: option.labelKey ? t(option.labelKey) : option.label ?? option.value,
-    }));
-}
-
-function coerceGraphicsFieldValue(valueType, rawValue) {
-  if (valueType === "number") {
-    const parsed = Number(rawValue);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  if (valueType === "integer") {
-    const parsed = Number.parseInt(rawValue, 10);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return rawValue;
 }
 
 function ensureSelectedVisualLayer() {

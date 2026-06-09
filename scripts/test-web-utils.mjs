@@ -7,6 +7,12 @@ import {
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
+  buildGraphicsSelectOptions,
+  coerceGraphicsFieldValue,
+  resolveGraphicsFieldValue,
+  shouldRenderGraphicsField,
+} from "../apps/web/src/graphics-studio/form-schema.js";
+import {
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -39,6 +45,7 @@ testEntityVisualDataUrlCache();
 testGraphicsPreviews();
 testGraphicsTemplateHelpers();
 testGraphicsStorageHelpers();
+testGraphicsFormSchemaHelpers();
 
 console.log("Web utility tests passed.");
 
@@ -245,6 +252,51 @@ function testGraphicsStorageHelpers() {
 
   persistJsonValue(storage, "plain", { ok: true });
   assert.equal(storage.getItem("plain"), '{"ok":true}');
+}
+
+function testGraphicsFormSchemaHelpers() {
+  assert.equal(shouldRenderGraphicsField({ field: "width" }, {}), true);
+  assert.equal(
+    shouldRenderGraphicsField(
+      { field: "stripeWidth", showWhen: { field: "textureType", equals: "stripes" } },
+      { textureType: "stripes" },
+    ),
+    true,
+  );
+  assert.equal(
+    shouldRenderGraphicsField(
+      { field: "stripeWidth", showWhen: { field: "textureType", equals: "stripes" } },
+      { textureType: "dither" },
+    ),
+    false,
+  );
+  assert.equal(
+    shouldRenderGraphicsField(
+      { field: "textureVariant", showWhen: { field: "textureType", notEquals: "stripes" } },
+      { textureType: "dither" },
+    ),
+    true,
+  );
+  assert.equal(resolveGraphicsFieldValue({ fill: "bad" }, { field: "fill", type: "color", fallback: "#f28d35" }), "#f28d35");
+  assert.equal(resolveGraphicsFieldValue({}, { field: "width", defaultValue: 12 }), 12);
+  assert.deepEqual(
+    buildGraphicsSelectOptions(
+      [
+        { value: "shape", labelKey: "graphics.layer.shape" },
+        { value: "glyph", label: "Glyph" },
+        { label: "bad" },
+      ],
+      (key) => `t:${key}`,
+    ),
+    [
+      { value: "shape", label: "t:graphics.layer.shape" },
+      { value: "glyph", label: "Glyph" },
+    ],
+  );
+  assert.equal(coerceGraphicsFieldValue("number", "4.5"), 4.5);
+  assert.equal(coerceGraphicsFieldValue("number", "bad"), 0);
+  assert.equal(coerceGraphicsFieldValue("integer", "7.9"), 7);
+  assert.equal(coerceGraphicsFieldValue("string", "7.9"), "7.9");
 }
 
 function createMemoryStorage() {
