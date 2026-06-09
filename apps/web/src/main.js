@@ -22,6 +22,18 @@ import {
   buildGraphicsTexturePreview,
   normalizeColorValue,
 } from "./graphics-studio/entity-visuals.js";
+import {
+  buildCustomTemplateId,
+  isGraphicsTemplateLibraryPayload,
+  normalizeGraphicsCustomTemplate,
+  normalizeGraphicsCustomTemplates,
+  normalizeGraphicsTemplateFilterState,
+  normalizeRecentGraphicsTemplateIds,
+  resolveGraphicsTemplateObject,
+  resolveGraphicsTemplateValue,
+  serializeGraphicsTemplate,
+  serializeGraphicsTemplateLibrary,
+} from "./graphics-studio/templates.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -1343,59 +1355,6 @@ function getGraphicsEntityKind(entityKey = selectedVisualEntityKey) {
   return graphicsEditorConfig.entityKinds?.[entityKey] ?? "";
 }
 
-function normalizeGraphicsCustomTemplates(value) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value
-    .map((template, index) => normalizeGraphicsCustomTemplate(template, index))
-    .filter(Boolean);
-}
-
-function normalizeRecentGraphicsTemplateIds(value) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return [...new Set(value.filter((item) => typeof item === "string" && item.trim()).map((item) => item.trim()))].slice(0, 6);
-}
-
-function normalizeGraphicsTemplateFilterState(value) {
-  return {
-    mode: value?.mode === "fit" ? "fit" : "all",
-    category: typeof value?.category === "string" && value.category.trim() ? value.category.trim() : "all",
-  };
-}
-
-function normalizeGraphicsCustomTemplate(template, index) {
-  if (!template || typeof template !== "object" || !template.visual || !Array.isArray(template.visual.layers)) {
-    return null;
-  }
-  const label =
-    typeof template.label === "string" && template.label.trim()
-      ? template.label.trim()
-      : `Template ${String(index + 1).padStart(2, "0")}`;
-  return {
-    id:
-      typeof template.id === "string" && template.id.trim()
-        ? template.id.trim()
-        : `custom-template-${String(index + 1).padStart(2, "0")}`,
-    label,
-    description:
-      typeof template.description === "string" && template.description.trim() ? template.description.trim() : "",
-    categoryKey:
-      typeof template.categoryKey === "string" && template.categoryKey.trim()
-        ? template.categoryKey.trim()
-        : "graphics.templateCategory.custom",
-    categoryLabel:
-      typeof template.categoryLabel === "string" && template.categoryLabel.trim() ? template.categoryLabel.trim() : "",
-    entityKinds: Array.isArray(template.entityKinds) ? template.entityKinds.filter((item) => typeof item === "string") : [],
-    originEntityKey:
-      typeof template.originEntityKey === "string" && template.originEntityKey.trim() ? template.originEntityKey.trim() : "",
-    updatedAt: Number.isFinite(Number(template.updatedAt)) ? Number(template.updatedAt) : 0,
-    visual: cloneJson(template.visual),
-  };
-}
-
 function renderGraphicsLayerList() {
   if (!elements.graphicsLayerList) {
     return;
@@ -2271,7 +2230,7 @@ function exportGraphicsTemplate(templateId) {
   if (!template || !elements.graphicsEntityIo) {
     return;
   }
-  elements.graphicsEntityIo.value = JSON.stringify(serializeGraphicsTemplate(template), null, 2);
+  elements.graphicsEntityIo.value = JSON.stringify(serializeGraphicsTemplate(template, graphicsTemplateSerializationOptions()), null, 2);
   elements.graphicsEntityIo.focus();
   elements.graphicsEntityIo.select();
   renderGraphicsEditor();
@@ -2282,7 +2241,7 @@ function exportGraphicsTemplateLibrary() {
   if (!elements.graphicsEntityIo) {
     return;
   }
-  const payload = serializeGraphicsTemplateLibrary(customGraphicsTemplates);
+  const payload = serializeGraphicsTemplateLibrary(customGraphicsTemplates, graphicsTemplateSerializationOptions());
   elements.graphicsEntityIo.value = JSON.stringify(payload, null, 2);
   elements.graphicsEntityIo.focus();
   elements.graphicsEntityIo.select();
@@ -2437,6 +2396,13 @@ function recordRecentGraphicsTemplates(templateIds) {
   persistRecentGraphicsTemplates();
 }
 
+function graphicsTemplateSerializationOptions() {
+  return {
+    getLabel: getGraphicsTemplateLabel,
+    getDescription: getGraphicsTemplateDescription,
+  };
+}
+
 function upsertCustomGraphicsTemplate(template) {
   customGraphicsTemplates = [template, ...customGraphicsTemplates.filter((item) => item.id !== template.id)];
   persistCustomGraphicsTemplates();
@@ -2471,15 +2437,6 @@ function buildDefaultCustomTemplateLabel(entityKey) {
   return `${entityLabel} // ${String(similarCount).padStart(2, "0")}`;
 }
 
-function buildCustomTemplateId(entityKey, label) {
-  const slug = String(label)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 24);
-  return `custom-${entityKey}-${slug || "template"}-${Date.now().toString(36)}`;
-}
-
 function removeCustomGraphicsTemplate(templateId) {
   if (!templateId) {
     return;
@@ -2493,38 +2450,6 @@ function removeCustomGraphicsTemplate(templateId) {
   persistCustomGraphicsTemplates();
   persistRecentGraphicsTemplates();
   showToast({ title: t("graphics.templateDeleted"), body: getGraphicsTemplateLabel(template) }, "success");
-}
-
-function serializeGraphicsTemplate(template) {
-  return {
-    kind: "graphics-template",
-    version: 1,
-    id: template.id,
-    label: getGraphicsTemplateLabel(template),
-    description: getGraphicsTemplateDescription(template),
-    categoryKey: template.categoryKey ?? "graphics.templateCategory.custom",
-    categoryLabel: typeof template.categoryLabel === "string" ? template.categoryLabel : "",
-    entityKinds: Array.isArray(template.entityKinds) ? [...template.entityKinds] : [],
-    originEntityKey: template.originEntityKey ?? "",
-    updatedAt: Number(template.updatedAt ?? Date.now()),
-    visual: cloneJson(template.visual),
-  };
-}
-
-function serializeGraphicsTemplateLibrary(templates) {
-  return {
-    kind: "graphics-template-library",
-    version: 1,
-    exportedAt: Date.now(),
-    templates: templates.map((template) => serializeGraphicsTemplate(template)),
-  };
-}
-
-function isGraphicsTemplateLibraryPayload(payload) {
-  return (
-    payload?.kind === "graphics-template-library" ||
-    (Array.isArray(payload?.templates) && (!payload.kind || payload.kind === "graphics-template-library"))
-  );
 }
 
 function applyShapePreset(presetId) {
@@ -2547,45 +2472,6 @@ function applyShapePreset(presetId) {
   );
   normalizeShapeLayer(layer, visual);
   persistEntityVisualCatalog();
-}
-
-function resolveGraphicsTemplateObject(patch, context) {
-  return Object.fromEntries(
-    Object.entries(patch).map(([key, value]) => [key, resolveGraphicsTemplateValue(value, context)]),
-  );
-}
-
-function resolveGraphicsTemplateValue(value, context) {
-  if (Array.isArray(value)) {
-    return value.map((item) => resolveGraphicsTemplateValue(item, context));
-  }
-  if (value === null || value === undefined || typeof value !== "object") {
-    return value;
-  }
-  if (value.kind === "center") {
-    const canvasSize = Number(context.canvasSize ?? 24);
-    return canvasSize / 2 + Number(value.offset ?? 0);
-  }
-  if (value.kind === "entityInitial") {
-    return String(context.entityKey ?? "?").slice(0, 1).toUpperCase() || "?";
-  }
-  if ("scale" in value) {
-    const canvasSize = Number(context.canvasSize ?? 24);
-    let resolved = canvasSize * Number(value.scale ?? 0);
-    if (value.round === "integer") {
-      resolved = Math.round(resolved);
-    }
-    if (Number.isFinite(Number(value.min))) {
-      resolved = Math.max(resolved, Number(value.min));
-    }
-    if (Number.isFinite(Number(value.max))) {
-      resolved = Math.min(resolved, Number(value.max));
-    }
-    return resolved;
-  }
-  return Object.fromEntries(
-    Object.entries(value).map(([key, child]) => [key, resolveGraphicsTemplateValue(child, context)]),
-  );
 }
 
 function buildFillSwatchesForSelection() {

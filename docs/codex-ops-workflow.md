@@ -47,6 +47,14 @@ Timeout seconds: 30
 
 `Smoke.cmd` relies on `scripts/smoke-web-ui.mjs`, which starts its own temporary HTTP server on an available port and closes it after the browser flow finishes. Keep smoke independent from the fixed manual-testing port `4173`, because that port may already be occupied by another local project.
 
+For token-light refactor slices, run focused module tests first:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe scripts/test-web-utils.mjs
+```
+
+This directly covers extracted Web utility and Graphics Studio pure modules before the broader `Validate.cmd` and `Smoke.cmd` gates.
+
 ## Safety Policy
 
 Do not run destructive clean/reset/deploy commands unless the user explicitly asks.
