@@ -28,6 +28,7 @@ import {
 } from "./graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
+  buildVisualLayerActionState,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
   describeVisualLayerMeta,
@@ -976,21 +977,20 @@ function renderGraphicsEditor() {
   if (elements.graphicsExportLibraryButton) {
     elements.graphicsExportLibraryButton.disabled = customGraphicsTemplates.length === 0;
   }
-  const layerIndex = visual?.layers.findIndex((item) => item.id === selectedVisualLayerId) ?? -1;
-  const layerCount = visual?.layers.length ?? 0;
+  const layerActions = buildVisualLayerActionState(visual?.layers, selectedVisualLayerId);
   const selectedLayer = visual?.layers.find((item) => item.id === selectedVisualLayerId) ?? null;
   const selectedLocked = Boolean(selectedLayer?.locked);
   if (elements.graphicsDuplicateLayerButton) {
-    elements.graphicsDuplicateLayerButton.disabled = !selectedVisualLayerId;
+    elements.graphicsDuplicateLayerButton.disabled = layerActions.duplicateDisabled;
   }
   if (elements.graphicsMoveLayerUpButton) {
-    elements.graphicsMoveLayerUpButton.disabled = layerIndex <= 0;
+    elements.graphicsMoveLayerUpButton.disabled = layerActions.moveUpDisabled;
   }
   if (elements.graphicsMoveLayerDownButton) {
-    elements.graphicsMoveLayerDownButton.disabled = layerIndex < 0 || layerIndex >= layerCount - 1;
+    elements.graphicsMoveLayerDownButton.disabled = layerActions.moveDownDisabled;
   }
   if (elements.graphicsDeleteLayerButton) {
-    elements.graphicsDeleteLayerButton.disabled = !selectedVisualLayerId;
+    elements.graphicsDeleteLayerButton.disabled = layerActions.deleteDisabled;
   }
   if (elements.graphicsCopyButton && !graphicsCopyResetTimer) {
     elements.graphicsCopyButton.textContent = t("graphics.copy");

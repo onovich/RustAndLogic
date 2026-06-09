@@ -18,6 +18,7 @@ import {
 } from "../apps/web/src/graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
+  buildVisualLayerActionState,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
   describeVisualLayerMeta,
@@ -1475,6 +1476,30 @@ function testGraphicsLayerHelpers() {
   assert.equal(moveVisualLayer(layers, "b", -1), true);
   assert.deepEqual(layers.map((item) => item.id), ["b", "a", "c"]);
   assert.equal(moveVisualLayer(layers, "b", -1), false);
+  assert.deepEqual(buildVisualLayerActionState(layers, ""), {
+    duplicateDisabled: true,
+    moveUpDisabled: true,
+    moveDownDisabled: true,
+    deleteDisabled: true,
+  });
+  assert.deepEqual(buildVisualLayerActionState(layers, "b"), {
+    duplicateDisabled: false,
+    moveUpDisabled: true,
+    moveDownDisabled: false,
+    deleteDisabled: false,
+  });
+  assert.deepEqual(buildVisualLayerActionState(layers, "a"), {
+    duplicateDisabled: false,
+    moveUpDisabled: false,
+    moveDownDisabled: false,
+    deleteDisabled: false,
+  });
+  assert.deepEqual(buildVisualLayerActionState(layers, "c"), {
+    duplicateDisabled: false,
+    moveUpDisabled: false,
+    moveDownDisabled: true,
+    deleteDisabled: false,
+  });
 
   const translate = (key) =>
     ({

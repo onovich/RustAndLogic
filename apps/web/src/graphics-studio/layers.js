@@ -115,6 +115,17 @@ export function moveVisualLayer(layers, selectedLayerId, delta) {
   return true;
 }
 
+export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
+  const entries = Array.isArray(layers) ? layers : [];
+  const selectedIndex = selectedLayerId ? entries.findIndex((layer) => layer.id === selectedLayerId) : -1;
+  return {
+    duplicateDisabled: !selectedLayerId,
+    moveUpDisabled: selectedIndex <= 0,
+    moveDownDisabled: selectedIndex < 0 || selectedIndex >= entries.length - 1,
+    deleteDisabled: !selectedLayerId,
+  };
+}
+
 export function applyShapePresetToLayer(layer, preset, visual, options = {}) {
   if (!visual || !layer || layer.type !== "shape" || layer.locked || !preset) {
     return false;
