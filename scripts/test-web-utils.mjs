@@ -130,6 +130,7 @@ import {
   buildRuntimeLogItems,
   calculateArmorPercent,
   calculateEnergyPercent,
+  formatCargoManifestDisplay,
   formatInstructionUsage,
   formatRuntimeDiffItem,
   formatRuntimeValue,
@@ -583,6 +584,16 @@ function testRuntimeDisplayHelpers() {
     items: [{ item: "chip", count: 3 }],
   });
   assert.deepEqual(buildCargoManifestDisplayItems(null), { empty: true, items: [] });
+  const translateManifest = (key) =>
+    ({
+      "resources.cargoEmpty": "Empty",
+      "resources.item.scrap": "Scrap",
+      "resources.item.battery": "Battery",
+      "resources.item.chip": "Chip",
+    })[key] ?? key;
+  assert.equal(formatCargoManifestDisplay({ scrap: 2, battery: 1 }, translateManifest), "Scrap x2, Battery x1");
+  assert.equal(formatCargoManifestDisplay(new Map([["chip", 3]]), translateManifest), "Chip x3");
+  assert.equal(formatCargoManifestDisplay(null, translateManifest), "Empty");
   assert.equal(calculateArmorPercent({ hp: 5, armor: 1 }), 50);
   assert.equal(calculateArmorPercent({ hp: 20, armor: 1 }), 100);
   assert.equal(calculateEnergyPercent({ energy: 3, maxEnergy: 6 }), 50);

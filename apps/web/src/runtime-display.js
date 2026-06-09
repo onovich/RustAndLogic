@@ -53,6 +53,16 @@ export function buildCargoManifestDisplayItems(manifestItems = {}) {
   };
 }
 
+export function formatCargoManifestDisplay(manifestItems = {}, translate = identityTranslate) {
+  const manifest = buildCargoManifestDisplayItems(manifestItems);
+  if (manifest.empty) {
+    return translate("resources.cargoEmpty");
+  }
+  return manifest.items
+    .map(({ item, count }) => `${translate(`resources.item.${item}`)} x${count}`)
+    .join(", ");
+}
+
 export function buildRuntimeLogItems(logs = []) {
   return Array.isArray(logs) ? logs : [];
 }
@@ -107,4 +117,8 @@ export function calculateEnergyPercent(robot = {}) {
 
 function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
+}
+
+function identityTranslate(key) {
+  return key;
 }

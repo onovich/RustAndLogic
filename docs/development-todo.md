@@ -12,6 +12,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Translate M1~M4 planning into concrete system requirements and domain-split implementation backlog docs.
 - [x] Keep `docs/development-todo.md` current after each implementation slice.
 - [x] Keep validation commands in `.codex/project-ops-workflow.json` aligned with the current stack.
+- [x] Wire the git workflow validation step to the existing ops validation wrapper so commit/push runs the project gate automatically.
 - [x] Keep the ops smoke workflow independent from fixed `4173` dev-server health checks.
 
 ## Milestone 1: TapeScript Core Slice
@@ -127,6 +128,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Remove the obsolete playback control fallback that referenced the old pause button after the patched control model became authoritative.
 - [x] Extract Web UI runtime display labels, meter percentages, and cargo manifest summaries into reusable pure helpers with direct tests.
 - [x] Extract Web UI cargo manifest display item normalization into reusable pure runtime display helpers with direct tests.
+- [x] Extract Web UI cargo manifest localized text formatting into reusable pure runtime display helpers with direct tests.
 - [x] Extract Web UI runtime checklist done/active state selection into reusable pure flow helpers with direct tests.
 - [x] Extract Web UI facility list visibility and recipe display data into reusable pure runtime display helpers with direct tests.
 - [x] Extract Web UI runtime log and diff display data into reusable pure runtime display helpers with direct tests.

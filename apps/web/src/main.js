@@ -105,11 +105,11 @@ import {
   playbackScheduleDelay,
 } from "./runtime-controls.js";
 import {
-  buildCargoManifestDisplayItems,
   buildFacilityDisplayItems,
   buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
   buildRuntimeLogItems,
+  formatCargoManifestDisplay,
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
@@ -2146,7 +2146,7 @@ function render(state, options = {}) {
   elements.chips.textContent = display.resources.chips;
   elements.memoryShards.textContent = display.resources.memoryShards;
   elements.cargoCount.textContent = display.cargoCount;
-  elements.cargoManifest.textContent = formatCargoManifest(display.cargoManifestItems);
+  elements.cargoManifest.textContent = formatCargoManifestDisplay(display.cargoManifestItems, t);
   renderFacilities(state.facilities);
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
@@ -3565,16 +3565,6 @@ function renderDiff(diff) {
     item.textContent = change.text;
     elements.diffList.append(item);
   }
-}
-
-function formatCargoManifest(manifestItems) {
-  const manifest = buildCargoManifestDisplayItems(manifestItems);
-  if (manifest.empty) {
-    return t("resources.cargoEmpty");
-  }
-  return manifest.items
-    .map(({ item, count }) => `${t(`resources.item.${item}`)} x${count}`)
-    .join(", ");
 }
 
 function renderFacilities(facilities) {
