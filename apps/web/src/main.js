@@ -141,6 +141,7 @@ import {
   buildStageFlow,
   buildStageSampleActionItems,
   buildStoryDialogueModel,
+  formatStageCopyDisplay,
   getStageCompletionTasks as selectStageCompletionTasks,
   getStageDefinition as selectStageDefinition,
   getStageRecommendedPreset as selectStageRecommendedPreset,
@@ -2462,17 +2463,18 @@ function renderFlowSummary() {
 
 function renderStageCopy() {
   const copy = buildStageCopyModel(getStageDefinition());
+  const display = formatStageCopyDisplay(copy, t);
   if (elements.locationKind) {
-    elements.locationKind.textContent = t(copy.locationKindKey);
+    elements.locationKind.textContent = display.locationKind;
   }
   if (elements.locationName) {
-    elements.locationName.textContent = t(copy.locationNameKey);
+    elements.locationName.textContent = display.locationName;
   }
   if (elements.locationDescription) {
-    elements.locationDescription.textContent = t(copy.locationDescriptionKey);
+    elements.locationDescription.textContent = display.locationDescription;
   }
   if (elements.resourceGuidance) {
-    elements.resourceGuidance.textContent = copy.resourceGuidanceKey ? t(copy.resourceGuidanceKey) : "";
+    elements.resourceGuidance.textContent = display.resourceGuidance;
   }
 }
 
@@ -2481,7 +2483,7 @@ function renderScriptGuidance() {
     return;
   }
   const copy = buildStageCopyModel(getStageDefinition());
-  elements.scriptGuidance.textContent = copy.scriptGuidanceKey ? t(copy.scriptGuidanceKey) : "";
+  elements.scriptGuidance.textContent = formatStageCopyDisplay(copy, t).scriptGuidance;
 }
 
 function renderStageActions() {

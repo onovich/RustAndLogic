@@ -24,6 +24,16 @@ export function buildStageCopyModel(stage) {
   };
 }
 
+export function formatStageCopyDisplay(copy = {}, translate = identityTranslate) {
+  return {
+    locationKind: translate(copy.locationKindKey),
+    locationName: translate(copy.locationNameKey),
+    locationDescription: translate(copy.locationDescriptionKey),
+    resourceGuidance: copy.resourceGuidanceKey ? translate(copy.resourceGuidanceKey) : "",
+    scriptGuidance: copy.scriptGuidanceKey ? translate(copy.scriptGuidanceKey) : "",
+  };
+}
+
 export function buildStoryDialogueModel(storyActive = false, storyPages = [], storyIndex = 0) {
   const pages = Array.isArray(storyPages) ? storyPages : [];
   if (!storyActive || pages.length === 0) {
@@ -127,4 +137,8 @@ export function getStageTeachingMoments(stage, kind) {
 
 export function buildTeachingMomentKey(stageId, kind, momentId) {
   return `${stageId}:${kind}:${momentId}`;
+}
+
+function identityTranslate(key) {
+  return key;
 }

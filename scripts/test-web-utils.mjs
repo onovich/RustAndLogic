@@ -84,6 +84,7 @@ import {
   buildStageFlow,
   buildStageSampleActionItems,
   buildStoryDialogueModel,
+  formatStageCopyDisplay,
   buildTeachingMomentKey,
   getStageCompletionTasks,
   getStageDefinition,
@@ -276,6 +277,28 @@ function testStageHelpers() {
     locationDescriptionKey: "location.description",
     resourceGuidanceKey: "",
     scriptGuidanceKey: "",
+  });
+  const translateStageCopy = (key) =>
+    ({
+      "location.kind.m1": "Sector",
+      "location.name.m1": "WASTE-X",
+      "location.description.m1": "Recovery site",
+      "stage.guidance.m1": "Recover nearby scrap.",
+      "script.guidance.m1": "Use the wake script.",
+    })[key] ?? key;
+  assert.deepEqual(formatStageCopyDisplay(buildStageCopyModel(stages[0]), translateStageCopy), {
+    locationKind: "Sector",
+    locationName: "WASTE-X",
+    locationDescription: "Recovery site",
+    resourceGuidance: "Recover nearby scrap.",
+    scriptGuidance: "Use the wake script.",
+  });
+  assert.deepEqual(formatStageCopyDisplay(buildStageCopyModel(null), translateStageCopy), {
+    locationKind: "location.kind",
+    locationName: "world.title",
+    locationDescription: "location.description",
+    resourceGuidance: "",
+    scriptGuidance: "",
   });
   const storyPages = [
     { speakerKey: "story.speaker.1", textKey: "story.text.1" },
