@@ -128,8 +128,8 @@ import {
   tokenRangeAtOffset,
 } from "./editor-text.js";
 import {
+  buildDiagnosticDisplayModel,
   buildScriptHighlightModel,
-  classifyDiagnosticSeverity,
 } from "./editor-highlight.js";
 import {
   buildStageActionItems,
@@ -2568,43 +2568,39 @@ function renderScriptHighlight(errors) {
 }
 
 function renderDiagnostics(errors) {
+  const diagnostics = buildDiagnosticDisplayModel(errors);
   elements.diagnostics.replaceChildren();
-  elements.editor.dataset.invalid = String(errors.length > 0);
+  elements.editor.dataset.invalid = String(diagnostics.invalid);
   if (elements.diagnosticCount) {
-    elements.diagnosticCount.textContent = t(
-      errors.length === 1 ? "diagnostic.issueCount.one" : "diagnostic.issueCount.other",
-      { count: errors.length },
-    );
+    elements.diagnosticCount.textContent = t(diagnostics.countKey, { count: diagnostics.count });
   }
-  if (errors.length === 0) {
+  if (!diagnostics.invalid) {
     return;
   }
-  for (const error of errors) {
+  for (const diagnostic of diagnostics.items) {
     const item = document.createElement("li");
-    item.dataset.line = String(error.line);
-    const severity = classifyDiagnosticSeverity(error.message);
-    item.dataset.severity = severity;
-    const location = error.line > 0 ? t("diagnostic.line", { line: error.line }) : t("diagnostic.general");
+    item.dataset.line = String(diagnostic.line);
+    item.dataset.severity = diagnostic.severity;
     const topline = document.createElement("div");
     topline.className = "diagnostic-topline";
     const severityNode = document.createElement("span");
     severityNode.className = "diagnostic-severity";
-    severityNode.textContent = severity === "warning" ? t("diagnostic.severity.warning") : t("diagnostic.severity.error");
+    severityNode.textContent = t(diagnostic.severityKey);
     const locationNode = document.createElement("span");
     locationNode.className = "diagnostic-location";
-    locationNode.textContent = location;
+    locationNode.textContent = t(diagnostic.locationKey, diagnostic.locationValues);
     topline.append(severityNode, locationNode);
     const messageNode = document.createElement("span");
     messageNode.className = "diagnostic-message";
-    messageNode.textContent = error.message;
+    messageNode.textContent = diagnostic.message;
     item.append(topline, messageNode);
-    if (error.line > 0) {
+    if (diagnostic.interactive) {
       item.tabIndex = 0;
-      item.addEventListener("click", () => jumpToLine(error.line));
+      item.addEventListener("click", () => jumpToLine(diagnostic.line));
       item.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          jumpToLine(error.line);
+          jumpToLine(diagnostic.line);
         }
       });
     }

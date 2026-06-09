@@ -153,6 +153,7 @@ import {
   tokenRangeAtOffset,
 } from "../apps/web/src/editor-text.js";
 import {
+  buildDiagnosticDisplayModel,
   buildScriptHighlightModel,
   classifyDiagnosticSeverity,
   highlightEditorLine,
@@ -706,6 +707,40 @@ function testEditorHighlightHelpers() {
   };
   assert.equal(classifyDiagnosticSeverity("Unused label"), "warning");
   assert.equal(classifyDiagnosticSeverity("Unknown instruction"), "error");
+  assert.deepEqual(buildDiagnosticDisplayModel([]), {
+    invalid: false,
+    count: 0,
+    countKey: "diagnostic.issueCount.other",
+    items: [],
+  });
+  assert.deepEqual(buildDiagnosticDisplayModel([
+    { line: 2, message: "Unknown instruction" },
+    { line: 0, message: "Unused label" },
+  ]), {
+    invalid: true,
+    count: 2,
+    countKey: "diagnostic.issueCount.other",
+    items: [
+      {
+        line: 2,
+        severity: "error",
+        severityKey: "diagnostic.severity.error",
+        locationKey: "diagnostic.line",
+        locationValues: { line: 2 },
+        message: "Unknown instruction",
+        interactive: true,
+      },
+      {
+        line: 0,
+        severity: "warning",
+        severityKey: "diagnostic.severity.warning",
+        locationKey: "diagnostic.general",
+        locationValues: {},
+        message: "Unused label",
+        interactive: false,
+      },
+    ],
+  });
   assert.equal(
     highlightEditorLine("If Check(Home) Then Goto @Loop // <safe>", syntax),
     '<span class="tok-branch">If</span> <span class="tok-query">Check</span>(<span class="tok-value">Home</span>) <span class="tok-unknown">Then</span> <span class="tok-action">Goto</span> <span class="tok-label tok-label-ref" title="defined line 1">@Loop</span> <span class="tok-comment">// &lt;safe&gt;</span>',

@@ -20,6 +20,28 @@ export function classifyDiagnosticSeverity(message) {
   return /unreachable|unused|redundant/i.test(String(message ?? "")) ? "warning" : "error";
 }
 
+export function buildDiagnosticDisplayModel(errors = []) {
+  const diagnostics = Array.isArray(errors) ? errors : [];
+  return {
+    invalid: diagnostics.length > 0,
+    count: diagnostics.length,
+    countKey: diagnostics.length === 1 ? "diagnostic.issueCount.one" : "diagnostic.issueCount.other",
+    items: diagnostics.map((error) => {
+      const line = Number(error.line) || 0;
+      const severity = classifyDiagnosticSeverity(error.message);
+      return {
+        line,
+        severity,
+        severityKey: severity === "warning" ? "diagnostic.severity.warning" : "diagnostic.severity.error",
+        locationKey: line > 0 ? "diagnostic.line" : "diagnostic.general",
+        locationValues: line > 0 ? { line } : {},
+        message: error.message,
+        interactive: line > 0,
+      };
+    }),
+  };
+}
+
 export function highlightEditorLine(line, options = {}) {
   const source = String(line ?? "");
   const commentStart = source.indexOf("//");

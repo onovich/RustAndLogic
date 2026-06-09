@@ -114,6 +114,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract TapeScript editor token-range and label-definition scanning into reusable pure text helpers with direct tests.
 - [x] Extract TapeScript editor syntax highlighting and diagnostic severity rules into reusable pure helpers with direct tests.
 - [x] Extract TapeScript editor label lookup and line selection range calculations into reusable pure text helpers with direct tests.
+- [x] Extract TapeScript editor diagnostic list view model into reusable pure highlight helpers with direct tests.
 - [x] Lock TapeScript editing to the stopped state, make pause/resume continue from the current VM position, and make stop reset only the stage simulation instead of overwriting the current script.
 - [x] Add a startup loading overlay so the player never sees the pre-hydration map shell drift into the fully loaded stage state.
 - [x] Extract Web UI runtime halt cause detection, toast-key selection, and auto-pause checks into reusable pure helpers with direct tests.
