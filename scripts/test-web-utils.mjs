@@ -99,6 +99,11 @@ import {
   shouldAutoPause,
 } from "../apps/web/src/runtime-feedback.js";
 import {
+  isRobotHome,
+  storedInventoryTotal,
+  updateRuntimeFlow,
+} from "../apps/web/src/runtime-flow.js";
+import {
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -132,6 +137,7 @@ testI18nParsing();
 testJsonClone();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
+testRuntimeFlowHelpers();
 testEditorAutocompleteHelpers();
 testEditorTextHelpers();
 testEditorHighlightHelpers();
@@ -250,6 +256,63 @@ function testRuntimeFeedbackHelpers() {
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 1, vm: { pc: 2 } }), true);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 2, vm: { pc: 3 } }), false);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["Battery depleted"], tick: 2, vm: { pc: 3 } }), true);
+}
+
+function testRuntimeFlowHelpers() {
+  const baseFlow = {
+    deploy: false,
+    collect: false,
+    unload: false,
+    craft: false,
+    stockBalance: false,
+    combat: false,
+    repair: false,
+    chip: false,
+    recharge: false,
+    save: true,
+  };
+  const before = {
+    robot: { hp: 6, energy: 3, maxEnergy: 8 },
+    resources: { memoryShards: 1, chips: 0 },
+    enemies: [{ id: "e1" }, { id: "e2" }],
+  };
+  const state = {
+    program: { ok: true },
+    robot: { x: 1, y: 2, hp: 8, energy: 8, maxEnergy: 8, cargo: ["scrap"] },
+    base: { x: 1, y: 2 },
+    resources: { scrap: 1, cells: 0, chips: 1, memoryShards: 3 },
+    enemies: [{ id: "e2" }],
+  };
+
+  assert.deepEqual(updateRuntimeFlow(baseFlow, before, state), {
+    deploy: true,
+    collect: true,
+    unload: true,
+    craft: true,
+    stockBalance: true,
+    combat: true,
+    repair: true,
+    chip: true,
+    recharge: true,
+    save: true,
+  });
+  assert.deepEqual(baseFlow, {
+    deploy: false,
+    collect: false,
+    unload: false,
+    craft: false,
+    stockBalance: false,
+    combat: false,
+    repair: false,
+    chip: false,
+    recharge: false,
+    save: true,
+  });
+  assert.deepEqual(updateRuntimeFlow({ craft: false }, null, { resources: { memoryShards: 2 } }), { craft: true });
+  assert.deepEqual(updateRuntimeFlow({ combat: true }, before, { enemies: [] }), { combat: true });
+  assert.equal(storedInventoryTotal({ scrap: 2, cells: 3, chips: 4 }), 9);
+  assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 2, y: 1 } }), true);
+  assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 1, y: 1 } }), false);
 }
 
 function testEditorAutocompleteHelpers() {

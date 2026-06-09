@@ -88,6 +88,7 @@ import {
   detectRuntimeCause,
   shouldAutoPause,
 } from "./runtime-feedback.js";
+import { updateRuntimeFlow } from "./runtime-flow.js";
 import {
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
@@ -2538,37 +2539,7 @@ function loadScriptPreset(presetId) {
 }
 
 function syncFlowState(beforeState, state) {
-  if ("deploy" in flow) {
-    flow.deploy = Boolean(state.program?.ok);
-  }
-  if ("collect" in flow) {
-    flow.collect = flow.collect || state.robot.cargo.length > 0;
-  }
-  if ("unload" in flow) {
-    flow.unload = flow.unload || storedInventoryTotal(state.resources) > 0;
-  }
-  if ("craft" in flow) {
-    flow.craft = flow.craft || (beforeState ? state.resources.memoryShards > beforeState.resources.memoryShards : state.resources.memoryShards > 1);
-  }
-  if ("stockBalance" in flow) {
-    flow.stockBalance = flow.stockBalance || state.resources.memoryShards >= 3;
-  }
-  if ("combat" in flow && !flow.combat && beforeState?.enemies) {
-    flow.combat = (state.enemies?.length ?? 0) < (beforeState.enemies?.length ?? 0);
-  }
-  if ("repair" in flow) {
-    flow.repair = flow.repair || Boolean(beforeState && state.robot.hp > beforeState.robot.hp);
-  }
-  if ("chip" in flow && !flow.chip && beforeState?.resources) {
-    flow.chip = (state.resources.chips ?? 0) > (beforeState.resources.chips ?? 0);
-  }
-  if ("recharge" in flow && !flow.recharge && beforeState?.robot) {
-    const recharged =
-      state.robot.energy === state.robot.maxEnergy &&
-      beforeState.robot.energy < beforeState.robot.maxEnergy &&
-      isRobotHome(state);
-    flow.recharge = recharged;
-  }
+  flow = updateRuntimeFlow(flow, beforeState, state);
 }
 
 function updateEditorTools(errors = null) {
@@ -3657,14 +3628,6 @@ function renderFacilities(facilities) {
     row.append(term, desc);
     elements.facilityList.append(row);
   }
-}
-
-function storedInventoryTotal(resources) {
-  return (resources.scrap ?? 0) + (resources.cells ?? 0) + (resources.chips ?? 0);
-}
-
-function isRobotHome(state) {
-  return state.robot.x === state.base.x && state.robot.y === state.base.y;
 }
 
 function applyLanguage() {
