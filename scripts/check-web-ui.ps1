@@ -22,6 +22,7 @@ $files = @(
   "apps/web/src/graphics-studio/templates.js",
   "apps/web/src/runtime-feedback.js",
   "apps/web/src/runtime-flow.js",
+  "apps/web/src/runtime-teaching.js",
   "apps/web/src/stages.js",
   "apps/web/src/utils/assets.js",
   "apps/web/src/utils/csv.js",

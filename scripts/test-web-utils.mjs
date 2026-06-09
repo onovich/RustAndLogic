@@ -104,6 +104,10 @@ import {
   updateRuntimeFlow,
 } from "../apps/web/src/runtime-flow.js";
 import {
+  selectFailureTeachingMoment,
+  selectSuccessTeachingMoment,
+} from "../apps/web/src/runtime-teaching.js";
+import {
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -138,6 +142,7 @@ testJsonClone();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
 testRuntimeFlowHelpers();
+testRuntimeTeachingHelpers();
 testEditorAutocompleteHelpers();
 testEditorTextHelpers();
 testEditorHighlightHelpers();
@@ -313,6 +318,39 @@ function testRuntimeFlowHelpers() {
   assert.equal(storedInventoryTotal({ scrap: 2, cells: 3, chips: 4 }), 9);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 2, y: 1 } }), true);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 1, y: 1 } }), false);
+}
+
+function testRuntimeTeachingHelpers() {
+  const stage = { id: "m2" };
+  const successMoments = [
+    { id: "deploy", taskId: "deploy", titleKey: "success.deploy.title" },
+    { id: "collect", taskId: "collect", titleKey: "success.collect.title" },
+  ];
+  assert.deepEqual(
+    selectSuccessTeachingMoment(stage, successMoments, { deploy: false, collect: false }, { deploy: true, collect: false }),
+    { key: "m2:success:deploy", moment: successMoments[0] },
+  );
+  assert.equal(
+    selectSuccessTeachingMoment(
+      stage,
+      successMoments,
+      { deploy: false, collect: false },
+      { deploy: true, collect: true },
+      new Set(["m2:success:deploy"]),
+    ).key,
+    "m2:success:collect",
+  );
+  assert.equal(selectSuccessTeachingMoment(null, successMoments, {}, {}), null);
+
+  const failureMoments = [
+    { id: "wall", cause: "wall", titleKey: "failure.wall.title" },
+    { id: "power", cause: "power", titleKey: "failure.power.title" },
+  ];
+  assert.deepEqual(selectFailureTeachingMoment(stage, failureMoments, "power"), {
+    key: "m2:failure:power",
+    moment: failureMoments[1],
+  });
+  assert.equal(selectFailureTeachingMoment(stage, failureMoments, "power", new Set(["m2:failure:power"])), null);
 }
 
 function testEditorAutocompleteHelpers() {

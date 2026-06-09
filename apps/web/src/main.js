@@ -90,6 +90,10 @@ import {
 } from "./runtime-feedback.js";
 import { updateRuntimeFlow } from "./runtime-flow.js";
 import {
+  selectFailureTeachingMoment,
+  selectSuccessTeachingMoment,
+} from "./runtime-teaching.js";
+import {
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
   dedupeSuggestions,
@@ -111,7 +115,6 @@ import {
 } from "./editor-highlight.js";
 import {
   buildStageFlow,
-  buildTeachingMomentKey,
   getStageCompletionTasks as selectStageCompletionTasks,
   getStageDefinition as selectStageDefinition,
   getStageRecommendedPreset as selectStageRecommendedPreset,
@@ -425,10 +428,6 @@ function getStageRecommendedPreset(stage = getStageDefinition()) {
 
 function getStageTeachingMoments(kind, stage = getStageDefinition()) {
   return selectStageTeachingMoments(stage, kind);
-}
-
-function teachingMomentKey(stageId, kind, momentId) {
-  return buildTeachingMomentKey(stageId, kind, momentId);
 }
 
 function resetCameraIntro() {
@@ -2295,28 +2294,30 @@ function summarizeRuntimeToast(state) {
 
 function maybeShowSuccessTeachingMoment(flowBefore) {
   const stage = getStageDefinition();
-  for (const moment of getStageTeachingMoments("success", stage)) {
-    const momentKey = teachingMomentKey(stage.id, "success", moment.id);
-    if (seenTeachingMoments.has(momentKey)) {
-      continue;
-    }
-    if (!flowBefore[moment.taskId] && flow[moment.taskId]) {
-      seenTeachingMoments.add(momentKey);
-      showToast({ title: t(moment.titleKey), body: t(moment.bodyKey) }, "success");
-      return;
-    }
+  const selected = selectSuccessTeachingMoment(
+    stage,
+    getStageTeachingMoments("success", stage),
+    flowBefore,
+    flow,
+    seenTeachingMoments,
+  );
+  if (selected) {
+    seenTeachingMoments.add(selected.key);
+    showToast({ title: t(selected.moment.titleKey), body: t(selected.moment.bodyKey) }, "success");
   }
 }
 
 function consumeFailureTeachingMoment(cause) {
   const stage = getStageDefinition();
-  for (const moment of getStageTeachingMoments("failure", stage)) {
-    const momentKey = teachingMomentKey(stage.id, "failure", moment.id);
-    if (seenTeachingMoments.has(momentKey) || moment.cause !== cause) {
-      continue;
-    }
-    seenTeachingMoments.add(momentKey);
-    return { title: t(moment.titleKey), body: t(moment.bodyKey) };
+  const selected = selectFailureTeachingMoment(
+    stage,
+    getStageTeachingMoments("failure", stage),
+    cause,
+    seenTeachingMoments,
+  );
+  if (selected) {
+    seenTeachingMoments.add(selected.key);
+    return { title: t(selected.moment.titleKey), body: t(selected.moment.bodyKey) };
   }
   return null;
 }
