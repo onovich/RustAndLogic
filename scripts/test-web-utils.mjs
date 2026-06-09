@@ -107,6 +107,7 @@ import {
   buildRuntimeFlowListItems,
   buildRuntimeFlowSummaryModel,
   formatRuntimeFlowProgress,
+  formatRuntimeFlowSummary,
   isRobotHome,
   runtimeFlowProgress,
   selectRuntimeFlowSummary,
@@ -450,6 +451,18 @@ function testRuntimeFlowHelpers() {
     textKey: "flow.summary.complete",
     labelKey: "task.collect",
   });
+  const translateSummary = (key, values = {}) => {
+    const text = {
+      "flow.summary.none": "No target",
+      "flow.summary.pending": "Next: {label}",
+      "flow.summary.complete": "Done: {label}",
+      "task.collect": "Collect cargo",
+    }[key] ?? key;
+    return Object.entries(values).reduce((result, [name, value]) => result.replaceAll(`{${name}}`, String(value)), text);
+  };
+  assert.equal(formatRuntimeFlowSummary({ state: "none", textKey: "flow.summary.none", labelKey: "" }, translateSummary), "No target");
+  assert.equal(formatRuntimeFlowSummary({ state: "pending", textKey: "flow.summary.pending", labelKey: "task.collect" }, translateSummary), "Next: Collect cargo");
+  assert.equal(formatRuntimeFlowSummary({ state: "complete", textKey: "flow.summary.complete", labelKey: "task.collect" }, translateSummary), "Done: Collect cargo");
   assert.deepEqual(buildRuntimeFlowChecklistState(["deploy", "collect", "unload"], { deploy: true, collect: false, unload: false }), [
     { id: "deploy", done: true, active: false },
     { id: "collect", done: false, active: true },

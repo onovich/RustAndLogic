@@ -93,6 +93,7 @@ import {
   buildRuntimeFlowListItems,
   buildRuntimeFlowSummaryModel,
   formatRuntimeFlowProgress,
+  formatRuntimeFlowSummary,
   updateRuntimeFlow,
 } from "./runtime-flow.js";
 import {
@@ -2456,11 +2457,7 @@ function renderFlowSummary() {
     return;
   }
   const summary = buildRuntimeFlowSummaryModel(getStageCompletionTasks(), flow);
-  if (summary.state === "none") {
-    elements.flowSummary.textContent = t(summary.textKey);
-    return;
-  }
-  elements.flowSummary.textContent = t(summary.textKey, { label: t(summary.labelKey) });
+  elements.flowSummary.textContent = formatRuntimeFlowSummary(summary, t);
 }
 
 function renderStageCopy() {

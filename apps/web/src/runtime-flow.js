@@ -92,6 +92,13 @@ export function buildRuntimeFlowSummaryModel(completionTasks = [], flow = {}) {
   };
 }
 
+export function formatRuntimeFlowSummary(summary = {}, translate = identityTranslate) {
+  if (summary.state === "none") {
+    return translate(summary.textKey);
+  }
+  return translate(summary.textKey, { label: translate(summary.labelKey) });
+}
+
 export function buildRuntimeFlowChecklistState(flowIds = [], flow = {}) {
   let firstPendingAssigned = false;
   return flowIds.map((id) => {
@@ -114,4 +121,8 @@ export function storedInventoryTotal(resources = {}) {
 
 export function isRobotHome(state = {}) {
   return state.robot?.x === state.base?.x && state.robot?.y === state.base?.y;
+}
+
+function identityTranslate(key) {
+  return key;
 }
