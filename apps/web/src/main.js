@@ -16,6 +16,9 @@ import {
   getTapeScriptCheckPredicates,
   getTapeScriptCheckValues,
 } from "../../../packages/tapescript-runtime/index.js";
+import { loadTextAsset } from "./utils/assets.js";
+import { parseI18nCsv } from "./utils/csv.js";
+import { cloneJson } from "./utils/json.js";
 
 let game = createGame();
 let previousState = null;
@@ -300,22 +303,6 @@ async function loadEntityVisualCatalog() {
   ensureSelectedVisualLayer();
 }
 
-async function loadTextAsset(paths) {
-  const failures = [];
-  for (const path of paths) {
-    try {
-      const response = await fetch(path, { cache: "no-store" });
-      if (response.ok) {
-        return response.text();
-      }
-      failures.push(`${path}: ${response.status}`);
-    } catch (error) {
-      failures.push(`${path}: ${error.message}`);
-    }
-  }
-  throw new Error(`Failed to load asset. Tried ${failures.join("; ")}`);
-}
-
 function getStageDefinition(stageId = currentStageId) {
   return stageDefinitions.find((stage) => stage.id === stageId) ?? stageDefinitions[0] ?? null;
 }
@@ -511,67 +498,6 @@ function initializeAppData() {
   applyStageConfiguration(currentStageId, { renderNow: false, resetStory: false });
   renderStageActions();
   renderSampleActions();
-}
-
-function parseI18nCsv(source) {
-  const rows = parseCsv(source.trim());
-  const [header, ...entries] = rows;
-  const keyIndex = header.indexOf("key");
-  const enIndex = header.indexOf("en");
-  const zhIndex = header.indexOf("zh");
-  if (keyIndex < 0 || enIndex < 0 || zhIndex < 0) {
-    throw new Error("i18n.csv must contain key,en,zh columns.");
-  }
-  const dictionary = { en: {}, zh: {} };
-  for (const row of entries) {
-    const key = row[keyIndex]?.trim();
-    if (!key) {
-      continue;
-    }
-    dictionary.en[key] = row[enIndex] ?? key;
-    dictionary.zh[key] = row[zhIndex] ?? dictionary.en[key] ?? key;
-  }
-  return dictionary;
-}
-
-function parseCsv(source) {
-  const rows = [];
-  let row = [];
-  let value = "";
-  let quoted = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    const next = source[index + 1];
-    if (quoted) {
-      if (char === '"' && next === '"') {
-        value += '"';
-        index += 1;
-      } else if (char === '"') {
-        quoted = false;
-      } else {
-        value += char;
-      }
-    } else if (char === '"') {
-      quoted = true;
-    } else if (char === ',') {
-      row.push(value);
-      value = "";
-    } else if (char === '\n') {
-      row.push(value);
-      rows.push(row);
-      row = [];
-      value = "";
-    } else if (char !== '\r') {
-      value += char;
-    }
-  }
-  row.push(value);
-  rows.push(row);
-  return rows;
-}
-
-function cloneJson(value) {
-  return JSON.parse(JSON.stringify(value));
 }
 
 function mergeEntityVisualCatalogs(baseCatalog, overrideCatalog) {

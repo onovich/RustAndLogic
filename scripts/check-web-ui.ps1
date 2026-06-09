@@ -9,9 +9,13 @@ if (-not (Test-Path -LiteralPath $node)) {
 $files = @(
   "packages/tapescript-runtime/index.js",
   "packages/game-sim/index.js",
+  "apps/web/src/utils/assets.js",
+  "apps/web/src/utils/csv.js",
+  "apps/web/src/utils/json.js",
   "apps/web/src/main.js",
   "scripts/serve-web-ui.mjs",
   "scripts/test-runtime.mjs",
+  "scripts/test-web-utils.mjs",
   "scripts/smoke-web-ui.mjs"
 )
 
@@ -25,6 +29,11 @@ foreach ($file in $files) {
 & $node scripts/test-runtime.mjs
 if ($LASTEXITCODE -ne 0) {
   throw "Runtime tests failed."
+}
+
+& $node scripts/test-web-utils.mjs
+if ($LASTEXITCODE -ne 0) {
+  throw "Web utility tests failed."
 }
 
 Write-Host "Web UI and runtime checks passed."

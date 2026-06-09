@@ -54,6 +54,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Remove player-facing arena preview from the right sidebar; keep locked locations out of the sidebar.
 - [x] Add pan/zoom behavior to the stage canvas and redesign map markers with glitch/noise styling.
 - [x] Split Web UI configuration into `apps/web/app-data.json` and keep player-facing text in `apps/web/i18n.csv`.
+- [x] Extract Web UI asset loading, CSV/i18n parsing, and JSON clone helpers into reusable utility modules.
 - [x] Add a root `RunWebUI.cmd` command for manual browser testing.
 - [x] Make Web UI data loading tolerate both current and previously running static server asset paths.
 - [x] Redesign map symbols and barrier styling toward a quieter minimalist wabi-sabi visual language.
