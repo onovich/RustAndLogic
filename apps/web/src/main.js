@@ -99,6 +99,8 @@ import {
 import {
   collectLabelDefinitions,
   createLabelEntries,
+  findLabelLine,
+  lineSelectionRange,
   tokenAtOffset,
   tokenRangeAtOffset,
 } from "./editor-text.js";
@@ -3139,22 +3141,18 @@ function updateAutocompletePosition(context = getAutocompleteContext()) {
 }
 
 function jumpToLabel(label) {
-  const lines = elements.editor.value.split("\n");
-  const lineIndex = lines.findIndex((line) => line.trim() === `@${label}`);
-  if (lineIndex >= 0) {
-    jumpToLine(lineIndex + 1);
+  const line = findLabelLine(elements.editor.value, label);
+  if (line > 0) {
+    jumpToLine(line);
   }
 }
 
 function jumpToLine(lineNumber) {
-  const lines = elements.editor.value.split("\n");
-  const safeLine = Math.min(Math.max(lineNumber, 1), lines.length);
-  const start = lines.slice(0, safeLine - 1).reduce((total, line) => total + line.length + 1, 0);
-  const end = start + lines[safeLine - 1].length;
+  const selection = lineSelectionRange(elements.editor.value, lineNumber);
   elements.editor.focus();
-  elements.editor.setSelectionRange(start, end);
+  elements.editor.setSelectionRange(selection.start, selection.end);
   const lineHeight = Number.parseFloat(getComputedStyle(elements.editor).lineHeight) || 20;
-  elements.editor.scrollTop = Math.max(0, (safeLine - 2) * lineHeight);
+  elements.editor.scrollTop = Math.max(0, (selection.line - 2) * lineHeight);
   syncEditorScroll();
 }
 

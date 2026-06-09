@@ -113,6 +113,8 @@ import {
   collectLabelDefinitions,
   createLabelEntries,
   createLabelNames,
+  findLabelLine,
+  lineSelectionRange,
   tokenAtOffset,
   tokenRangeAtOffset,
 } from "../apps/web/src/editor-text.js";
@@ -348,6 +350,18 @@ function testEditorTextHelpers() {
     { label: "Back_1", line: 3 },
   ]);
   assert.deepEqual(createLabelNames(labels), ["Loop", "Back_1"]);
+  assert.equal(findLabelLine("@Loop\nMove()\n@Back_1", "Back_1"), 3);
+  assert.equal(findLabelLine("@Loop\nMove()", "Missing"), 0);
+  assert.deepEqual(lineSelectionRange("@Loop\nMove()\nGoto @Loop", 2), {
+    line: 2,
+    start: 6,
+    end: 12,
+  });
+  assert.deepEqual(lineSelectionRange("@Loop\nMove()", 99), {
+    line: 2,
+    start: 6,
+    end: 12,
+  });
 }
 
 function testEditorHighlightHelpers() {
