@@ -13,6 +13,16 @@ import {
   shouldRenderGraphicsField,
 } from "../apps/web/src/graphics-studio/form-schema.js";
 import {
+  applyShapePresetToLayer,
+  createDefaultGlyphLayer,
+  createDefaultShapeLayer,
+  describeVisualLayerMeta,
+  describeVisualLayerTitle,
+  moveVisualLayer,
+  normalizeShapeLayer,
+  upgradeVisualLayerType,
+} from "../apps/web/src/graphics-studio/layers.js";
+import {
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -46,6 +56,7 @@ testGraphicsPreviews();
 testGraphicsTemplateHelpers();
 testGraphicsStorageHelpers();
 testGraphicsFormSchemaHelpers();
+testGraphicsLayerHelpers();
 
 console.log("Web utility tests passed.");
 
@@ -297,6 +308,108 @@ function testGraphicsFormSchemaHelpers() {
   assert.equal(coerceGraphicsFieldValue("number", "bad"), 0);
   assert.equal(coerceGraphicsFieldValue("integer", "7.9"), 7);
   assert.equal(coerceGraphicsFieldValue("string", "7.9"), "7.9");
+}
+
+function testGraphicsLayerHelpers() {
+  const visual = { canvasSize: 30, layers: [] };
+  const defaultShapeLayer = {
+    x: { kind: "center" },
+    y: { kind: "center", offset: 1 },
+    width: { scale: 0.5, round: "integer" },
+    fill: "#f28d35",
+  };
+  const defaultGlyphLayer = {
+    glyph: { kind: "entityInitial" },
+    x: { kind: "center" },
+    y: { kind: "center" },
+    fontSize: { scale: 0.3, min: 7 },
+  };
+
+  assert.deepEqual(
+    createDefaultShapeLayer(visual, {
+      entityKey: "robot",
+      defaultShapeLayer,
+      now: () => 46656,
+    }),
+    {
+      id: "robot-shape-1000",
+      type: "shape",
+      x: 15,
+      y: 16,
+      width: 15,
+      fill: "#f28d35",
+    },
+  );
+  assert.deepEqual(
+    createDefaultGlyphLayer(visual, {
+      entityKey: "scrap",
+      defaultGlyphLayer,
+      now: () => 46657,
+    }),
+    {
+      id: "scrap-glyph-1001",
+      type: "glyph",
+      glyph: "S",
+      x: 15,
+      y: 15,
+      fontSize: 9,
+    },
+  );
+
+  const layer = { id: "kept", type: "shape", shape: "rectangle", x: 3 };
+  upgradeVisualLayerType(layer, "glyph", visual, {
+    entityKey: "robot",
+    defaultGlyphLayer,
+    now: () => 1,
+  });
+  assert.equal(layer.id, "kept");
+  assert.equal(layer.type, "glyph");
+  assert.equal(layer.glyph, "R");
+  assert.equal(layer.x, 3);
+  assert.equal(layer.y, 15);
+
+  const starLayer = { id: "star", type: "shape", shape: "star", width: 20, height: 10 };
+  normalizeShapeLayer(starLayer, visual);
+  assert.equal(starLayer.points, 5);
+  assert.equal(starLayer.outerRadius, 10);
+  assert.equal(starLayer.innerRadius, 5.5);
+  assert.equal(starLayer.x, 15);
+  assert.equal(starLayer.y, 15);
+
+  const presetLayer = { id: "shape", type: "shape", shape: "rectangle" };
+  assert.equal(
+    applyShapePresetToLayer(
+      presetLayer,
+      { patch: { shape: "polygon", width: { scale: 0.4 }, y: { kind: "center", offset: -2 } } },
+      visual,
+      { entityKey: "robot" },
+    ),
+    true,
+  );
+  assert.equal(presetLayer.shape, "polygon");
+  assert.equal(presetLayer.width, 12);
+  assert.equal(presetLayer.y, 13);
+  assert.equal(presetLayer.sides, 6);
+  assert.equal(applyShapePresetToLayer({ type: "shape", locked: true }, { patch: { width: 1 } }, visual), false);
+
+  const layers = [{ id: "a" }, { id: "b" }, { id: "c" }];
+  assert.equal(moveVisualLayer(layers, "b", -1), true);
+  assert.deepEqual(layers.map((item) => item.id), ["b", "a", "c"]);
+  assert.equal(moveVisualLayer(layers, "b", -1), false);
+
+  const translate = (key) =>
+    ({
+      "graphics.option.layer.shape": "Shape",
+      "graphics.option.layer.glyph": "Glyph",
+      "graphics.option.shape.rectangle": "Rectangle",
+      "graphics.layerVisible": "Visible",
+      "graphics.layerHidden": "Hidden",
+      "graphics.layerLocked": "Locked",
+      "graphics.layerUnlocked": "Editable",
+    })[key] ?? key;
+  assert.equal(describeVisualLayerTitle({ type: "shape", shape: "rectangle" }, translate), "Shape // Rectangle");
+  assert.equal(describeVisualLayerTitle({ type: "glyph", glyph: "R" }, translate), "Glyph // R");
+  assert.equal(describeVisualLayerMeta({ id: "body", locked: true, visible: false }, translate), "body // Hidden / Locked");
 }
 
 function createMemoryStorage() {

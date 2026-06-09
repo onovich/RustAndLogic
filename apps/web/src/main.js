@@ -29,10 +29,19 @@ import {
   shouldRenderGraphicsField,
 } from "./graphics-studio/form-schema.js";
 import {
+  applyShapePresetToLayer,
+  createDefaultGlyphLayer,
+  createDefaultShapeLayer,
+  describeVisualLayerMeta,
+  describeVisualLayerTitle,
+  moveVisualLayer,
+  normalizeShapeLayer,
+  upgradeVisualLayerType,
+} from "./graphics-studio/layers.js";
+import {
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
-  resolveGraphicsTemplateObject,
   resolveGraphicsTemplateValue,
   serializeGraphicsTemplate,
   serializeGraphicsTemplateLibrary,
@@ -540,7 +549,7 @@ function initializeGraphicsEditor() {
     if (!visual) {
       return;
     }
-    visual.layers.push(createDefaultShapeLayer(visual));
+    visual.layers.push(createDefaultShapeLayer(visual, graphicsLayerOptions()));
     selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
     persistEntityVisualCatalog();
   });
@@ -550,7 +559,7 @@ function initializeGraphicsEditor() {
     if (!visual) {
       return;
     }
-    visual.layers.push(createDefaultGlyphLayer(visual, selectedVisualEntityKey));
+    visual.layers.push(createDefaultGlyphLayer(visual, graphicsLayerOptions()));
     selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
     persistEntityVisualCatalog();
   });
@@ -660,7 +669,7 @@ function initializeGraphicsEditor() {
     }
     const nextValue = coerceGraphicsFieldValue(valueType, input.value);
     if (field === "type" && scope === "layer") {
-      upgradeVisualLayerType(target, nextValue, targetVisual);
+      upgradeVisualLayerType(target, nextValue, targetVisual, graphicsLayerOptions());
     } else {
       target[field] = nextValue;
     }
@@ -1352,10 +1361,10 @@ function renderGraphicsLayerList() {
     button.dataset.active = String(layer.id === selectedVisualLayerId);
     const title = document.createElement("span");
     title.className = "visual-layer-title";
-    title.textContent = describeVisualLayerTitle(layer);
+    title.textContent = describeVisualLayerTitle(layer, t);
     const meta = document.createElement("span");
     meta.className = "visual-layer-meta";
-    meta.textContent = describeVisualLayerMeta(layer);
+    meta.textContent = describeVisualLayerMeta(layer, t);
     button.append(title, meta);
     const controls = document.createElement("div");
     controls.className = "visual-layer-controls";
@@ -2005,108 +2014,20 @@ function normalizeGraphicsEditorConfig(config = {}) {
   };
 }
 
-function createDefaultShapeLayer(visual) {
-  const canvasSize = Number(visual.canvasSize ?? 24);
-  const template = resolveGraphicsTemplateObject(graphicsEditorConfig.defaultShapeLayer ?? {}, {
-    canvasSize,
-    entityKey: selectedVisualEntityKey,
-  });
-  return {
-    id: `${selectedVisualEntityKey}-shape-${Date.now().toString(36)}`,
-    type: "shape",
-    ...template,
-  };
-}
-
-function createDefaultGlyphLayer(visual, entityKey) {
-  const canvasSize = Number(visual.canvasSize ?? 24);
-  const template = resolveGraphicsTemplateObject(graphicsEditorConfig.defaultGlyphLayer ?? {}, {
-    canvasSize,
-    entityKey,
-  });
-  return {
-    id: `${selectedVisualEntityKey}-glyph-${Date.now().toString(36)}`,
-    type: "glyph",
-    ...template,
-  };
-}
-
-function upgradeVisualLayerType(layer, nextType, visual) {
-  layer.type = nextType;
-  if (nextType === "glyph") {
-    Object.assign(layer, createDefaultGlyphLayer(visual, selectedVisualEntityKey), {
-      id: layer.id,
-      type: "glyph",
-      x: layer.x ?? (visual?.canvasSize ?? 24) / 2,
-      y: layer.y ?? (visual?.canvasSize ?? 24) / 2,
-    });
-    return;
-  }
-  Object.assign(layer, createDefaultShapeLayer(visual), {
-    id: layer.id,
-    type: "shape",
-    x: layer.x ?? (visual?.canvasSize ?? 24) / 2,
-    y: layer.y ?? (visual?.canvasSize ?? 24) / 2,
-  });
-}
-
-function normalizeShapeLayer(layer, visual = getSelectedEntityVisual()) {
-  if (layer.type !== "shape") {
-    return;
-  }
-  const canvasSize = Number(visual?.canvasSize ?? 24);
-  if (layer.shape === "polygon" && !layer.sides) {
-    layer.sides = 6;
-  }
-  if (layer.shape === "star") {
-    if (!layer.points) {
-      layer.points = 5;
-    }
-    if (!layer.outerRadius) {
-      layer.outerRadius = Math.max(layer.width ?? 6, layer.height ?? 6) / 2;
-    }
-    if (!layer.innerRadius) {
-      layer.innerRadius = layer.outerRadius * 0.55;
-    }
-  }
-  if (layer.x === undefined) {
-    layer.x = canvasSize / 2;
-  }
-  if (layer.y === undefined) {
-    layer.y = canvasSize / 2;
-  }
-}
-
-function describeVisualLayerTitle(layer) {
-  const layerType = t(`graphics.option.layer.${layer.type ?? "shape"}`);
-  const detail = layer.type === "glyph" ? layer.glyph ?? "" : t(`graphics.option.shape.${layer.shape ?? "rectangle"}`);
-  return `${layerType} // ${detail}`;
-}
-
-function describeVisualLayerMeta(layer) {
-  const flags = [
-    layer.visible === false ? t("graphics.layerHidden") : t("graphics.layerVisible"),
-    layer.locked ? t("graphics.layerLocked") : t("graphics.layerUnlocked"),
-  ];
-  return `${layer.id} // ${flags.join(" / ")}`;
-}
-
 function moveSelectedVisualLayer(delta) {
   const visual = getSelectedEntityVisual();
-  if (!visual || !selectedVisualLayerId) {
+  if (!moveVisualLayer(visual?.layers, selectedVisualLayerId, delta)) {
     return;
   }
-  const index = visual.layers.findIndex((layer) => layer.id === selectedVisualLayerId);
-  if (index < 0) {
-    return;
-  }
-  const nextIndex = clamp(index + delta, 0, visual.layers.length - 1);
-  if (nextIndex === index) {
-    return;
-  }
-  const [layer] = visual.layers.splice(index, 1);
-  visual.layers.splice(nextIndex, 0, layer);
   persistEntityVisualCatalog();
+}
+
+function graphicsLayerOptions() {
+  return {
+    entityKey: selectedVisualEntityKey,
+    defaultShapeLayer: graphicsEditorConfig.defaultShapeLayer,
+    defaultGlyphLayer: graphicsEditorConfig.defaultGlyphLayer,
+  };
 }
 
 function buildEntityVisualDataUrl(entityKey, visual = getEntityVisual(entityKey)) {
@@ -2383,22 +2304,10 @@ function removeCustomGraphicsTemplate(templateId) {
 function applyShapePreset(presetId) {
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!visual || !layer || layer.type !== "shape" || layer.locked) {
-    return;
-  }
-  const canvasSize = Number(visual.canvasSize ?? 24);
   const preset = (graphicsEditorConfig.shapePresets ?? []).find((item) => item.id === presetId);
-  if (!preset) {
+  if (!applyShapePresetToLayer(layer, preset, visual, { entityKey: selectedVisualEntityKey })) {
     return;
   }
-  Object.assign(
-    layer,
-    resolveGraphicsTemplateObject(preset.patch ?? {}, {
-      canvasSize,
-      entityKey: selectedVisualEntityKey,
-    }),
-  );
-  normalizeShapeLayer(layer, visual);
   persistEntityVisualCatalog();
 }
 
