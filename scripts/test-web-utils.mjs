@@ -128,6 +128,7 @@ import {
   buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
   buildRuntimeLogItems,
+  buildCompileStatusDisplay,
   calculateArmorPercent,
   calculateEnergyPercent,
   formatCargoManifestDisplay,
@@ -604,6 +605,7 @@ function testRuntimeDisplayHelpers() {
   assert.equal(selectVmStateLabelKey(null), "state.idle");
   assert.equal(selectVmStateLabelKey("suspended"), "vm.suspended");
   assert.equal(formatPercentText(83), "83%");
+  assert.deepEqual(buildCompileStatusDisplay(), { text: "", className: "", visible: false });
   assert.deepEqual(buildRuntimeDisplayModel({
     tick: 7,
     program: { instructionUsed: 5 },
@@ -615,6 +617,7 @@ function testRuntimeDisplayHelpers() {
   }), {
     tick: 7,
     instructionUsage: "5/12",
+    compileStatus: { text: "", className: "", visible: false },
     vmStateKey: "vm.suspended",
     capacityLabelKey: "capacity",
     capacityLabelValues: { value: 12 },

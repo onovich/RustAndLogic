@@ -12,6 +12,7 @@ export function buildRuntimeDisplayModel(state = {}) {
   return {
     tick: state.tick ?? 0,
     instructionUsage: formatInstructionUsage(state.program, state.instructionCapacity),
+    compileStatus: buildCompileStatusDisplay(),
     vmStateKey: selectVmStateLabelKey(state.vm?.state),
     capacityLabelKey: "capacity",
     capacityLabelValues: { value: state.instructionCapacity ?? 0 },
@@ -113,6 +114,14 @@ export function buildRuntimeDiffDisplay(diff = [], limit = 18) {
 
 export function formatInstructionUsage(program, capacity = 0) {
   return program ? `${program.instructionUsed}/${capacity}` : `0/${capacity}`;
+}
+
+export function buildCompileStatusDisplay() {
+  return {
+    text: "",
+    className: "",
+    visible: false,
+  };
 }
 
 export function selectVmStateLabelKey(state) {

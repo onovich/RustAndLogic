@@ -2159,15 +2159,9 @@ function render(state, options = {}) {
   elements.energyMeter.style.width = display.energyMeterWidth;
 
   const compileStatusHost = elements.compileStatus.closest(".stage-mode");
-  if (!state.program || state.program.ok) {
-    elements.compileStatus.textContent = "";
-    elements.compileStatus.className = "";
-    compileStatusHost?.setAttribute("data-visible", "false");
-  } else {
-    elements.compileStatus.textContent = "";
-    elements.compileStatus.className = "";
-    compileStatusHost?.setAttribute("data-visible", "false");
-  }
+  elements.compileStatus.textContent = display.compileStatus.text;
+  elements.compileStatus.className = display.compileStatus.className;
+  compileStatusHost?.setAttribute("data-visible", String(display.compileStatus.visible));
 
   elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
   elements.flowProgress.textContent = formatRuntimeFlowProgress(flow);
