@@ -26,14 +26,20 @@ import {
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
-  normalizeGraphicsCustomTemplates,
-  normalizeGraphicsTemplateFilterState,
-  normalizeRecentGraphicsTemplateIds,
   resolveGraphicsTemplateObject,
   resolveGraphicsTemplateValue,
   serializeGraphicsTemplate,
   serializeGraphicsTemplateLibrary,
 } from "./graphics-studio/templates.js";
+import {
+  loadCustomGraphicsTemplatesFromStorage,
+  loadEntityVisualCatalogState,
+  loadGraphicsTemplateFilterStateFromStorage,
+  loadRecentGraphicsTemplateIdsFromStorage,
+  persistGraphicsTemplateFilterState as persistGraphicsTemplateFilterStateToStorage,
+  persistJsonValue,
+  persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
+} from "./graphics-studio/storage.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -262,60 +268,30 @@ async function loadAppData() {
 }
 
 function loadCustomGraphicsTemplates() {
-  const stored = localStorage.getItem(graphicsTemplatesKey);
-  if (!stored) {
-    customGraphicsTemplates = [];
-    return;
-  }
-  try {
-    customGraphicsTemplates = normalizeGraphicsCustomTemplates(JSON.parse(stored));
-  } catch (error) {
+  customGraphicsTemplates = loadCustomGraphicsTemplatesFromStorage(localStorage, graphicsTemplatesKey, (error) => {
     console.warn("Failed to restore custom graphics templates.", error);
-    customGraphicsTemplates = [];
-  }
+  });
 }
 
 function loadRecentGraphicsTemplates() {
-  const stored = localStorage.getItem(graphicsRecentTemplatesKey);
-  if (!stored) {
-    recentGraphicsTemplateIds = [];
-    return;
-  }
-  try {
-    recentGraphicsTemplateIds = normalizeRecentGraphicsTemplateIds(JSON.parse(stored));
-  } catch (error) {
+  recentGraphicsTemplateIds = loadRecentGraphicsTemplateIdsFromStorage(localStorage, graphicsRecentTemplatesKey, (error) => {
     console.warn("Failed to restore recent graphics templates.", error);
-    recentGraphicsTemplateIds = [];
-  }
+  });
 }
 
 function loadGraphicsTemplateFilterState() {
-  const stored = localStorage.getItem(graphicsTemplateFilterKey);
-  if (!stored) {
-    graphicsTemplateFilterState = { mode: "all", category: "all" };
-    return;
-  }
-  try {
-    graphicsTemplateFilterState = normalizeGraphicsTemplateFilterState(JSON.parse(stored));
-  } catch (error) {
+  graphicsTemplateFilterState = loadGraphicsTemplateFilterStateFromStorage(localStorage, graphicsTemplateFilterKey, (error) => {
     console.warn("Failed to restore graphics template filters.", error);
-    graphicsTemplateFilterState = { mode: "all", category: "all" };
-  }
+  });
 }
 
 async function loadEntityVisualCatalog() {
   const loaded = JSON.parse(await loadTextAsset(["/apps/web/entity-visuals.json", "./entity-visuals.json"]));
-  defaultEntityVisualCatalog = cloneJson(loaded);
-  entityVisualCatalog = cloneJson(loaded);
-
-  const stored = localStorage.getItem(entityVisualsKey);
-  if (stored) {
-    try {
-      entityVisualCatalog = mergeEntityVisualCatalogs(defaultEntityVisualCatalog, JSON.parse(stored));
-    } catch (error) {
-      console.warn("Failed to restore local entity visuals override.", error);
-    }
-  }
+  const restored = loadEntityVisualCatalogState(loaded, localStorage.getItem(entityVisualsKey), (error) => {
+    console.warn("Failed to restore local entity visuals override.", error);
+  });
+  defaultEntityVisualCatalog = restored.defaultEntityVisualCatalog;
+  entityVisualCatalog = restored.entityVisualCatalog;
 
   selectedVisualEntityKey = Object.keys(entityVisualCatalog.entities ?? {})[0] ?? "";
   ensureSelectedVisualLayer();
@@ -516,19 +492,6 @@ function initializeAppData() {
   applyStageConfiguration(currentStageId, { renderNow: false, resetStory: false });
   renderStageActions();
   renderSampleActions();
-}
-
-function mergeEntityVisualCatalogs(baseCatalog, overrideCatalog) {
-  const merged = cloneJson(baseCatalog);
-  if (!overrideCatalog?.entities) {
-    return merged;
-  }
-
-  for (const [entityKey, overrideVisual] of Object.entries(overrideCatalog.entities)) {
-    merged.entities[entityKey] = cloneJson(overrideVisual);
-  }
-
-  return merged;
 }
 
 function initializeGraphicsEditor() {
@@ -845,7 +808,7 @@ function setGraphicsCopyButtonState(key) {
 }
 
 function persistEntityVisualCatalog() {
-  localStorage.setItem(entityVisualsKey, JSON.stringify(entityVisualCatalog));
+  persistJsonValue(localStorage, entityVisualsKey, entityVisualCatalog);
   entityVisualDataUrlCache.clear();
   ensureSelectedVisualLayer();
   renderGraphicsEditor();
@@ -853,19 +816,25 @@ function persistEntityVisualCatalog() {
 }
 
 function persistCustomGraphicsTemplates() {
-  localStorage.setItem(graphicsTemplatesKey, JSON.stringify(customGraphicsTemplates));
+  persistJsonValue(localStorage, graphicsTemplatesKey, customGraphicsTemplates);
   renderGraphicsEditor();
 }
 
 function persistRecentGraphicsTemplates() {
-  recentGraphicsTemplateIds = normalizeRecentGraphicsTemplateIds(recentGraphicsTemplateIds);
-  localStorage.setItem(graphicsRecentTemplatesKey, JSON.stringify(recentGraphicsTemplateIds));
+  recentGraphicsTemplateIds = persistRecentGraphicsTemplateIdsToStorage(
+    localStorage,
+    graphicsRecentTemplatesKey,
+    recentGraphicsTemplateIds,
+  );
   renderGraphicsEditor();
 }
 
 function persistGraphicsTemplateFilterState() {
-  graphicsTemplateFilterState = normalizeGraphicsTemplateFilterState(graphicsTemplateFilterState);
-  localStorage.setItem(graphicsTemplateFilterKey, JSON.stringify(graphicsTemplateFilterState));
+  graphicsTemplateFilterState = persistGraphicsTemplateFilterStateToStorage(
+    localStorage,
+    graphicsTemplateFilterKey,
+    graphicsTemplateFilterState,
+  );
   renderGraphicsEditor();
 }
 

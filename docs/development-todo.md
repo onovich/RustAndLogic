@@ -144,6 +144,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add full custom-template-library export/import so developers can move whole local asset packs between browsers and machines.
 - [x] Extract Graphics Studio entity visual SVG/Data URL rendering into a reusable pure module with direct tests.
 - [x] Extract Graphics Studio template normalization, serialization, and placeholder resolution into a reusable pure module with direct tests.
+- [x] Extract Graphics Studio storage restore, persistence, and entity-visual catalog merge helpers into a reusable module with direct tests.
 
 ## Definition Of Done For A Small Item
 

@@ -17,6 +17,17 @@ import {
   serializeGraphicsTemplate,
   serializeGraphicsTemplateLibrary,
 } from "../apps/web/src/graphics-studio/templates.js";
+import {
+  defaultGraphicsTemplateFilterState,
+  loadCustomGraphicsTemplatesFromStorage,
+  loadEntityVisualCatalogState,
+  loadGraphicsTemplateFilterStateFromStorage,
+  loadRecentGraphicsTemplateIdsFromStorage,
+  mergeEntityVisualCatalogs,
+  persistGraphicsTemplateFilterState,
+  persistJsonValue,
+  persistRecentGraphicsTemplateIds,
+} from "../apps/web/src/graphics-studio/storage.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -27,6 +38,7 @@ testEntityVisualRendering();
 testEntityVisualDataUrlCache();
 testGraphicsPreviews();
 testGraphicsTemplateHelpers();
+testGraphicsStorageHelpers();
 
 console.log("Web utility tests passed.");
 
@@ -181,4 +193,65 @@ function testGraphicsTemplateHelpers() {
   assert.equal(isGraphicsTemplateLibraryPayload(library), true);
   assert.equal(isGraphicsTemplateLibraryPayload({ templates: [] }), true);
   assert.equal(isGraphicsTemplateLibraryPayload({ kind: "graphics-template", templates: [] }), false);
+}
+
+function testGraphicsStorageHelpers() {
+  const storage = createMemoryStorage();
+  const templatesKey = "templates";
+  const recentKey = "recent";
+  const filterKey = "filter";
+  const catalogKey = "catalog";
+  const rawTemplate = {
+    label: "Local Bot",
+    visual: { canvasSize: 24, layers: [{ id: "body", type: "shape" }] },
+  };
+
+  storage.setItem(templatesKey, JSON.stringify([rawTemplate, { broken: true }]));
+  assert.equal(loadCustomGraphicsTemplatesFromStorage(storage, templatesKey).length, 1);
+  storage.setItem(templatesKey, "{bad json");
+  assert.deepEqual(loadCustomGraphicsTemplatesFromStorage(storage, templatesKey), []);
+
+  storage.setItem(recentKey, JSON.stringify(["x", "x", " y "]));
+  assert.deepEqual(loadRecentGraphicsTemplateIdsFromStorage(storage, recentKey), ["x", "y"]);
+  const normalizedRecent = persistRecentGraphicsTemplateIds(storage, recentKey, ["a", "a", "b"]);
+  assert.deepEqual(normalizedRecent, ["a", "b"]);
+  assert.equal(storage.getItem(recentKey), '["a","b"]');
+
+  assert.deepEqual(defaultGraphicsTemplateFilterState(), { mode: "all", category: "all" });
+  storage.setItem(filterKey, JSON.stringify({ mode: "fit", category: "actor" }));
+  assert.deepEqual(loadGraphicsTemplateFilterStateFromStorage(storage, filterKey), { mode: "fit", category: "actor" });
+  const normalizedFilter = persistGraphicsTemplateFilterState(storage, filterKey, { mode: "bad", category: "" });
+  assert.deepEqual(normalizedFilter, { mode: "all", category: "all" });
+
+  const baseCatalog = {
+    version: 1,
+    entities: {
+      robot: { label: "Robot", layers: [{ id: "base" }] },
+      wall: { label: "Wall", layers: [] },
+    },
+  };
+  const overrideCatalog = { entities: { robot: { label: "Custom Robot", layers: [{ id: "custom" }] } } };
+  const merged = mergeEntityVisualCatalogs(baseCatalog, overrideCatalog);
+  assert.equal(merged.entities.robot.label, "Custom Robot");
+  assert.equal(merged.entities.wall.label, "Wall");
+  merged.entities.robot.layers[0].id = "mutated";
+  assert.equal(overrideCatalog.entities.robot.layers[0].id, "custom");
+
+  storage.setItem(catalogKey, JSON.stringify(overrideCatalog));
+  const restored = loadEntityVisualCatalogState(baseCatalog, storage.getItem(catalogKey));
+  assert.equal(restored.entityVisualCatalog.entities.robot.label, "Custom Robot");
+  restored.defaultEntityVisualCatalog.entities.robot.label = "changed";
+  assert.equal(baseCatalog.entities.robot.label, "Robot");
+
+  persistJsonValue(storage, "plain", { ok: true });
+  assert.equal(storage.getItem("plain"), '{"ok":true}');
+}
+
+function createMemoryStorage() {
+  const values = new Map();
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+    removeItem: (key) => values.delete(key),
+  };
 }
