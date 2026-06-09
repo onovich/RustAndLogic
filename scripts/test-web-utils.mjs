@@ -44,6 +44,11 @@ import {
   persistJsonValue,
   persistRecentGraphicsTemplateIds,
 } from "../apps/web/src/graphics-studio/storage.js";
+import {
+  applyGraphicsSwatchToLayer,
+  buildFillSwatches,
+  buildTextureSwatches,
+} from "../apps/web/src/graphics-studio/swatches.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -57,6 +62,7 @@ testGraphicsTemplateHelpers();
 testGraphicsStorageHelpers();
 testGraphicsFormSchemaHelpers();
 testGraphicsLayerHelpers();
+testGraphicsSwatchHelpers();
 
 console.log("Web utility tests passed.");
 
@@ -410,6 +416,60 @@ function testGraphicsLayerHelpers() {
   assert.equal(describeVisualLayerTitle({ type: "shape", shape: "rectangle" }, translate), "Shape // Rectangle");
   assert.equal(describeVisualLayerTitle({ type: "glyph", glyph: "R" }, translate), "Glyph // R");
   assert.equal(describeVisualLayerMeta({ id: "body", locked: true, visible: false }, translate), "body // Hidden / Locked");
+}
+
+function testGraphicsSwatchHelpers() {
+  const translate = (key) =>
+    ({
+      "graphics.fillSwatches": "Fill swatches",
+      "graphics.textureSwatches": "Texture swatches",
+    })[key] ?? key;
+
+  const fillSwatches = buildFillSwatches(
+    { type: "shape", fill: "#f28d35" },
+    [
+      { id: "rust", value: "#f28d35" },
+      { id: "mint", value: "#00ff88" },
+    ],
+    translate,
+  );
+  assert.equal(fillSwatches.length, 2);
+  assert.equal(fillSwatches[0].kind, "fill");
+  assert.equal(fillSwatches[0].selected, true);
+  assert.equal(fillSwatches[0].title, "Fill swatches // rust");
+  assert.equal(fillSwatches[0].preview, "linear-gradient(180deg, #f28d35, #f28d35)");
+  assert.equal(fillSwatches[1].selected, false);
+
+  const glyphSwatches = buildFillSwatches({ type: "glyph", glyphColor: "#f0d8bb", locked: true }, [{ value: "bad" }], translate);
+  assert.equal(glyphSwatches[0].value, "#f0d8bb");
+  assert.equal(glyphSwatches[0].selected, true);
+  assert.equal(glyphSwatches[0].disabled, true);
+
+  assert.deepEqual(buildTextureSwatches({ type: "shape", textureType: "none" }, [{ value: "#33261c" }], translate), []);
+  const textureSwatches = buildTextureSwatches(
+    { type: "shape", textureType: "stripes", textureColor: "#33261c" },
+    [
+      { id: "dark", value: "#33261c" },
+      { id: "light", value: "#ffcc99" },
+    ],
+    translate,
+  );
+  assert.equal(textureSwatches[0].kind, "texture");
+  assert.equal(textureSwatches[0].selected, true);
+  assert.equal(textureSwatches[0].title, "Texture swatches // dark");
+  assert.match(textureSwatches[0].preview, /repeating-linear-gradient/);
+
+  const shapeLayer = { type: "shape", fill: "#000000", textureType: "dither", textureColor: "#111111" };
+  assert.equal(applyGraphicsSwatchToLayer(shapeLayer, "fill", "#ffffff"), true);
+  assert.equal(shapeLayer.fill, "#ffffff");
+  assert.equal(applyGraphicsSwatchToLayer(shapeLayer, "texture", "#222222"), true);
+  assert.equal(shapeLayer.textureColor, "#222222");
+
+  const glyphLayer = { type: "glyph", glyphColor: "#000000" };
+  assert.equal(applyGraphicsSwatchToLayer(glyphLayer, "fill", "#eeeeee"), true);
+  assert.equal(glyphLayer.glyphColor, "#eeeeee");
+  assert.equal(applyGraphicsSwatchToLayer({ type: "shape", locked: true }, "fill", "#ffffff"), false);
+  assert.equal(applyGraphicsSwatchToLayer({ type: "shape", textureType: "none" }, "texture", "#ffffff"), false);
 }
 
 function createMemoryStorage() {

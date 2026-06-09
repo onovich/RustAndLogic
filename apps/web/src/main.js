@@ -18,9 +18,6 @@ import {
 } from "../../../packages/tapescript-runtime/index.js";
 import {
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
-  buildGraphicsColorPreview,
-  buildGraphicsTexturePreview,
-  normalizeColorValue,
 } from "./graphics-studio/entity-visuals.js";
 import {
   buildGraphicsSelectOptions,
@@ -55,6 +52,11 @@ import {
   persistJsonValue,
   persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
 } from "./graphics-studio/storage.js";
+import {
+  applyGraphicsSwatchToLayer,
+  buildFillSwatches,
+  buildTextureSwatches,
+} from "./graphics-studio/swatches.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -1416,8 +1418,13 @@ function renderGraphicsPresets() {
 }
 
 function renderGraphicsSwatches() {
-  renderGraphicsSwatchStrip(elements.graphicsFillSwatches, buildFillSwatchesForSelection());
-  renderGraphicsSwatchStrip(elements.graphicsTextureSwatches, buildTextureSwatchesForSelection());
+  const visual = getSelectedEntityVisual();
+  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
+  renderGraphicsSwatchStrip(elements.graphicsFillSwatches, buildFillSwatches(layer, graphicsEditorConfig.fillSwatches, t));
+  renderGraphicsSwatchStrip(
+    elements.graphicsTextureSwatches,
+    buildTextureSwatches(layer, graphicsEditorConfig.textureSwatches, t),
+  );
 }
 
 function renderGraphicsSwatchStrip(container, swatches) {
@@ -2311,61 +2318,10 @@ function applyShapePreset(presetId) {
   persistEntityVisualCatalog();
 }
 
-function buildFillSwatchesForSelection() {
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!layer) {
-    return [];
-  }
-  const field = layer.type === "glyph" ? "glyphColor" : "fill";
-  const currentValue = normalizeColorValue(layer[field], field === "glyphColor" ? "#f0d8bb" : "#f28d35").toLowerCase();
-  return (graphicsEditorConfig.fillSwatches ?? []).map((swatch) => ({
-    kind: "fill",
-    value: normalizeColorValue(swatch.value, "#f28d35"),
-    selected: normalizeColorValue(swatch.value, "#f28d35").toLowerCase() === currentValue,
-    disabled: Boolean(layer.locked),
-    title: `${t("graphics.fillSwatches")} // ${swatch.id ?? swatch.value}`,
-    preview: buildGraphicsColorPreview(normalizeColorValue(swatch.value, "#f28d35")),
-  }));
-}
-
-function buildTextureSwatchesForSelection() {
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!layer || layer.type !== "shape" || (layer.textureType ?? "none") === "none") {
-    return [];
-  }
-  const currentValue = normalizeColorValue(layer.textureColor, "#33261c").toLowerCase();
-  return (graphicsEditorConfig.textureSwatches ?? []).map((swatch) => {
-    const color = normalizeColorValue(swatch.value, "#33261c");
-    return {
-      kind: "texture",
-      value: color,
-      selected: color.toLowerCase() === currentValue,
-      disabled: Boolean(layer.locked),
-      title: `${t("graphics.textureSwatches")} // ${swatch.id ?? swatch.value}`,
-      preview: buildGraphicsTexturePreview(color, layer.textureType),
-    };
-  });
-}
-
 function applyGraphicsSwatch(kind, value) {
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!visual || !layer || layer.locked) {
-    return;
-  }
-  if (kind === "fill") {
-    if (layer.type === "glyph") {
-      layer.glyphColor = value;
-    } else {
-      layer.fill = value;
-    }
-    persistEntityVisualCatalog();
-    return;
-  }
-  if (kind === "texture" && layer.type === "shape" && (layer.textureType ?? "none") !== "none") {
-    layer.textureColor = value;
+  if (visual && applyGraphicsSwatchToLayer(layer, kind, value)) {
     persistEntityVisualCatalog();
   }
 }
