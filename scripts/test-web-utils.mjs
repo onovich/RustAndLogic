@@ -131,6 +131,7 @@ import {
   calculateArmorPercent,
   calculateEnergyPercent,
   formatInstructionUsage,
+  formatRuntimeDiffItem,
   formatRuntimeValue,
   summarizeCargoManifest,
 } from "../apps/web/src/runtime-display.js";
@@ -553,15 +554,18 @@ function testRuntimeDisplayHelpers() {
     count: 0,
     countLabelKey: "diff.changes",
     empty: true,
+    emptyKey: "diff.empty",
     items: [],
   });
   assert.deepEqual(buildRuntimeDiffDisplay([{ path: "robot.x", before: "", after: 2 }]), {
     count: 1,
     countLabelKey: "diff.change",
     empty: false,
-    items: [{ path: "robot.x", before: "-", after: "2" }],
+    emptyKey: "diff.empty",
+    items: [{ path: "robot.x", before: "-", after: "2", text: "robot.x: - -> 2" }],
   });
   assert.equal(buildRuntimeDiffDisplay(Array.from({ length: 20 }, (_, index) => ({ path: `p${index}` }))).items.length, 18);
+  assert.equal(formatRuntimeDiffItem({ path: "robot.hp", before: 8, after: null }), "robot.hp: 8 -> -");
   assert.deepEqual(summarizeCargoManifest(["scrap", "cell", "cell", "chip"]), {
     scrap: 1,
     battery: 2,

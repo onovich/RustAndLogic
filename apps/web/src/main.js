@@ -3555,14 +3555,14 @@ function renderDiff(diff) {
 
   if (diffDisplay.empty) {
     const item = document.createElement("li");
-    item.textContent = t("diff.empty");
+    item.textContent = t(diffDisplay.emptyKey);
     elements.diffList.append(item);
     return;
   }
 
   for (const change of diffDisplay.items) {
     const item = document.createElement("li");
-    item.textContent = `${change.path}: ${change.before} -> ${change.after}`;
+    item.textContent = change.text;
     elements.diffList.append(item);
   }
 }

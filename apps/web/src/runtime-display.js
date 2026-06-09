@@ -63,10 +63,12 @@ export function buildRuntimeDiffDisplay(diff = [], limit = 18) {
     count: changes.length,
     countLabelKey: changes.length === 1 ? "diff.change" : "diff.changes",
     empty: changes.length === 0,
+    emptyKey: "diff.empty",
     items: changes.slice(0, limit).map((change) => ({
       path: change.path,
       before: formatRuntimeValue(change.before),
       after: formatRuntimeValue(change.after),
+      text: formatRuntimeDiffItem(change),
     })),
   };
 }
@@ -80,6 +82,10 @@ export function formatRuntimeValue(value) {
     return "-";
   }
   return String(value);
+}
+
+export function formatRuntimeDiffItem(change = {}) {
+  return `${change.path}: ${formatRuntimeValue(change.before)} -> ${formatRuntimeValue(change.after)}`;
 }
 
 export function summarizeCargoManifest(cargo = []) {
