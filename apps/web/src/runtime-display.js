@@ -92,6 +92,10 @@ export function formatCargoManifestDisplay(manifestItems = {}, translate = ident
     .join(", ");
 }
 
+export function formatSaveStatusDisplay(status = {}, translate = identityTranslate) {
+  return translate(status?.key ?? "save.empty", status?.values ?? {});
+}
+
 export function buildRuntimeLogItems(logs = []) {
   return Array.isArray(logs) ? logs : [];
 }

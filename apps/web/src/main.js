@@ -117,6 +117,7 @@ import {
   formatFacilityDescription,
   formatRuntimeDiffCount,
   formatRuntimeDiffEmpty,
+  formatSaveStatusDisplay,
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
@@ -2170,7 +2171,7 @@ function render(state, options = {}) {
   elements.compileStatus.className = display.compileStatus.className;
   compileStatusHost?.setAttribute("data-visible", String(display.compileStatus.visible));
 
-  elements.saveSummary.textContent = t(saveStatus.key, saveStatus.values);
+  elements.saveSummary.textContent = formatSaveStatusDisplay(saveStatus, t);
   elements.flowProgress.textContent = formatRuntimeFlowProgress(flow);
 
   renderStageCopy();

@@ -145,6 +145,7 @@ import {
   formatPercentText,
   formatRuntimeDiffItem,
   formatRuntimeValue,
+  formatSaveStatusDisplay,
   selectVmStateLabelKey,
   summarizeCargoManifest,
 } from "../apps/web/src/runtime-display.js";
@@ -733,6 +734,17 @@ function testRuntimeDisplayHelpers() {
   assert.equal(formatCargoManifestDisplay({ scrap: 2, battery: 1 }, translateManifest), "Scrap x2, Battery x1");
   assert.equal(formatCargoManifestDisplay(new Map([["chip", 3]]), translateManifest), "Chip x3");
   assert.equal(formatCargoManifestDisplay(null, translateManifest), "Empty");
+  const translateSaveStatus = (key, values = {}) => {
+    const text = {
+      "save.empty": "No save yet",
+      "save.saved": "Saved at tick {tick}",
+      "save.missing": "No save slot",
+    }[key] ?? key;
+    return Object.entries(values).reduce((result, [name, value]) => result.replaceAll(`{${name}}`, String(value)), text);
+  };
+  assert.equal(formatSaveStatusDisplay({ key: "save.saved", values: { tick: 9 } }, translateSaveStatus), "Saved at tick 9");
+  assert.equal(formatSaveStatusDisplay({ key: "save.missing" }, translateSaveStatus), "No save slot");
+  assert.equal(formatSaveStatusDisplay(null, translateSaveStatus), "No save yet");
   assert.equal(calculateArmorPercent({ hp: 5, armor: 1 }), 50);
   assert.equal(calculateArmorPercent({ hp: 20, armor: 1 }), 100);
   assert.equal(calculateEnergyPercent({ energy: 3, maxEnergy: 6 }), 50);
