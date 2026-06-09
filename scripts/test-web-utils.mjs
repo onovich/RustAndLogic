@@ -83,6 +83,7 @@ import {
   buildStageCopyModel,
   buildStageFlow,
   buildStageSampleActionItems,
+  buildStoryDialogueModel,
   buildTeachingMomentKey,
   getStageCompletionTasks,
   getStageDefinition,
@@ -265,6 +266,40 @@ function testStageHelpers() {
     locationDescriptionKey: "location.description",
     resourceGuidanceKey: "",
     scriptGuidanceKey: "",
+  });
+  const storyPages = [
+    { speakerKey: "story.speaker.1", textKey: "story.text.1" },
+    { speakerKey: "story.speaker.2", textKey: "story.text.2" },
+  ];
+  assert.deepEqual(buildStoryDialogueModel(false, storyPages, 0), {
+    visible: false,
+    stageMode: "idle",
+    speakerKey: "",
+    textKey: "",
+    promptKey: "",
+    pageDots: [],
+  });
+  assert.deepEqual(buildStoryDialogueModel(true, storyPages, 0), {
+    visible: true,
+    stageMode: "story",
+    speakerKey: "story.speaker.1",
+    textKey: "story.text.1",
+    promptKey: "story.prompt.continue",
+    pageDots: [
+      { index: 0, active: true },
+      { index: 1, active: false },
+    ],
+  });
+  assert.deepEqual(buildStoryDialogueModel(true, storyPages, 99), {
+    visible: true,
+    stageMode: "story",
+    speakerKey: "story.speaker.2",
+    textKey: "story.text.2",
+    promptKey: "story.prompt.begin",
+    pageDots: [
+      { index: 0, active: false },
+      { index: 1, active: true },
+    ],
   });
   assert.deepEqual(getStageTaskDefinitions(stages[0], tasks).map((task) => task.id), ["boot", "collect"]);
   assert.deepEqual(buildStageFlow(stages[0], tasks), { boot: false, collect: false });

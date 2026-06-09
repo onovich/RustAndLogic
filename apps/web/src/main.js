@@ -136,6 +136,7 @@ import {
   buildStageCopyModel,
   buildStageFlow,
   buildStageSampleActionItems,
+  buildStoryDialogueModel,
   getStageCompletionTasks as selectStageCompletionTasks,
   getStageDefinition as selectStageDefinition,
   getStageRecommendedPreset as selectStageRecommendedPreset,
@@ -2377,30 +2378,29 @@ function renderStoryDialogue() {
   ) {
     return;
   }
-  if (!storyActive) {
-    elements.stage.dataset.mode = "idle";
+  const story = buildStoryDialogueModel(storyActive, storyPages, storyIndex);
+  if (!story.visible) {
+    elements.stage.dataset.mode = story.stageMode;
     elements.storyDialogue.hidden = true;
-    elements.storyPages.replaceChildren();
+    renderStoryPageDots(story.pageDots);
     applyCanvasTransform();
     return;
   }
-  const page = storyPages[storyIndex];
-  elements.stage.dataset.mode = "story";
+  elements.stage.dataset.mode = story.stageMode;
   elements.storyDialogue.hidden = false;
-  elements.storySpeaker.textContent = t(page.speakerKey);
-  elements.storyText.textContent = t(page.textKey);
-  renderStoryPageDots();
-  elements.storyPrompt.textContent =
-    storyIndex === storyPages.length - 1 ? t("story.prompt.begin") : t("story.prompt.continue");
+  elements.storySpeaker.textContent = t(story.speakerKey);
+  elements.storyText.textContent = t(story.textKey);
+  renderStoryPageDots(story.pageDots);
+  elements.storyPrompt.textContent = t(story.promptKey);
   applyCanvasTransform();
 }
 
-function renderStoryPageDots() {
+function renderStoryPageDots(pageDots = buildStoryDialogueModel(storyActive, storyPages, storyIndex).pageDots) {
   elements.storyPages.replaceChildren();
-  for (let index = 0; index < storyPages.length; index += 1) {
+  for (const pageDot of pageDots) {
     const dot = document.createElement("span");
     dot.className = "story-page-dot";
-    dot.dataset.active = String(index === storyIndex);
+    dot.dataset.active = String(pageDot.active);
     elements.storyPages.append(dot);
   }
 }

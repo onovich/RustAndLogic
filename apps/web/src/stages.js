@@ -24,6 +24,30 @@ export function buildStageCopyModel(stage) {
   };
 }
 
+export function buildStoryDialogueModel(storyActive = false, storyPages = [], storyIndex = 0) {
+  const pages = Array.isArray(storyPages) ? storyPages : [];
+  if (!storyActive || pages.length === 0) {
+    return {
+      visible: false,
+      stageMode: "idle",
+      speakerKey: "",
+      textKey: "",
+      promptKey: "",
+      pageDots: [],
+    };
+  }
+  const pageIndex = Math.max(0, Math.min(Number(storyIndex) || 0, pages.length - 1));
+  const page = pages[pageIndex] ?? {};
+  return {
+    visible: true,
+    stageMode: "story",
+    speakerKey: page.speakerKey ?? "",
+    textKey: page.textKey ?? "",
+    promptKey: pageIndex === pages.length - 1 ? "story.prompt.begin" : "story.prompt.continue",
+    pageDots: pages.map((_, index) => ({ index, active: index === pageIndex })),
+  };
+}
+
 export function getStageUi(stage) {
   return stage?.ui ?? {};
 }
