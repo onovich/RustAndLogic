@@ -60,6 +60,8 @@ import {
 } from "../apps/web/src/language.js";
 import {
   buildDrawerToggleState,
+  buildGraphicsStudioButtonModel,
+  buildGraphicsStudioOpenState,
   buildSidebarToggleDisplay,
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
@@ -297,6 +299,24 @@ function testUiShellHelpers() {
     settingsOpen: "false",
     devOpen: "false",
     closeStudio: true,
+  });
+  assert.deepEqual(buildGraphicsStudioOpenState(true), {
+    devOpen: "true",
+    studioOpen: "true",
+    bodyGraphicsStudio: "true",
+  });
+  assert.deepEqual(buildGraphicsStudioOpenState(false), {
+    devOpen: "true",
+    studioOpen: "false",
+    bodyGraphicsStudio: "false",
+  });
+  assert.deepEqual(buildGraphicsStudioButtonModel("true"), {
+    labelKey: "graphics.closeStudio",
+    active: "true",
+  });
+  assert.deepEqual(buildGraphicsStudioButtonModel("false"), {
+    labelKey: "graphics.openStudio",
+    active: "false",
   });
 }
 

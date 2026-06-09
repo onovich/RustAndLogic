@@ -23,6 +23,23 @@ export function buildDrawerToggleState(kind, state = {}) {
   };
 }
 
+export function buildGraphicsStudioOpenState(isStudioOpen) {
+  const studioOpen = Boolean(isStudioOpen);
+  return {
+    devOpen: "true",
+    studioOpen: String(studioOpen),
+    bodyGraphicsStudio: String(studioOpen),
+  };
+}
+
+export function buildGraphicsStudioButtonModel(studioOpen) {
+  const active = isOpen(studioOpen);
+  return {
+    labelKey: active ? "graphics.closeStudio" : "graphics.openStudio",
+    active: String(active),
+  };
+}
+
 function isCollapsed(value) {
   return value === true || value === "true";
 }

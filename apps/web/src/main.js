@@ -84,7 +84,13 @@ import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
 import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
-import { buildDrawerToggleState, buildSidebarToggleDisplay, toggleCollapsedState } from "./ui-shell.js";
+import {
+  buildDrawerToggleState,
+  buildGraphicsStudioButtonModel,
+  buildGraphicsStudioOpenState,
+  buildSidebarToggleDisplay,
+  toggleCollapsedState,
+} from "./ui-shell.js";
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
@@ -857,9 +863,10 @@ function setGraphicsStudioOpen(isOpen) {
   if (!elements.devPanel) {
     return;
   }
-  elements.devPanel.dataset.open = "true";
-  elements.devPanel.dataset.studio = String(isOpen);
-  document.body.dataset.graphicsStudio = String(isOpen);
+  const studioState = buildGraphicsStudioOpenState(isOpen);
+  elements.devPanel.dataset.open = studioState.devOpen;
+  elements.devPanel.dataset.studio = studioState.studioOpen;
+  document.body.dataset.graphicsStudio = studioState.bodyGraphicsStudio;
   renderGraphicsEditor();
   updateControls();
 }
@@ -989,9 +996,9 @@ function renderGraphicsEditor() {
     elements.graphicsCopyButton.textContent = t("graphics.copy");
   }
   if (elements.graphicsStudioButton) {
-    const studioOpen = elements.devPanel?.dataset.studio === "true";
-    elements.graphicsStudioButton.textContent = t(studioOpen ? "graphics.closeStudio" : "graphics.openStudio");
-    elements.graphicsStudioButton.dataset.active = String(studioOpen);
+    const studioButton = buildGraphicsStudioButtonModel(elements.devPanel?.dataset.studio);
+    elements.graphicsStudioButton.textContent = t(studioButton.labelKey);
+    elements.graphicsStudioButton.dataset.active = studioButton.active;
   }
   if (elements.graphicsExportEntityButton) {
     elements.graphicsExportEntityButton.textContent = t("graphics.exportEntity");
