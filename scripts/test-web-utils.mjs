@@ -134,6 +134,7 @@ import {
   summarizeCargoManifest,
 } from "../apps/web/src/runtime-display.js";
 import {
+  buildAutocompleteDisplayModel,
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -639,6 +640,29 @@ function testEditorAutocompleteHelpers() {
     { value: "Move()", kindKey: "completion.kind.action" },
     { value: "Move()", kindKey: "completion.kind.query" },
   ]);
+  const translateAutocomplete = (key) =>
+    ({
+      "completion.kind.action": "Action",
+      "completion.kind.label": "Label",
+      "completion.hint.action": "action clause",
+    })[key] ?? key;
+  assert.deepEqual(
+    buildAutocompleteDisplayModel(
+      [
+        { value: "Move()", label: "Move()", kindKey: "completion.kind.action", hintKey: "completion.hint.action" },
+        { value: "@Loop", kindKey: "completion.kind.label", hintText: "defined at line 1" },
+      ],
+      1,
+      translateAutocomplete,
+    ),
+    {
+      items: [
+        { index: 0, active: false, label: "Move()", hint: "Action / action clause" },
+        { index: 1, active: true, label: "@Loop", hint: "Label / defined at line 1" },
+      ],
+      footerText: "[TAB] Accept   [ESC] Close",
+    },
+  );
 
   assert.equal(predicateCallSnippet("Has"), "Has()");
   assert.deepEqual(predicateSnippetMeta("Has"), {

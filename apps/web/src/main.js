@@ -112,6 +112,7 @@ import {
   summarizeCargoManifest,
 } from "./runtime-display.js";
 import {
+  buildAutocompleteDisplayModel,
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
   dedupeSuggestions,
@@ -2630,29 +2631,26 @@ function updateAutocomplete() {
   }
 
   elements.autocomplete.replaceChildren();
-  activeSuggestions.forEach((suggestion, index) => {
+  const autocompleteDisplay = buildAutocompleteDisplayModel(activeSuggestions, activeSuggestionIndex, t);
+  for (const suggestion of autocompleteDisplay.items) {
     const item = document.createElement("button");
     item.type = "button";
     item.className = "autocomplete-item";
-    item.dataset.index = String(index);
-    item.dataset.active = String(index === activeSuggestionIndex);
-    item.innerHTML =
-      `<span>${escapeHtml(suggestion.label ?? suggestion.value)}</span>` +
-      `<small>${escapeHtml(autocompleteHintText(suggestion))}</small>`;
+    item.dataset.index = String(suggestion.index);
+    item.dataset.active = String(suggestion.active);
+    const label = document.createElement("span");
+    label.textContent = suggestion.label;
+    const hint = document.createElement("small");
+    hint.textContent = suggestion.hint;
+    item.append(label, hint);
     elements.autocomplete.append(item);
-  });
+  }
   const footer = document.createElement("div");
   footer.className = "autocomplete-footer";
-  footer.textContent = "[TAB] Accept   [ESC] Close";
+  footer.textContent = autocompleteDisplay.footerText;
   elements.autocomplete.append(footer);
   elements.autocomplete.hidden = false;
   updateAutocompletePosition(context);
-}
-
-function autocompleteHintText(suggestion) {
-  const kind = t(suggestion.kindKey);
-  const hint = suggestion.hintText ?? t(suggestion.hintKey);
-  return `${kind} / ${hint}`;
 }
 
 function getAutocompleteContext() {
@@ -3122,14 +3120,6 @@ function jumpToLine(lineNumber) {
   const lineHeight = Number.parseFloat(getComputedStyle(elements.editor).lineHeight) || 20;
   elements.editor.scrollTop = Math.max(0, (selection.line - 2) * lineHeight);
   syncEditorScroll();
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }
 
 function beginCanvasDrag(event) {

@@ -44,6 +44,19 @@ export function dedupeSuggestions(items) {
   });
 }
 
+export function buildAutocompleteDisplayModel(suggestions = [], activeIndex = 0, translate = (key) => key) {
+  const items = (Array.isArray(suggestions) ? suggestions : []).map((suggestion, index) => ({
+    index,
+    active: index === activeIndex,
+    label: String(suggestion.label ?? suggestion.value ?? ""),
+    hint: autocompleteHintText(suggestion, translate),
+  }));
+  return {
+    items,
+    footerText: "[TAB] Accept   [ESC] Close",
+  };
+}
+
 export function predicateCallSnippet(predicate) {
   return `${predicate}()`;
 }
@@ -117,4 +130,10 @@ export function createActionKeywordSuggestions(actions) {
       ...actionSnippetMeta(action),
     })),
   ]);
+}
+
+function autocompleteHintText(suggestion, translate) {
+  const kind = translate(suggestion.kindKey);
+  const hint = suggestion.hintText ?? translate(suggestion.hintKey);
+  return `${kind} / ${hint}`;
 }

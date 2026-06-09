@@ -111,6 +111,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add label-aware editor guidance so `Goto @...` autocomplete surfaces defined labels with line metadata and the highlighter distinguishes label definitions, resolved references, and missing references.
 - [x] Harden TapeScript autocomplete matching so non-string suggestion values cannot crash segmented completion filtering.
 - [x] Extract TapeScript editor autocomplete matching, suggestion normalization, snippet metadata, and dedupe helpers into a reusable pure module with direct tests.
+- [x] Extract TapeScript editor autocomplete list display model into reusable pure autocomplete helpers with direct tests.
 - [x] Extract TapeScript editor token-range and label-definition scanning into reusable pure text helpers with direct tests.
 - [x] Extract TapeScript editor syntax highlighting and diagnostic severity rules into reusable pure helpers with direct tests.
 - [x] Extract TapeScript editor label lookup and line selection range calculations into reusable pure text helpers with direct tests.
