@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
 import {
+  defaultGraphicsEditorConfig,
+  normalizeGraphicsEditorConfig,
+} from "../apps/web/src/graphics-studio/config.js";
+import {
   buildEntityVisualDataUrl,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
@@ -73,6 +77,7 @@ import { cloneJson } from "../apps/web/src/utils/json.js";
 testCsvParsing();
 testI18nParsing();
 testJsonClone();
+testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
 testGraphicsPreviews();
@@ -109,6 +114,36 @@ function testJsonClone() {
   clone.list.push("b");
   assert.equal(source.nested.value, 1);
   assert.deepEqual(source.list, ["a"]);
+}
+
+function testGraphicsConfigHelpers() {
+  const fallback = defaultGraphicsEditorConfig();
+  assert.equal(fallback.entityKinds.robot, "actor");
+  assert.equal(fallback.entityTemplates.length, 4);
+  assert.equal(fallback.fillSwatches.length, 6);
+
+  const normalized = normalizeGraphicsEditorConfig({
+    entityKinds: { signal: "pickup" },
+    entityTemplates: [{ id: "signal", visual: { layers: [] } }],
+    layerTypeOptions: [],
+    shapeOptions: [{ value: "hex", label: "Hex" }],
+    defaultShapeLayer: { fill: "#ffffff", x: { kind: "center" } },
+    fillSwatches: [{ id: "white", value: "#ffffff" }],
+  });
+  assert.deepEqual(normalized.entityKinds, { signal: "pickup" });
+  assert.equal(normalized.entityTemplates[0].id, "signal");
+  assert.deepEqual(normalized.layerTypeOptions, fallback.layerTypeOptions);
+  assert.deepEqual(normalized.shapeOptions, [{ value: "hex", label: "Hex" }]);
+  assert.deepEqual(normalized.defaultShapeLayer, { fill: "#ffffff", x: { kind: "center" } });
+  assert.deepEqual(normalized.fillSwatches, [{ id: "white", value: "#ffffff" }]);
+
+  normalized.entityKinds.signal = "changed";
+  normalized.defaultShapeLayer.x.kind = "mutated";
+  assert.deepEqual(normalizeGraphicsEditorConfig({ entityKinds: { signal: "pickup" } }).entityKinds, { signal: "pickup" });
+  const sourceConfig = { defaultShapeLayer: { x: { kind: "center" } } };
+  const cloned = normalizeGraphicsEditorConfig(sourceConfig);
+  cloned.defaultShapeLayer.x.kind = "mutated";
+  assert.equal(sourceConfig.defaultShapeLayer.x.kind, "center");
 }
 
 function testEntityVisualRendering() {

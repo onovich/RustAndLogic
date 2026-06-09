@@ -149,6 +149,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio layer creation, type upgrade, preset patching, ordering, and display-summary helpers into a reusable pure module with direct tests.
 - [x] Extract Graphics Studio fill/texture swatch view-model generation and layer application helpers into a reusable pure module with direct tests.
 - [x] Extract Graphics Studio template library source tagging, filtering, sorting, grouping, recommendation, and filter-option helpers into a reusable pure module with direct tests.
+- [x] Extract Graphics Studio default editor configuration and config normalization into a reusable pure module with direct tests.
 
 ## Definition Of Done For A Small Item
 
