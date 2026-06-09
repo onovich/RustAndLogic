@@ -21,6 +21,7 @@ import {
 import {
   applyShapePresetToLayer,
   buildVisualLayerActionState,
+  buildVisualLayerListItems,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
   describeVisualLayerMeta,
@@ -1585,6 +1586,38 @@ function testGraphicsLayerHelpers() {
   assert.equal(describeVisualLayerTitle({ type: "shape", shape: "rectangle" }, translate), "Shape // Rectangle");
   assert.equal(describeVisualLayerTitle({ type: "glyph", glyph: "R" }, translate), "Glyph // R");
   assert.equal(describeVisualLayerMeta({ id: "body", locked: true, visible: false }, translate), "body // Hidden / Locked");
+  assert.deepEqual(
+    buildVisualLayerListItems(
+      [
+        { id: "body", type: "shape", shape: "rectangle", visible: false, locked: true },
+        { id: "glyph", type: "glyph", glyph: "R" },
+      ],
+      "glyph",
+      translate,
+    ),
+    [
+      {
+        id: "body",
+        hidden: "true",
+        locked: "true",
+        active: "false",
+        title: "Shape // Rectangle",
+        meta: "body // Hidden / Locked",
+        visibility: { active: "false", label: "Hidden" },
+        lock: { active: "true", label: "Locked" },
+      },
+      {
+        id: "glyph",
+        hidden: "false",
+        locked: "false",
+        active: "true",
+        title: "Glyph // R",
+        meta: "glyph // Visible / Editable",
+        visibility: { active: "true", label: "Visible" },
+        lock: { active: "false", label: "Editable" },
+      },
+    ],
+  );
 }
 
 function testGraphicsSwatchHelpers() {

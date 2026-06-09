@@ -172,6 +172,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Promote the graphics lab into a dedicated full-screen developer studio mode while keeping its local catalog, preview, diff, and runtime console linked to the same Web UI state.
 - [x] Add per-layer visibility and lock controls plus selected-entity import/export so developers can manage iteration without replacing the entire visual catalog each time.
 - [x] Extract Graphics Studio layer action disabled-state rules into reusable pure layer helpers with direct tests.
+- [x] Extract Graphics Studio layer list row view-model construction into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio template action disabled-state rules into reusable pure template helpers with direct tests.
 - [x] Extract Graphics Studio locked-layer form control disabled-state rules into reusable pure form-schema helpers with direct tests.
 - [x] Add quick shape presets and denser layer-state readouts so common silhouette changes take one click instead of manual field edits.

@@ -30,8 +30,7 @@ import {
   buildVisualLayerActionState,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
-  describeVisualLayerMeta,
-  describeVisualLayerTitle,
+  buildVisualLayerListItems,
   moveVisualLayer,
   normalizeShapeLayer,
   upgradeVisualLayerType,
@@ -1237,37 +1236,37 @@ function renderGraphicsLayerList() {
     return;
   }
 
-  for (const layer of visual.layers ?? []) {
+  for (const layerItem of buildVisualLayerListItems(visual.layers, selectedVisualLayerId, t)) {
     const row = document.createElement("div");
     row.className = "visual-layer-item";
-    row.dataset.hidden = String(layer.visible === false);
-    row.dataset.locked = String(Boolean(layer.locked));
+    row.dataset.hidden = layerItem.hidden;
+    row.dataset.locked = layerItem.locked;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "visual-layer-select";
-    button.dataset.layerId = layer.id;
-    button.dataset.active = String(layer.id === selectedVisualLayerId);
+    button.dataset.layerId = layerItem.id;
+    button.dataset.active = layerItem.active;
     const title = document.createElement("span");
     title.className = "visual-layer-title";
-    title.textContent = describeVisualLayerTitle(layer, t);
+    title.textContent = layerItem.title;
     const meta = document.createElement("span");
     meta.className = "visual-layer-meta";
-    meta.textContent = describeVisualLayerMeta(layer, t);
+    meta.textContent = layerItem.meta;
     button.append(title, meta);
     const controls = document.createElement("div");
     controls.className = "visual-layer-controls";
     const visibleButton = document.createElement("button");
     visibleButton.type = "button";
     visibleButton.dataset.layerAction = "visible";
-    visibleButton.dataset.layerId = layer.id;
-    visibleButton.dataset.active = String(layer.visible !== false);
-    visibleButton.textContent = t(layer.visible === false ? "graphics.layerHidden" : "graphics.layerVisible");
+    visibleButton.dataset.layerId = layerItem.id;
+    visibleButton.dataset.active = layerItem.visibility.active;
+    visibleButton.textContent = layerItem.visibility.label;
     const lockedButton = document.createElement("button");
     lockedButton.type = "button";
     lockedButton.dataset.layerAction = "locked";
-    lockedButton.dataset.layerId = layer.id;
-    lockedButton.dataset.active = String(Boolean(layer.locked));
-    lockedButton.textContent = t(layer.locked ? "graphics.layerLocked" : "graphics.layerUnlocked");
+    lockedButton.dataset.layerId = layerItem.id;
+    lockedButton.dataset.active = layerItem.lock.active;
+    lockedButton.textContent = layerItem.lock.label;
     controls.append(visibleButton, lockedButton);
     row.append(button, controls);
     elements.graphicsLayerList.append(row);

@@ -126,6 +126,25 @@ export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   };
 }
 
+export function buildVisualLayerListItems(layers = [], selectedLayerId = "", translate = (key) => key) {
+  return (Array.isArray(layers) ? layers : []).map((layer) => ({
+    id: layer.id,
+    hidden: String(layer.visible === false),
+    locked: String(Boolean(layer.locked)),
+    active: String(layer.id === selectedLayerId),
+    title: describeVisualLayerTitle(layer, translate),
+    meta: describeVisualLayerMeta(layer, translate),
+    visibility: {
+      active: String(layer.visible !== false),
+      label: translate(layer.visible === false ? "graphics.layerHidden" : "graphics.layerVisible"),
+    },
+    lock: {
+      active: String(Boolean(layer.locked)),
+      label: translate(layer.locked ? "graphics.layerLocked" : "graphics.layerUnlocked"),
+    },
+  }));
+}
+
 export function applyShapePresetToLayer(layer, preset, visual, options = {}) {
   if (!visual || !layer || layer.type !== "shape" || layer.locked || !preset) {
     return false;
