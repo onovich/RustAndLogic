@@ -103,6 +103,8 @@ import {
 } from "../apps/web/src/runtime-feedback.js";
 import {
   buildRuntimeFlowChecklistState,
+  buildRuntimeFlowListItems,
+  buildRuntimeFlowSummaryModel,
   formatRuntimeFlowProgress,
   isRobotHome,
   runtimeFlowProgress,
@@ -388,10 +390,34 @@ function testRuntimeFlowHelpers() {
     state: "complete",
     task: completionTasks[1],
   });
+  assert.deepEqual(buildRuntimeFlowSummaryModel([], {}), {
+    state: "none",
+    textKey: "flow.summary.none",
+    labelKey: "",
+  });
+  assert.deepEqual(buildRuntimeFlowSummaryModel(completionTasks, { deploy: true, collect: false }), {
+    state: "pending",
+    textKey: "flow.summary.pending",
+    labelKey: "task.collect",
+  });
+  assert.deepEqual(buildRuntimeFlowSummaryModel(completionTasks, { deploy: true, collect: true }), {
+    state: "complete",
+    textKey: "flow.summary.complete",
+    labelKey: "task.collect",
+  });
   assert.deepEqual(buildRuntimeFlowChecklistState(["deploy", "collect", "unload"], { deploy: true, collect: false, unload: false }), [
     { id: "deploy", done: true, active: false },
     { id: "collect", done: false, active: true },
     { id: "unload", done: false, active: false },
+  ]);
+  assert.deepEqual(buildRuntimeFlowListItems([
+    { id: "deploy", labelKey: "task.deploy" },
+    { id: "collect", labelKey: "task.collect" },
+    { id: "unload", labelKey: "task.unload" },
+  ], { deploy: true, collect: false, unload: false }), [
+    { id: "deploy", labelKey: "task.deploy", done: true, active: false },
+    { id: "collect", labelKey: "task.collect", done: false, active: true },
+    { id: "unload", labelKey: "task.unload", done: false, active: false },
   ]);
   assert.deepEqual(buildRuntimeFlowChecklistState(["deploy", "collect"], { deploy: true, collect: true }), [
     { id: "deploy", done: true, active: false },

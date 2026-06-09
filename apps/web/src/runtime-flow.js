@@ -62,6 +62,36 @@ export function selectRuntimeFlowSummary(completionTasks = [], flow = {}) {
   };
 }
 
+export function buildRuntimeFlowListItems(tasks = [], flow = {}) {
+  const taskList = Array.isArray(tasks) ? tasks : [];
+  const checklistState = new Map(buildRuntimeFlowChecklistState(taskList.map((task) => task.id), flow).map((item) => [item.id, item]));
+  return taskList.map((task) => {
+    const state = checklistState.get(task.id);
+    return {
+      id: task.id,
+      labelKey: task.labelKey,
+      done: Boolean(state?.done),
+      active: Boolean(state?.active),
+    };
+  });
+}
+
+export function buildRuntimeFlowSummaryModel(completionTasks = [], flow = {}) {
+  const summary = selectRuntimeFlowSummary(completionTasks, flow);
+  if (summary.state === "none") {
+    return {
+      state: "none",
+      textKey: "flow.summary.none",
+      labelKey: "",
+    };
+  }
+  return {
+    state: summary.state,
+    textKey: summary.state === "complete" ? "flow.summary.complete" : "flow.summary.pending",
+    labelKey: summary.task?.labelKey ?? "",
+  };
+}
+
 export function buildRuntimeFlowChecklistState(flowIds = [], flow = {}) {
   let firstPendingAssigned = false;
   return flowIds.map((id) => {

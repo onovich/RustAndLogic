@@ -90,8 +90,9 @@ import {
 } from "./runtime-feedback.js";
 import {
   buildRuntimeFlowChecklistState,
+  buildRuntimeFlowListItems,
+  buildRuntimeFlowSummaryModel,
   formatRuntimeFlowProgress,
-  selectRuntimeFlowSummary,
   updateRuntimeFlow,
 } from "./runtime-flow.js";
 import {
@@ -2434,9 +2435,11 @@ function resetFlow() {
 
 function renderFlowList() {
   elements.flowChecklist.replaceChildren();
-  for (const task of getStageTaskDefinitions()) {
+  for (const task of buildRuntimeFlowListItems(getStageTaskDefinitions(), flow)) {
     const item = document.createElement("li");
     item.dataset.flow = task.id;
+    item.dataset.done = String(task.done);
+    item.dataset.active = String(task.active);
     const checkbox = document.createElement("span");
     checkbox.className = "task-checkbox";
     checkbox.setAttribute("aria-hidden", "true");
@@ -2455,16 +2458,12 @@ function renderFlowSummary() {
   if (!elements.flowSummary) {
     return;
   }
-  const summary = selectRuntimeFlowSummary(getStageCompletionTasks(), flow);
+  const summary = buildRuntimeFlowSummaryModel(getStageCompletionTasks(), flow);
   if (summary.state === "none") {
-    elements.flowSummary.textContent = t("flow.summary.none");
+    elements.flowSummary.textContent = t(summary.textKey);
     return;
   }
-  if (summary.state === "complete") {
-    elements.flowSummary.textContent = t("flow.summary.complete", { label: t(summary.task.labelKey) });
-    return;
-  }
-  elements.flowSummary.textContent = t("flow.summary.pending", { label: t(summary.task.labelKey) });
+  elements.flowSummary.textContent = t(summary.textKey, { label: t(summary.labelKey) });
 }
 
 function renderStageCopy() {
