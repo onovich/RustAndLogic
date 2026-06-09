@@ -131,7 +131,9 @@ import {
   classifyDiagnosticSeverity,
 } from "./editor-highlight.js";
 import {
+  buildStageActionItems,
   buildStageFlow,
+  buildStageSampleActionItems,
   getStageCompletionTasks as selectStageCompletionTasks,
   getStageDefinition as selectStageDefinition,
   getStageRecommendedPreset as selectStageRecommendedPreset,
@@ -2494,13 +2496,13 @@ function renderStageActions() {
     return;
   }
   elements.stageActions.replaceChildren();
-  for (const stage of stageDefinitions) {
+  for (const stageAction of buildStageActionItems(stageDefinitions, currentStageId, playbackMode)) {
     const button = document.createElement("button");
     button.type = "button";
-    button.dataset.stage = stage.id;
-    button.dataset.active = String(stage.id === currentStageId);
-    button.disabled = playbackMode !== "stopped";
-    button.textContent = t(stage.labelKey);
+    button.dataset.stage = stageAction.id;
+    button.dataset.active = String(stageAction.active);
+    button.disabled = stageAction.disabled;
+    button.textContent = t(stageAction.labelKey);
     elements.stageActions.append(button);
   }
 }
@@ -2510,14 +2512,14 @@ function renderSampleActions() {
     return;
   }
   elements.sampleActions.replaceChildren();
-  for (const preset of getStageSamplePresets()) {
+  for (const presetAction of buildStageSampleActionItems(getStageDefinition(), scriptPresets, currentPresetId, playbackMode)) {
     const button = document.createElement("button");
     button.type = "button";
-    button.dataset.preset = preset.id;
-    button.dataset.active = String(preset.id === currentPresetId);
-    button.disabled = playbackMode !== "stopped";
-    button.textContent = t(preset.labelKey);
-    button.addEventListener("click", () => loadScriptPreset(preset.id));
+    button.dataset.preset = presetAction.id;
+    button.dataset.active = String(presetAction.active);
+    button.disabled = presetAction.disabled;
+    button.textContent = t(presetAction.labelKey);
+    button.addEventListener("click", () => loadScriptPreset(presetAction.id));
     elements.sampleActions.append(button);
   }
 }

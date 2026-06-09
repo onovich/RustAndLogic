@@ -79,7 +79,9 @@ import {
   upsertGraphicsTemplates,
 } from "../apps/web/src/graphics-studio/template-library.js";
 import {
+  buildStageActionItems,
   buildStageFlow,
+  buildStageSampleActionItems,
   buildTeachingMomentKey,
   getStageCompletionTasks,
   getStageDefinition,
@@ -214,12 +216,13 @@ function testStageHelpers() {
     { id: "return", labelKey: "task.return" },
   ];
   const presets = [
-    { id: "safe", lines: ["Move()"] },
-    { id: "fast", lines: ["Turn(Right)"] },
+    { id: "safe", labelKey: "preset.safe", lines: ["Move()"] },
+    { id: "fast", labelKey: "preset.fast", lines: ["Turn(Right)"] },
   ];
   const stages = [
     {
       id: "m1",
+      labelKey: "stage.m1",
       presetId: "safe",
       taskIds: ["boot", "missing", "collect"],
       completionTaskIds: ["collect", "return"],
@@ -232,7 +235,7 @@ function testStageHelpers() {
         recommendedPresetId: "fast",
       },
     },
-    { id: "m2", taskIds: ["return"], ui: {} },
+    { id: "m2", labelKey: "stage.m2", taskIds: ["return"], ui: {} },
   ];
 
   assert.equal(getStageDefinition(stages, "m1").id, "m1");
@@ -256,6 +259,17 @@ function testStageHelpers() {
   assert.equal(getStageRecommendedPreset(stages[0], presets).id, "fast");
   assert.equal(getStageRecommendedPreset({ presetId: "safe", ui: {} }, presets).id, "safe");
   assert.equal(getStageRecommendedPreset({ presetId: "missing", ui: {} }, presets), null);
+  assert.deepEqual(buildStageActionItems(stages, "m2", "playing"), [
+    { id: "m1", labelKey: "stage.m1", active: false, disabled: true },
+    { id: "m2", labelKey: "stage.m2", active: true, disabled: true },
+  ]);
+  assert.deepEqual(buildStageSampleActionItems(stages[0], presets, "fast", "stopped"), [
+    { id: "fast", labelKey: "preset.fast", active: true, disabled: false },
+  ]);
+  assert.deepEqual(buildStageSampleActionItems({ ui: {} }, presets, "safe", "paused"), [
+    { id: "safe", labelKey: "preset.safe", active: true, disabled: true },
+    { id: "fast", labelKey: "preset.fast", active: false, disabled: true },
+  ]);
   assert.deepEqual(getStageTeachingMoments(stages[0], "success"), [{ id: "first" }]);
   assert.deepEqual(getStageTeachingMoments(stages[0], "unknown"), []);
   assert.equal(buildTeachingMomentKey("m1", "success", "first"), "m1:success:first");

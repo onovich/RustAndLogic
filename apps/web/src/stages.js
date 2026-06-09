@@ -66,6 +66,26 @@ export function getStageRecommendedPreset(stage, scriptPresets) {
   return presets.find((preset) => preset.id === recommendedId) ?? null;
 }
 
+export function buildStageActionItems(stageDefinitions = [], currentStageId = "", playbackMode = "stopped") {
+  const disabled = playbackMode !== "stopped";
+  return (Array.isArray(stageDefinitions) ? stageDefinitions : []).map((stage) => ({
+    id: stage.id,
+    labelKey: stage.labelKey,
+    active: stage.id === currentStageId,
+    disabled,
+  }));
+}
+
+export function buildStageSampleActionItems(stage, scriptPresets = [], currentPresetId = "", playbackMode = "stopped") {
+  const disabled = playbackMode !== "stopped";
+  return getStageSamplePresets(stage, scriptPresets).map((preset) => ({
+    id: preset.id,
+    labelKey: preset.labelKey,
+    active: preset.id === currentPresetId,
+    disabled,
+  }));
+}
+
 export function getStageTeachingMoments(stage, kind) {
   return stage?.teachingMoments?.[kind] ?? [];
 }
