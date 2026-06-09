@@ -59,6 +59,10 @@ import {
   resolveLanguage,
 } from "../apps/web/src/language.js";
 import {
+  buildSidebarToggleDisplay,
+  toggleCollapsedState,
+} from "../apps/web/src/ui-shell.js";
+import {
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateModeOptions,
@@ -190,6 +194,7 @@ testCsvParsing();
 testI18nParsing();
 testJsonClone();
 testLanguageHelpers();
+testUiShellHelpers();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
 testRuntimeFlowHelpers();
@@ -254,6 +259,24 @@ function testLanguageHelpers() {
   assert.equal(resolveLanguage("auto", ["ja-JP", "en-US"]), "en");
   assert.equal(resolveLanguage("auto", "zh-Hans-CN"), "zh");
   assert.equal(resolveLanguage("invalid", []), "en");
+}
+
+function testUiShellHelpers() {
+  assert.deepEqual(buildSidebarToggleDisplay({ objectivesCollapsed: "false", rightCollapsed: "false" }), {
+    objectivesLabel: "\u25c0",
+    rightLabel: "\u25b6",
+  });
+  assert.deepEqual(buildSidebarToggleDisplay({ objectivesCollapsed: "true", rightCollapsed: "true" }), {
+    objectivesLabel: "\u25b6",
+    rightLabel: "\u25c0",
+  });
+  assert.deepEqual(buildSidebarToggleDisplay({ objectivesCollapsed: true, rightCollapsed: true }), {
+    objectivesLabel: "\u25b6",
+    rightLabel: "\u25c0",
+  });
+  assert.equal(toggleCollapsedState("true"), "false");
+  assert.equal(toggleCollapsedState("false"), "true");
+  assert.equal(toggleCollapsedState(undefined), "true");
 }
 
 function testStageHelpers() {

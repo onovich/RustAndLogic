@@ -84,6 +84,7 @@ import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
 import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
+import { buildSidebarToggleDisplay, toggleCollapsedState } from "./ui-shell.js";
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
@@ -1821,11 +1822,12 @@ function getNavigatorLanguages() {
 }
 
 function updateSidebarToggles() {
+  const sidebarToggles = buildSidebarToggleDisplay(document.body.dataset);
   if (elements.objectivesToggle) {
-    elements.objectivesToggle.textContent = document.body.dataset.objectivesCollapsed === "true" ? "▶" : "◀";
+    elements.objectivesToggle.textContent = sidebarToggles.objectivesLabel;
   }
   if (elements.rightSidebarToggle) {
-    elements.rightSidebarToggle.textContent = document.body.dataset.rightCollapsed === "true" ? "◀" : "▶";
+    elements.rightSidebarToggle.textContent = sidebarToggles.rightLabel;
   }
 }
 
@@ -1909,15 +1911,13 @@ document.addEventListener("keydown", (event) => {
 
 if (elements.objectivesToggle) {
   elements.objectivesToggle.addEventListener("click", () => {
-    document.body.dataset.objectivesCollapsed =
-      document.body.dataset.objectivesCollapsed === "true" ? "false" : "true";
+    document.body.dataset.objectivesCollapsed = toggleCollapsedState(document.body.dataset.objectivesCollapsed);
     updateSidebarToggles();
   });
 }
 if (elements.rightSidebarToggle) {
   elements.rightSidebarToggle.addEventListener("click", () => {
-    document.body.dataset.rightCollapsed =
-      document.body.dataset.rightCollapsed === "true" ? "false" : "true";
+    document.body.dataset.rightCollapsed = toggleCollapsedState(document.body.dataset.rightCollapsed);
     updateSidebarToggles();
   });
 }
