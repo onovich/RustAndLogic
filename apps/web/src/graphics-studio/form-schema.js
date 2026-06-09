@@ -35,6 +35,10 @@ export function buildGraphicsSelectOptions(options, translate = (key) => key) {
     }));
 }
 
+export function shouldDisableGraphicsFieldControl(layerLocked, scope = "layer") {
+  return Boolean(layerLocked) && scope === "layer";
+}
+
 export function coerceGraphicsFieldValue(valueType, rawValue) {
   if (valueType === "number") {
     const parsed = Number(rawValue);

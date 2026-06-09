@@ -173,6 +173,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add per-layer visibility and lock controls plus selected-entity import/export so developers can manage iteration without replacing the entire visual catalog each time.
 - [x] Extract Graphics Studio layer action disabled-state rules into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio template action disabled-state rules into reusable pure template helpers with direct tests.
+- [x] Extract Graphics Studio locked-layer form control disabled-state rules into reusable pure form-schema helpers with direct tests.
 - [x] Add quick shape presets and denser layer-state readouts so common silhouette changes take one click instead of manual field edits.
 - [x] Externalize Graphics Studio presets and editor swatches into app data so common authoring helpers stay data-driven instead of living in the Web UI implementation.
 - [x] Externalize Graphics Studio default shape/glyph layer templates into app data so newly added layers follow editable authoring defaults instead of JS-only constants.

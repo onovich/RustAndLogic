@@ -14,6 +14,7 @@ import {
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
   resolveGraphicsFieldValue,
+  shouldDisableGraphicsFieldControl,
   shouldRenderGraphicsField,
 } from "../apps/web/src/graphics-studio/form-schema.js";
 import {
@@ -1389,6 +1390,10 @@ function testGraphicsFormSchemaHelpers() {
   );
   assert.equal(resolveGraphicsFieldValue({ fill: "bad" }, { field: "fill", type: "color", fallback: "#f28d35" }), "#f28d35");
   assert.equal(resolveGraphicsFieldValue({}, { field: "width", defaultValue: 12 }), 12);
+  assert.equal(shouldDisableGraphicsFieldControl(true, "layer"), true);
+  assert.equal(shouldDisableGraphicsFieldControl(true, "entity"), false);
+  assert.equal(shouldDisableGraphicsFieldControl(false, "layer"), false);
+  assert.equal(shouldDisableGraphicsFieldControl(true, undefined), true);
   assert.deepEqual(
     buildGraphicsSelectOptions(
       [

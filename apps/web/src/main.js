@@ -24,6 +24,7 @@ import {
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
   resolveGraphicsFieldValue,
+  shouldDisableGraphicsFieldControl,
   shouldRenderGraphicsField,
 } from "./graphics-studio/form-schema.js";
 import {
@@ -1016,7 +1017,7 @@ function renderGraphicsEditor() {
   }
   if (elements.graphicsForm) {
     for (const input of elements.graphicsForm.querySelectorAll("input, select")) {
-      input.disabled = selectedLocked && input.dataset.scope === "layer";
+      input.disabled = shouldDisableGraphicsFieldControl(selectedLocked, input.dataset.scope);
     }
   }
 }
