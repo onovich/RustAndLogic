@@ -99,6 +99,7 @@ import {
   shouldAutoPause,
 } from "../apps/web/src/runtime-feedback.js";
 import {
+  buildRuntimeFlowChecklistState,
   formatRuntimeFlowProgress,
   isRobotHome,
   runtimeFlowProgress,
@@ -347,6 +348,15 @@ function testRuntimeFlowHelpers() {
     state: "complete",
     task: completionTasks[1],
   });
+  assert.deepEqual(buildRuntimeFlowChecklistState(["deploy", "collect", "unload"], { deploy: true, collect: false, unload: false }), [
+    { id: "deploy", done: true, active: false },
+    { id: "collect", done: false, active: true },
+    { id: "unload", done: false, active: false },
+  ]);
+  assert.deepEqual(buildRuntimeFlowChecklistState(["deploy", "collect"], { deploy: true, collect: true }), [
+    { id: "deploy", done: true, active: false },
+    { id: "collect", done: true, active: false },
+  ]);
   assert.equal(storedInventoryTotal({ scrap: 2, cells: 3, chips: 4 }), 9);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 2, y: 1 } }), true);
   assert.equal(isRobotHome({ robot: { x: 2, y: 1 }, base: { x: 1, y: 1 } }), false);

@@ -62,6 +62,22 @@ export function selectRuntimeFlowSummary(completionTasks = [], flow = {}) {
   };
 }
 
+export function buildRuntimeFlowChecklistState(flowIds = [], flow = {}) {
+  let firstPendingAssigned = false;
+  return flowIds.map((id) => {
+    const done = Boolean(flow[id]);
+    const active = !done && !firstPendingAssigned;
+    if (active) {
+      firstPendingAssigned = true;
+    }
+    return {
+      id,
+      done,
+      active,
+    };
+  });
+}
+
 export function storedInventoryTotal(resources = {}) {
   return (resources.scrap ?? 0) + (resources.cells ?? 0) + (resources.chips ?? 0);
 }

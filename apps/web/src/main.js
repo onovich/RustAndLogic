@@ -89,6 +89,7 @@ import {
   shouldAutoPause,
 } from "./runtime-feedback.js";
 import {
+  buildRuntimeFlowChecklistState,
   formatRuntimeFlowProgress,
   selectRuntimeFlowSummary,
   updateRuntimeFlow,
@@ -3669,18 +3670,15 @@ function translateVmState(state) {
 
 function renderFlow() {
   renderFlowSummary();
-  const items = elements.flowChecklist.querySelectorAll("[data-flow]");
-  let firstPendingAssigned = false;
+  const items = [...elements.flowChecklist.querySelectorAll("[data-flow]")];
+  const itemState = new Map(
+    buildRuntimeFlowChecklistState(items.map((item) => item.dataset.flow), flow)
+      .map((state) => [state.id, state]),
+  );
   for (const item of items) {
-    const key = item.dataset.flow;
-    const done = flow[key] ? "true" : "false";
-    item.dataset.done = done;
-    if (done === "false" && !firstPendingAssigned) {
-      item.dataset.active = "true";
-      firstPendingAssigned = true;
-    } else {
-      item.dataset.active = "false";
-    }
+    const state = itemState.get(item.dataset.flow);
+    item.dataset.done = String(Boolean(state?.done));
+    item.dataset.active = String(Boolean(state?.active));
   }
 }
 
