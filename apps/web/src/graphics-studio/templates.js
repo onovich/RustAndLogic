@@ -53,6 +53,17 @@ export function normalizeGraphicsTemplateFilterState(value) {
   };
 }
 
+export function buildGraphicsTemplateActionState(state = {}) {
+  const customTemplateCount = Array.isArray(state.customTemplates)
+    ? state.customTemplates.length
+    : Number(state.customTemplateCount ?? 0);
+  return {
+    saveDisabled: !String(state.selectedEntityKey ?? "").trim(),
+    importDisabled: !String(state.ioValue ?? "").trim(),
+    exportLibraryDisabled: customTemplateCount <= 0,
+  };
+}
+
 export function serializeGraphicsTemplate(template, options = {}) {
   return {
     kind: "graphics-template",

@@ -38,6 +38,7 @@ import {
   upgradeVisualLayerType,
 } from "./graphics-studio/layers.js";
 import {
+  buildGraphicsTemplateActionState,
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -839,7 +840,9 @@ function initializeGraphicsEditor() {
   });
   elements.graphicsEntityIo?.addEventListener("input", () => {
     if (elements.graphicsImportTemplateButton) {
-      elements.graphicsImportTemplateButton.disabled = !elements.graphicsEntityIo?.value.trim();
+      elements.graphicsImportTemplateButton.disabled = buildGraphicsTemplateActionState({
+        ioValue: elements.graphicsEntityIo?.value,
+      }).importDisabled;
     }
   });
   elements.graphicsTemplateName?.addEventListener("keydown", (event) => {
@@ -968,14 +971,19 @@ function renderGraphicsEditor() {
     elements.graphicsEntityIo.placeholder = t("graphics.entityIoPlaceholder");
   }
   elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
+  const templateActions = buildGraphicsTemplateActionState({
+    selectedEntityKey: selectedVisualEntityKey,
+    ioValue: elements.graphicsEntityIo?.value,
+    customTemplates: customGraphicsTemplates,
+  });
   if (elements.graphicsSaveTemplateButton) {
-    elements.graphicsSaveTemplateButton.disabled = !selectedVisualEntityKey;
+    elements.graphicsSaveTemplateButton.disabled = templateActions.saveDisabled;
   }
   if (elements.graphicsImportTemplateButton) {
-    elements.graphicsImportTemplateButton.disabled = !elements.graphicsEntityIo?.value.trim();
+    elements.graphicsImportTemplateButton.disabled = templateActions.importDisabled;
   }
   if (elements.graphicsExportLibraryButton) {
-    elements.graphicsExportLibraryButton.disabled = customGraphicsTemplates.length === 0;
+    elements.graphicsExportLibraryButton.disabled = templateActions.exportLibraryDisabled;
   }
   const layerActions = buildVisualLayerActionState(visual?.layers, selectedVisualLayerId);
   const selectedLayer = visual?.layers.find((item) => item.id === selectedVisualLayerId) ?? null;

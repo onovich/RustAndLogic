@@ -28,6 +28,7 @@ import {
   upgradeVisualLayerType,
 } from "../apps/web/src/graphics-studio/layers.js";
 import {
+  buildGraphicsTemplateActionState,
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -1232,6 +1233,24 @@ function testGraphicsPreviews() {
 }
 
 function testGraphicsTemplateHelpers() {
+  assert.deepEqual(buildGraphicsTemplateActionState({
+    selectedEntityKey: "",
+    ioValue: "",
+    customTemplates: [],
+  }), {
+    saveDisabled: true,
+    importDisabled: true,
+    exportLibraryDisabled: true,
+  });
+  assert.deepEqual(buildGraphicsTemplateActionState({
+    selectedEntityKey: "robot",
+    ioValue: "  {\"kind\":\"graphics-template\"}  ",
+    customTemplateCount: 2,
+  }), {
+    saveDisabled: false,
+    importDisabled: false,
+    exportLibraryDisabled: false,
+  });
   const rawTemplate = {
     label: " Relay ",
     visual: { canvasSize: 24, layers: [{ id: "body", type: "shape" }] },
