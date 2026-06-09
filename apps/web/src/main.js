@@ -97,6 +97,12 @@ import {
   predicateSnippetMeta,
 } from "./editor-autocomplete.js";
 import {
+  collectLabelDefinitions,
+  createLabelEntries,
+  tokenAtOffset,
+  tokenRangeAtOffset,
+} from "./editor-text.js";
+import {
   buildStageFlow,
   buildTeachingMomentKey,
   getStageCompletionTasks as selectStageCompletionTasks,
@@ -2563,7 +2569,7 @@ function updateEditorTools(errors = null) {
   currentPresetId = scriptPresets.find((preset) => (preset.lines ?? []).join("\n") === elements.editor.value)?.id ?? null;
   const program = errors ? null : compileTapeScript(elements.editor.value, { instructionCapacity: game.instructionCapacity });
   const activeErrors = errors ?? program.errors;
-  labelDefinitions = collectLabelDefinitions();
+  labelDefinitions = collectLabelDefinitions(elements.editor.value);
   renderScriptHighlight(activeErrors);
   renderDiagnostics(activeErrors);
   renderSampleActions();
@@ -2681,24 +2687,6 @@ function syncEditorScroll() {
   elements.highlight.scrollLeft = elements.editor.scrollLeft;
   elements.lineNumbers.scrollTop = elements.editor.scrollTop;
   updateAutocompletePosition();
-}
-
-function tokenAtOffset(text, offset) {
-  const range = tokenRangeAtOffset(text, offset);
-  const token = text.slice(range.start, range.end);
-  return /^@[A-Za-z][A-Za-z0-9_]*$/.test(token) ? token : "";
-}
-
-function tokenRangeAtOffset(text, offset) {
-  const before = text.slice(0, offset);
-  const left = before.search(/[@A-Za-z0-9_]*$/);
-  const start = left < 0 ? offset : left;
-  const right = text.slice(offset).match(/^[@A-Za-z0-9_]*/)?.[0].length ?? 0;
-  return {
-    start,
-    end: offset + right,
-    token: text.slice(start, offset + right),
-  };
 }
 
 function updateAutocomplete() {
@@ -3044,25 +3032,7 @@ function actionKeywordSuggestions() {
 }
 
 function currentLabelEntries() {
-  return [...labelDefinitions.entries()]
-    .map(([label, line]) => ({ label, line }))
-    .sort((left, right) => left.line - right.line || left.label.localeCompare(right.label));
-}
-
-function currentLabels() {
-  return currentLabelEntries().map((entry) => entry.label);
-}
-
-function collectLabelDefinitions() {
-  const definitions = new Map();
-  elements.editor.value.split("\n").forEach((line, index) => {
-    const trimmed = line.trim();
-    const match = trimmed.match(/^@([A-Za-z][A-Za-z0-9_]*)$/);
-    if (match && !definitions.has(match[1])) {
-      definitions.set(match[1], index + 1);
-    }
-  });
-  return definitions;
+  return createLabelEntries(labelDefinitions);
 }
 
 function handleAutocompleteKeydown(event) {

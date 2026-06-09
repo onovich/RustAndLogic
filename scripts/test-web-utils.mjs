@@ -109,6 +109,13 @@ import {
   predicateSnippetMeta,
   splitCompletionSegments,
 } from "../apps/web/src/editor-autocomplete.js";
+import {
+  collectLabelDefinitions,
+  createLabelEntries,
+  createLabelNames,
+  tokenAtOffset,
+  tokenRangeAtOffset,
+} from "../apps/web/src/editor-text.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -118,6 +125,7 @@ testJsonClone();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
 testEditorAutocompleteHelpers();
+testEditorTextHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
@@ -304,6 +312,35 @@ function testEditorAutocompleteHelpers() {
       matchText: "Craft",
     },
   ]);
+}
+
+function testEditorTextHelpers() {
+  assert.deepEqual(tokenRangeAtOffset("@Loop\nGoto @Loop", 12), {
+    start: 11,
+    end: 16,
+    token: "@Loop",
+  });
+  assert.deepEqual(tokenRangeAtOffset("Move()", 999), {
+    start: 6,
+    end: 6,
+    token: "",
+  });
+  assert.equal(tokenAtOffset("@Loop", 2), "@Loop");
+  assert.equal(tokenAtOffset("Goto", 2), "");
+
+  const labels = collectLabelDefinitions([
+    "@Loop",
+    "Move()",
+    "@Back_1",
+    "@Loop",
+    "Goto @Back_1",
+  ].join("\n"));
+  assert.deepEqual([...labels.entries()], [["Loop", 1], ["Back_1", 3]]);
+  assert.deepEqual(createLabelEntries(labels), [
+    { label: "Loop", line: 1 },
+    { label: "Back_1", line: 3 },
+  ]);
+  assert.deepEqual(createLabelNames(labels), ["Loop", "Back_1"]);
 }
 
 function testGraphicsConfigHelpers() {
