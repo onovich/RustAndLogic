@@ -109,8 +109,10 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Chain TapeScript editor autocomplete steps so inserted `Check()` / `Move()` / `Turn()` / `Goto @` snippets place the caret in the next useful slot and immediately surface the next-stage suggestions.
 - [x] Extend TapeScript editor autocomplete to carry `Check(target)` selections into predicates and to finish conditional queries into `Then`-stage action suggestions.
 - [x] Add label-aware editor guidance so `Goto @...` autocomplete surfaces defined labels with line metadata and the highlighter distinguishes label definitions, resolved references, and missing references.
+- [x] Harden TapeScript autocomplete matching so non-string suggestion values cannot crash segmented completion filtering.
 - [x] Lock TapeScript editing to the stopped state, make pause/resume continue from the current VM position, and make stop reset only the stage simulation instead of overwriting the current script.
 - [x] Add a startup loading overlay so the player never sees the pre-hydration map shell drift into the fully loaded stage state.
+- [x] Extract Web UI runtime halt cause detection, toast-key selection, and auto-pause checks into reusable pure helpers with direct tests.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

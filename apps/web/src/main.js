@@ -84,6 +84,11 @@ import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
 import {
+  buildRuntimeToastModel,
+  detectRuntimeCause,
+  shouldAutoPause,
+} from "./runtime-feedback.js";
+import {
   buildStageFlow,
   buildTeachingMomentKey,
   getStageCompletionTasks as selectStageCompletionTasks,
@@ -2259,80 +2264,12 @@ function showToast(toast, kind = "failure") {
 }
 
 function summarizeRuntimeToast(state) {
-  const cause = detectRuntimeCause(state);
-  const runtimeToastKeys = {
-    boundary: ["runtime.blockedBoundary", "runtime.recodeBoundary"],
-    wall: ["runtime.blockedWall", "runtime.recodeWall"],
-    occupied: ["runtime.blockedOccupied", "runtime.recodeOccupied"],
-    empty: ["runtime.blockedEmpty", "runtime.recodeEmpty"],
-    power: ["runtime.blockedPower", "runtime.recodePower"],
-    hazard: ["runtime.hazardFault", "runtime.recodeHazard"],
-    combat: ["runtime.combatFault", "runtime.recodeCombat"],
-    logic: ["runtime.logicFault", "runtime.recodeLogic"],
-    compile: ["runtime.compileFault", "runtime.recodeCompile"],
-    generic: ["runtime.haltGeneric", "runtime.recodeGeneric"],
-  };
-  const [titleKey, bodyKey] = runtimeToastKeys[cause] ?? runtimeToastKeys.generic;
-  const stage = getStageDefinition();
-  const stageHint = stage?.runtimeHintKey ? t(stage.runtimeHintKey) : "";
+  const toastModel = buildRuntimeToastModel(state, getStageDefinition());
+  const stageHint = toastModel.stageHintKey ? t(toastModel.stageHintKey) : "";
   return {
-    title: t(titleKey),
-    body: stageHint ? `${t(bodyKey)} // ${stageHint}` : t(bodyKey),
+    title: t(toastModel.titleKey),
+    body: stageHint ? `${t(toastModel.bodyKey)} // ${stageHint}` : t(toastModel.bodyKey),
   };
-}
-
-function detectRuntimeCause(state) {
-  const latestLog = state.logs[0] ?? "";
-  const recentLogText = state.logs.slice(0, 10).join(" | ");
-  if (!state.program?.ok || recentLogText.includes("No script deployed") || recentLogText.includes("Deploy failed")) {
-    return "compile";
-  }
-  if (recentLogText.includes("Blocked by boundary") || recentLogText.includes("Drop blocked by boundary")) {
-    return "boundary";
-  }
-  if (recentLogText.includes("Blocked by wall")) {
-    return "wall";
-  }
-  if (recentLogText.includes("Battery depleted")) {
-    return "power";
-  }
-  if (recentLogText.includes("occupied") || recentLogText.includes("Drop blocked")) {
-    return "occupied";
-  }
-  if (
-    recentLogText.includes("Nothing ahead") ||
-    recentLogText.includes("No target lock") ||
-    recentLogText.includes("No cargo to drop") ||
-    recentLogText.includes("No cargo to unload") ||
-    recentLogText.includes("Unload requires")
-  ) {
-    return "empty";
-  }
-  if (
-    recentLogText.includes("Enemy strike") ||
-    recentLogText.includes("hostile contact destroyed")
-  ) {
-    return "combat";
-  }
-  if (
-    (state.hazards?.length ?? 0) > 0 &&
-    (recentLogText.includes("Repair requires home base") || recentLogText.includes("Hazard breach"))
-  ) {
-    return "hazard";
-  }
-  if (
-    state.vm?.state === "Fault" ||
-    state.vm?.state === "Halted" ||
-    recentLogText.includes("Logic Overload") ||
-    recentLogText.includes("Program counter") ||
-    recentLogText.includes("Cargo hold is full") ||
-    recentLogText.includes("Repair blocked") ||
-    recentLogText.includes("Already at home") ||
-    recentLogText.includes("Unknown action")
-  ) {
-    return "logic";
-  }
-  return "generic";
 }
 
 function maybeShowSuccessTeachingMoment(flowBefore) {
@@ -2420,13 +2357,6 @@ function renderStoryPageDots() {
     dot.dataset.active = String(index === storyIndex);
     elements.storyPages.append(dot);
   }
-}
-
-function shouldAutoPause(before, state) {
-  if (detectRuntimeCause(state) !== "generic") {
-    return true;
-  }
-  return before.tick === state.tick && before.vm?.pc === state.vm?.pc;
 }
 
 function stopPlayback(resetMode = true) {
@@ -2909,18 +2839,19 @@ function matchesCompletion(value, prefix) {
   if (!prefix) {
     return true;
   }
-  const normalizedValue = value.toLowerCase();
-  const normalizedPrefix = prefix.toLowerCase().replace(/^@/, "");
+  const text = String(value ?? "");
+  const normalizedValue = text.toLowerCase();
+  const normalizedPrefix = String(prefix ?? "").toLowerCase().replace(/^@/, "");
   if (normalizedValue.startsWith(normalizedPrefix)) {
     return true;
   }
-  return splitCompletionSegments(value).some((segment) =>
+  return splitCompletionSegments(text).some((segment) =>
     segment.toLowerCase().startsWith(normalizedPrefix),
   );
 }
 
 function splitCompletionSegments(value) {
-  return (value.match(/[A-Za-z][A-Za-z0-9_]*/g) ?? [])
+  return (String(value ?? "").match(/[A-Za-z][A-Za-z0-9_]*/g) ?? [])
     .flatMap((segment) => segment.split(/(?=[A-Z])|_/))
     .filter(Boolean);
 }
@@ -3197,10 +3128,16 @@ function actionSnippetMeta(action) {
 }
 
 function createAutocompleteSuggestions(items) {
-  return items.map((item) => ({
-    matchText: item.matchText ?? item.label ?? item.value,
-    ...item,
-  }));
+  return items.map((item) => {
+    const value = String(item.value ?? "");
+    const label = item.label === undefined ? value : String(item.label);
+    return {
+      ...item,
+      value,
+      label,
+      matchText: String(item.matchText ?? label ?? value),
+    };
+  });
 }
 
 function dedupeSuggestions(items) {

@@ -93,6 +93,11 @@ import {
   getStageVisibleFacilities,
   isStageUpgradeEnabled,
 } from "../apps/web/src/stages.js";
+import {
+  buildRuntimeToastModel,
+  detectRuntimeCause,
+  shouldAutoPause,
+} from "../apps/web/src/runtime-feedback.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -100,6 +105,7 @@ testCsvParsing();
 testI18nParsing();
 testJsonClone();
 testStageHelpers();
+testRuntimeFeedbackHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
@@ -191,6 +197,30 @@ function testStageHelpers() {
   assert.deepEqual(getStageTeachingMoments(stages[0], "success"), [{ id: "first" }]);
   assert.deepEqual(getStageTeachingMoments(stages[0], "unknown"), []);
   assert.equal(buildTeachingMomentKey("m1", "success", "first"), "m1:success:first");
+}
+
+function testRuntimeFeedbackHelpers() {
+  const okProgram = { ok: true };
+  assert.equal(detectRuntimeCause({ program: { ok: false }, logs: [] }), "compile");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["Blocked by boundary"] }), "boundary");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["Blocked by wall"] }), "wall");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["Battery depleted"] }), "power");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["Drop blocked"] }), "occupied");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["No cargo to unload"] }), "empty");
+  assert.equal(detectRuntimeCause({ program: okProgram, logs: ["Enemy strike"] }), "combat");
+  assert.equal(detectRuntimeCause({ program: okProgram, hazards: [{}], logs: ["Hazard breach"] }), "hazard");
+  assert.equal(detectRuntimeCause({ program: okProgram, vm: { state: "Fault" }, logs: [] }), "logic");
+  assert.equal(detectRuntimeCause({ program: okProgram, vm: { state: "Running" }, logs: ["steady"] }), "generic");
+
+  assert.deepEqual(buildRuntimeToastModel({ program: okProgram, logs: ["Battery depleted"] }, { runtimeHintKey: "runtime.stageHint.m2" }), {
+    cause: "power",
+    titleKey: "runtime.blockedPower",
+    bodyKey: "runtime.recodePower",
+    stageHintKey: "runtime.stageHint.m2",
+  });
+  assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 1, vm: { pc: 2 } }), true);
+  assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 2, vm: { pc: 3 } }), false);
+  assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["Battery depleted"], tick: 2, vm: { pc: 3 } }), true);
 }
 
 function testGraphicsConfigHelpers() {
