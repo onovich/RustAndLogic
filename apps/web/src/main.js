@@ -105,7 +105,9 @@ import {
 } from "./runtime-controls.js";
 import {
   buildFacilityDisplayItems,
+  buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
+  buildRuntimeLogItems,
   summarizeCargoManifest,
 } from "./runtime-display.js";
 import {
@@ -3542,7 +3544,7 @@ function directionDegrees(direction) {
 
 function renderLog(logs) {
   elements.consoleLog.replaceChildren();
-  for (const message of logs) {
+  for (const message of buildRuntimeLogItems(logs)) {
     const item = document.createElement("li");
     item.textContent = message;
     elements.consoleLog.append(item);
@@ -3550,31 +3552,25 @@ function renderLog(logs) {
 }
 
 function renderDiff(diff) {
+  const diffDisplay = buildRuntimeDiffDisplay(diff);
   elements.diffCount.textContent = t("diff.count", {
-    count: diff.length,
-    label: diff.length === 1 ? t("diff.change") : t("diff.changes"),
+    count: diffDisplay.count,
+    label: t(diffDisplay.countLabelKey),
   });
   elements.diffList.replaceChildren();
 
-  if (diff.length === 0) {
+  if (diffDisplay.empty) {
     const item = document.createElement("li");
     item.textContent = t("diff.empty");
     elements.diffList.append(item);
     return;
   }
 
-  for (const change of diff.slice(0, 18)) {
+  for (const change of diffDisplay.items) {
     const item = document.createElement("li");
-    item.textContent = `${change.path}: ${formatValue(change.before)} -> ${formatValue(change.after)}`;
+    item.textContent = `${change.path}: ${change.before} -> ${change.after}`;
     elements.diffList.append(item);
   }
-}
-
-function formatValue(value) {
-  if (value === null || value === undefined || value === "") {
-    return "-";
-  }
-  return String(value);
 }
 
 function formatCargoManifest(manifestItems) {

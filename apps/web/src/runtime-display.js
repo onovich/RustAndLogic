@@ -45,8 +45,33 @@ export function buildFacilityDisplayItems(facilities = {}, visibleFacilities = n
     });
 }
 
+export function buildRuntimeLogItems(logs = []) {
+  return Array.isArray(logs) ? logs : [];
+}
+
+export function buildRuntimeDiffDisplay(diff = [], limit = 18) {
+  const changes = Array.isArray(diff) ? diff : [];
+  return {
+    count: changes.length,
+    countLabelKey: changes.length === 1 ? "diff.change" : "diff.changes",
+    empty: changes.length === 0,
+    items: changes.slice(0, limit).map((change) => ({
+      path: change.path,
+      before: formatRuntimeValue(change.before),
+      after: formatRuntimeValue(change.after),
+    })),
+  };
+}
+
 export function formatInstructionUsage(program, capacity = 0) {
   return program ? `${program.instructionUsed}/${capacity}` : `0/${capacity}`;
+}
+
+export function formatRuntimeValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+  return String(value);
 }
 
 export function summarizeCargoManifest(cargo = []) {

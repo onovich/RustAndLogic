@@ -118,10 +118,13 @@ import {
 } from "../apps/web/src/runtime-controls.js";
 import {
   buildFacilityDisplayItems,
+  buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
+  buildRuntimeLogItems,
   calculateArmorPercent,
   calculateEnergyPercent,
   formatInstructionUsage,
+  formatRuntimeValue,
   summarizeCargoManifest,
 } from "../apps/web/src/runtime-display.js";
 import {
@@ -439,6 +442,25 @@ function testRuntimeControlHelpers() {
 function testRuntimeDisplayHelpers() {
   assert.equal(formatInstructionUsage({ instructionUsed: 4 }, 12), "4/12");
   assert.equal(formatInstructionUsage(null, 12), "0/12");
+  assert.equal(formatRuntimeValue(null), "-");
+  assert.equal(formatRuntimeValue(undefined), "-");
+  assert.equal(formatRuntimeValue(""), "-");
+  assert.equal(formatRuntimeValue(0), "0");
+  assert.deepEqual(buildRuntimeLogItems(["boot", "move"]), ["boot", "move"]);
+  assert.deepEqual(buildRuntimeLogItems(null), []);
+  assert.deepEqual(buildRuntimeDiffDisplay([]), {
+    count: 0,
+    countLabelKey: "diff.changes",
+    empty: true,
+    items: [],
+  });
+  assert.deepEqual(buildRuntimeDiffDisplay([{ path: "robot.x", before: "", after: 2 }]), {
+    count: 1,
+    countLabelKey: "diff.change",
+    empty: false,
+    items: [{ path: "robot.x", before: "-", after: "2" }],
+  });
+  assert.equal(buildRuntimeDiffDisplay(Array.from({ length: 20 }, (_, index) => ({ path: `p${index}` }))).items.length, 18);
   assert.deepEqual(summarizeCargoManifest(["scrap", "cell", "cell", "chip"]), {
     scrap: 1,
     battery: 2,
