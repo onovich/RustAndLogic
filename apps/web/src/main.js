@@ -103,6 +103,10 @@ import {
   tokenRangeAtOffset,
 } from "./editor-text.js";
 import {
+  buildScriptHighlightModel,
+  classifyDiagnosticSeverity,
+} from "./editor-highlight.js";
+import {
   buildStageFlow,
   buildTeachingMomentKey,
   getStageCompletionTasks as selectStageCompletionTasks,
@@ -2577,15 +2581,16 @@ function updateEditorTools(errors = null) {
 }
 
 function renderScriptHighlight(errors) {
-  const errorLines = new Set(errors.filter((error) => error.line > 0).map((error) => error.line));
-  const lines = elements.editor.value.split("\n");
-  elements.lineNumbers.textContent = lines.map((_, index) => String(index + 1).padStart(2, "0")).join("\n");
-  elements.highlight.innerHTML = lines
-    .map((line, index) => {
-      const className = errorLines.has(index + 1) ? "code-line has-error" : "code-line";
-      return `<span class="${className}">${highlightLine(line) || " "}</span>`;
-    })
-    .join("");
+  const highlight = buildScriptHighlightModel(elements.editor.value, errors, {
+    actions: scriptActions,
+    queries: scriptQueries,
+    branches: scriptBranches,
+    values: scriptValues,
+    labelDefinitions,
+    labelTitle: (line) => t("completion.hint.labelDefined", { line }),
+  });
+  elements.lineNumbers.textContent = highlight.lineNumbers;
+  elements.highlight.innerHTML = highlight.html;
 }
 
 function renderDiagnostics(errors) {
@@ -2631,55 +2636,6 @@ function renderDiagnostics(errors) {
     }
     elements.diagnostics.append(item);
   }
-}
-
-function classifyDiagnosticSeverity(message) {
-  return /unreachable|unused|redundant/i.test(message) ? "warning" : "error";
-}
-
-function highlightLine(line) {
-  const commentStart = line.indexOf("//");
-  const code = commentStart >= 0 ? line.slice(0, commentStart) : line;
-  const comment = commentStart >= 0 ? line.slice(commentStart) : "";
-  const pieces = [];
-  const pattern = /(@[A-Za-z][A-Za-z0-9_]*|[A-Za-z][A-Za-z0-9_]*|\s+|.)/g;
-  let match;
-  while ((match = pattern.exec(code)) !== null) {
-    const token = match[0];
-    if (/^\s+$/.test(token)) {
-      pieces.push(escapeHtml(token));
-    } else if (token.startsWith("@")) {
-      pieces.push(renderHighlightedLabelToken(token, code));
-    } else if (scriptActions.has(token)) {
-      pieces.push(`<span class="tok-action">${escapeHtml(token)}</span>`);
-    } else if (scriptQueries.has(token)) {
-      pieces.push(`<span class="tok-query">${escapeHtml(token)}</span>`);
-    } else if (scriptBranches.has(token)) {
-      pieces.push(`<span class="tok-branch">${escapeHtml(token)}</span>`);
-    } else if (scriptValues.has(token)) {
-      pieces.push(`<span class="tok-value">${escapeHtml(token)}</span>`);
-    } else if (/^[A-Za-z]/.test(token)) {
-      pieces.push(`<span class="tok-unknown">${escapeHtml(token)}</span>`);
-    } else {
-      pieces.push(escapeHtml(token));
-    }
-  }
-  if (comment) {
-    pieces.push(`<span class="tok-comment">${escapeHtml(comment)}</span>`);
-  }
-  return pieces.join("");
-}
-
-function renderHighlightedLabelToken(token, code) {
-  const labelName = token.slice(1);
-  if (code.trimStart().startsWith(token)) {
-    return `<span class="tok-label tok-label-def">${escapeHtml(token)}</span>`;
-  }
-  if (labelDefinitions.has(labelName)) {
-    const line = labelDefinitions.get(labelName);
-    return `<span class="tok-label tok-label-ref" title="${escapeHtml(t("completion.hint.labelDefined", { line }))}">${escapeHtml(token)}</span>`;
-  }
-  return `<span class="tok-label tok-label-missing">${escapeHtml(token)}</span>`;
 }
 
 function syncEditorScroll() {

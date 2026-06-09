@@ -10,6 +10,7 @@ $files = @(
   "packages/tapescript-runtime/index.js",
   "packages/game-sim/index.js",
   "apps/web/src/editor-autocomplete.js",
+  "apps/web/src/editor-highlight.js",
   "apps/web/src/editor-text.js",
   "apps/web/src/graphics-studio/config.js",
   "apps/web/src/graphics-studio/entity-visuals.js",

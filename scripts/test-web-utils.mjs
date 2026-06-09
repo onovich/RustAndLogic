@@ -116,6 +116,12 @@ import {
   tokenAtOffset,
   tokenRangeAtOffset,
 } from "../apps/web/src/editor-text.js";
+import {
+  buildScriptHighlightModel,
+  classifyDiagnosticSeverity,
+  highlightEditorLine,
+  renderHighlightedLabelToken,
+} from "../apps/web/src/editor-highlight.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -126,6 +132,7 @@ testStageHelpers();
 testRuntimeFeedbackHelpers();
 testEditorAutocompleteHelpers();
 testEditorTextHelpers();
+testEditorHighlightHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
@@ -341,6 +348,35 @@ function testEditorTextHelpers() {
     { label: "Back_1", line: 3 },
   ]);
   assert.deepEqual(createLabelNames(labels), ["Loop", "Back_1"]);
+}
+
+function testEditorHighlightHelpers() {
+  const syntax = {
+    actions: new Set(["Move", "Goto"]),
+    queries: new Set(["Check"]),
+    branches: new Set(["If"]),
+    values: new Set(["Home"]),
+    labelDefinitions: new Map([["Loop", 1]]),
+    labelTitle: (line) => `defined line ${line}`,
+  };
+  assert.equal(classifyDiagnosticSeverity("Unused label"), "warning");
+  assert.equal(classifyDiagnosticSeverity("Unknown instruction"), "error");
+  assert.equal(
+    highlightEditorLine("If Check(Home) Then Goto @Loop // <safe>", syntax),
+    '<span class="tok-branch">If</span> <span class="tok-query">Check</span>(<span class="tok-value">Home</span>) <span class="tok-unknown">Then</span> <span class="tok-action">Goto</span> <span class="tok-label tok-label-ref" title="defined line 1">@Loop</span> <span class="tok-comment">// &lt;safe&gt;</span>',
+  );
+  assert.equal(
+    renderHighlightedLabelToken("@Loop", "@Loop", syntax),
+    '<span class="tok-label tok-label-def">@Loop</span>',
+  );
+  assert.equal(
+    renderHighlightedLabelToken("@Missing", "Goto @Missing", syntax),
+    '<span class="tok-label tok-label-missing">@Missing</span>',
+  );
+  assert.deepEqual(buildScriptHighlightModel("@Loop\nMove()", [{ line: 2 }], syntax), {
+    lineNumbers: "01\n02",
+    html: '<span class="code-line"><span class="tok-label tok-label-def">@Loop</span></span><span class="code-line has-error"><span class="tok-action">Move</span>()</span>',
+  });
 }
 
 function testGraphicsConfigHelpers() {
