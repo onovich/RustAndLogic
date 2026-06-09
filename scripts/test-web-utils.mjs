@@ -49,6 +49,24 @@ import {
   buildFillSwatches,
   buildTextureSwatches,
 } from "../apps/web/src/graphics-studio/swatches.js";
+import {
+  buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateModeOptions,
+  getAllGraphicsTemplates,
+  getGraphicsEntityKind,
+  getGraphicsTemplateCategory,
+  getGraphicsTemplateDescription,
+  getGraphicsTemplateGroupId,
+  getGraphicsTemplateGroupLabel,
+  getGraphicsTemplateLabel,
+  getGraphicsTemplateSource,
+  getGroupedGraphicsTemplates,
+  getRecentGraphicsTemplates,
+  getSortedGraphicsTemplates,
+  isCustomGraphicsTemplate,
+  isGraphicsTemplateRecommended,
+  normalizeGraphicsTemplateFilterForAvailableCategories,
+} from "../apps/web/src/graphics-studio/template-library.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -63,6 +81,7 @@ testGraphicsStorageHelpers();
 testGraphicsFormSchemaHelpers();
 testGraphicsLayerHelpers();
 testGraphicsSwatchHelpers();
+testGraphicsTemplateLibraryHelpers();
 
 console.log("Web utility tests passed.");
 
@@ -470,6 +489,117 @@ function testGraphicsSwatchHelpers() {
   assert.equal(glyphLayer.glyphColor, "#eeeeee");
   assert.equal(applyGraphicsSwatchToLayer({ type: "shape", locked: true }, "fill", "#ffffff"), false);
   assert.equal(applyGraphicsSwatchToLayer({ type: "shape", textureType: "none" }, "texture", "#ffffff"), false);
+}
+
+function testGraphicsTemplateLibraryHelpers() {
+  const translate = (key) =>
+    ({
+      "graphics.template.frameBot": "Frame Bot",
+      "graphics.template.signalToken": "Signal Token",
+      "graphics.templateDesc.frameBot": "Layered chassis",
+      "graphics.templateCategory.actor": "Actor",
+      "graphics.templateCategory.pickup": "Pickup",
+      "graphics.templateCategory.custom": "Custom",
+      "graphics.templateGroup.recommended": "Best match",
+      "graphics.templateGroup.other": "Other",
+      "graphics.templateFilter.all": "All",
+      "graphics.templateFilter.fit": "Fits current",
+      "graphics.templateFilter.categoryAll": "Any type",
+    })[key] ?? key;
+  const customTemplates = [
+    {
+      id: "custom-old",
+      label: "Custom Old",
+      categoryKey: "graphics.templateCategory.custom",
+      entityKinds: ["actor"],
+      updatedAt: 10,
+      visual: { layers: [] },
+    },
+    {
+      id: "custom-new",
+      label: "Custom New",
+      categoryKey: "graphics.templateCategory.custom",
+      entityKinds: ["actor"],
+      updatedAt: 20,
+      visual: { layers: [] },
+    },
+  ];
+  const defaultTemplates = [
+    {
+      id: "frameBot",
+      labelKey: "graphics.template.frameBot",
+      descriptionKey: "graphics.templateDesc.frameBot",
+      categoryKey: "graphics.templateCategory.actor",
+      entityKinds: ["actor"],
+      visual: { layers: [] },
+    },
+    {
+      id: "signalToken",
+      labelKey: "graphics.template.signalToken",
+      categoryKey: "graphics.templateCategory.pickup",
+      entityKinds: ["pickup"],
+      visual: { layers: [] },
+    },
+    {
+      id: "mystery",
+      label: "Mystery",
+      categoryKey: "unknown.category",
+      entityKinds: [],
+      visual: { layers: [] },
+    },
+  ];
+
+  const templates = getAllGraphicsTemplates(customTemplates, defaultTemplates);
+  assert.equal(templates.length, 5);
+  assert.equal(getGraphicsTemplateSource(templates[0]), "custom");
+  assert.equal(getGraphicsTemplateSource(templates.at(-1)), "builtin");
+  assert.equal(isCustomGraphicsTemplate(templates[0]), true);
+  assert.equal(getGraphicsEntityKind({ robot: "actor" }, "robot"), "actor");
+  assert.equal(getGraphicsTemplateLabel(defaultTemplates[0], translate), "Frame Bot");
+  assert.equal(getGraphicsTemplateDescription(defaultTemplates[0], translate), "Layered chassis");
+  assert.equal(getGraphicsTemplateCategory(defaultTemplates[0], translate), "Actor");
+  assert.equal(getGraphicsTemplateGroupId(defaultTemplates[0]), "actor");
+  assert.equal(getGraphicsTemplateGroupId(defaultTemplates[2]), "other");
+  assert.equal(getGraphicsTemplateGroupLabel("missing", translate), "Other");
+  assert.equal(isGraphicsTemplateRecommended(defaultTemplates[0], "actor"), true);
+  assert.equal(isGraphicsTemplateRecommended(defaultTemplates[1], "actor"), false);
+
+  assert.deepEqual(getRecentGraphicsTemplates(["signalToken", "missing", "custom-new"], templates).map((template) => template.id), [
+    "signalToken",
+    "custom-new",
+  ]);
+  assert.deepEqual(getSortedGraphicsTemplates(templates, "actor", translate).map((template) => template.id).slice(0, 3), [
+    "custom-new",
+    "custom-old",
+    "frameBot",
+  ]);
+  const grouped = getGroupedGraphicsTemplates(templates, { mode: "all", category: "all" }, "actor", translate);
+  assert.equal(grouped[0].id, "recommended");
+  assert.deepEqual(grouped[0].templates.map((template) => template.id), ["custom-new", "custom-old", "frameBot"]);
+  assert.equal(grouped.some((group) => group.id === "pickup"), true);
+
+  const fitGroups = getGroupedGraphicsTemplates(templates, { mode: "fit", category: "all" }, "actor", translate);
+  assert.equal(fitGroups.some((group) => group.id === "recommended"), false);
+  assert.deepEqual(fitGroups.flatMap((group) => group.templates.map((template) => template.id)), [
+    "custom-new",
+    "custom-old",
+    "frameBot",
+  ]);
+  assert.deepEqual(normalizeGraphicsTemplateFilterForAvailableCategories(templates, { mode: "fit", category: "pickup" }, "actor"), {
+    mode: "fit",
+    category: "all",
+  });
+  assert.deepEqual(buildGraphicsTemplateModeOptions({ mode: "fit" }, translate), [
+    { kind: "mode", value: "all", label: "All", active: false },
+    { kind: "mode", value: "fit", label: "Fits current", active: true },
+  ]);
+  assert.deepEqual(
+    buildGraphicsTemplateCategoryOptions(templates, { mode: "all", category: "custom" }, "actor", translate).slice(0, 2),
+    [
+      { kind: "category", value: "all", label: "Any type", active: false },
+      { kind: "category", value: "custom", label: "Custom", active: true },
+    ],
+  );
 }
 
 function createMemoryStorage() {
