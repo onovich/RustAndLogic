@@ -22,6 +22,15 @@ export function buildRuntimeToastModel(state, stage) {
   };
 }
 
+export function formatRuntimeToastDisplay(toastModel = {}, translate = identityTranslate) {
+  const stageHint = toastModel.stageHintKey ? translate(toastModel.stageHintKey) : "";
+  const body = translate(toastModel.bodyKey);
+  return {
+    title: translate(toastModel.titleKey),
+    body: stageHint ? `${body} // ${stageHint}` : body,
+  };
+}
+
 export function detectRuntimeCause(state = {}) {
   const logs = Array.isArray(state.logs) ? state.logs : [];
   const recentLogText = logs.slice(0, 10).join(" | ");
@@ -78,4 +87,8 @@ export function shouldAutoPause(before = {}, state = {}) {
     return true;
   }
   return before.tick === state.tick && before.vm?.pc === state.vm?.pc;
+}
+
+function identityTranslate(key) {
+  return key;
 }

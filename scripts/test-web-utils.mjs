@@ -102,6 +102,7 @@ import {
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
+  formatRuntimeToastDisplay,
   shouldAutoPause,
 } from "../apps/web/src/runtime-feedback.js";
 import {
@@ -407,6 +408,27 @@ function testRuntimeFeedbackHelpers() {
     bodyKey: "runtime.recodePower",
     stageHintKey: "runtime.stageHint.m2",
   });
+  const translateToast = (key) =>
+    ({
+      "runtime.blockedPower": "Power fault",
+      "runtime.recodePower": "Recharge before continuing.",
+      "runtime.stageHint.m2": "Watch the battery.",
+    })[key] ?? key;
+  assert.deepEqual(
+    formatRuntimeToastDisplay(
+      {
+        titleKey: "runtime.blockedPower",
+        bodyKey: "runtime.recodePower",
+        stageHintKey: "runtime.stageHint.m2",
+      },
+      translateToast,
+    ),
+    { title: "Power fault", body: "Recharge before continuing. // Watch the battery." },
+  );
+  assert.deepEqual(
+    formatRuntimeToastDisplay({ titleKey: "runtime.blockedPower", bodyKey: "runtime.recodePower", stageHintKey: "" }, translateToast),
+    { title: "Power fault", body: "Recharge before continuing." },
+  );
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 1, vm: { pc: 2 } }), true);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 2, vm: { pc: 3 } }), false);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["Battery depleted"], tick: 2, vm: { pc: 3 } }), true);

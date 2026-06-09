@@ -86,6 +86,7 @@ import { cloneJson } from "./utils/json.js";
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
+  formatRuntimeToastDisplay,
   shouldAutoPause,
 } from "./runtime-feedback.js";
 import {
@@ -2288,7 +2289,8 @@ function showRuntimeToast(state) {
   if (!elements.runtimeToast || !elements.runtimeToastTitle || !elements.runtimeToastBody) {
     return;
   }
-  showToast(summarizeRuntimeToast(state), "failure");
+  const toastModel = buildRuntimeToastModel(state, getStageDefinition());
+  showToast(formatRuntimeToastDisplay(toastModel, t), "failure");
 }
 
 function hideRuntimeToast() {
@@ -2308,15 +2310,6 @@ function showToast(toast, kind = "failure") {
   elements.runtimeToastTitle.textContent = toast.title;
   elements.runtimeToastBody.textContent = toast.body;
   elements.runtimeToast.hidden = false;
-}
-
-function summarizeRuntimeToast(state) {
-  const toastModel = buildRuntimeToastModel(state, getStageDefinition());
-  const stageHint = toastModel.stageHintKey ? t(toastModel.stageHintKey) : "";
-  return {
-    title: t(toastModel.titleKey),
-    body: stageHint ? `${t(toastModel.bodyKey)} // ${stageHint}` : t(toastModel.bodyKey),
-  };
 }
 
 function maybeShowSuccessTeachingMoment(flowBefore) {
