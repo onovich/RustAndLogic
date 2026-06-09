@@ -89,6 +89,14 @@ import {
   shouldAutoPause,
 } from "./runtime-feedback.js";
 import {
+  createActionKeywordSuggestions,
+  createAutocompleteSuggestions,
+  dedupeSuggestions,
+  matchesCompletion,
+  predicateCallSnippet,
+  predicateSnippetMeta,
+} from "./editor-autocomplete.js";
+import {
   buildStageFlow,
   buildTeachingMomentKey,
   getStageCompletionTasks as selectStageCompletionTasks,
@@ -2835,27 +2843,6 @@ function findSuggestions(context) {
     .slice(0, 8);
 }
 
-function matchesCompletion(value, prefix) {
-  if (!prefix) {
-    return true;
-  }
-  const text = String(value ?? "");
-  const normalizedValue = text.toLowerCase();
-  const normalizedPrefix = String(prefix ?? "").toLowerCase().replace(/^@/, "");
-  if (normalizedValue.startsWith(normalizedPrefix)) {
-    return true;
-  }
-  return splitCompletionSegments(text).some((segment) =>
-    segment.toLowerCase().startsWith(normalizedPrefix),
-  );
-}
-
-function splitCompletionSegments(value) {
-  return (String(value ?? "").match(/[A-Za-z][A-Za-z0-9_]*/g) ?? [])
-    .flatMap((segment) => segment.split(/(?=[A-Z])|_/))
-    .filter(Boolean);
-}
-
 function getExplicitAutocompleteContext(context) {
   const { line, lineStart, lineNumber, column, range, token, beforeToken, prefixText } = context;
   const trimmedPrefix = prefixText.trimStart();
@@ -3052,104 +3039,8 @@ function explicitAutocompleteContext({ context, prefix, suggestions, slot = "" }
   };
 }
 
-function predicateCallSnippet(predicate) {
-  return `${predicate}()`;
-}
-
-function predicateSnippetMeta(predicate) {
-  if (["Has", "Is", "Below", "Above", "BelowCost"].includes(predicate)) {
-    const inside = predicate.length + 1;
-    return {
-      selectionStartOffset: inside,
-      selectionEndOffset: inside,
-      triggerAutocomplete: true,
-      requiresQueryValue: true,
-    };
-  }
-  if (["Any", "IsFull", "IsEmpty"].includes(predicate)) {
-    return {
-      completesQueryImmediately: true,
-    };
-  }
-  return {};
-}
-
-function actionInsertSnippet(action) {
-  if (action === "Move") {
-    return "Move()";
-  }
-  if (action === "MoveToward") {
-    return "MoveToward(Home)";
-  }
-  if (action === "Turn") {
-    return "Turn()";
-  }
-  if (["PickUp", "Drop", "Fire", "Wait", "Repair"].includes(action)) {
-    return `${action}()`;
-  }
-  if (action === "Unload" || action === "Craft") {
-    return `${action}(Home)`;
-  }
-  return `${action}()`;
-}
-
 function actionKeywordSuggestions() {
-  return createAutocompleteSuggestions([
-    {
-      value: "Goto @",
-      label: "Goto",
-      kindKey: "completion.kind.branch",
-      hintKey: "completion.goto.loop",
-      selectionStartOffset: 6,
-      selectionEndOffset: 6,
-      triggerAutocomplete: true,
-    },
-    ...TAPE_SCRIPT_EDITOR_MODEL.actions.map((action) => ({
-      value: actionInsertSnippet(action),
-      label: actionInsertSnippet(action),
-      kindKey: "completion.kind.action",
-      hintKey: "completion.hint.action",
-      matchText: action,
-      ...actionSnippetMeta(action),
-    })),
-  ]);
-}
-
-function actionSnippetMeta(action) {
-  if (action === "Move" || action === "Turn") {
-    const inside = action.length + 1;
-    return {
-      selectionStartOffset: inside,
-      selectionEndOffset: inside,
-      triggerAutocomplete: true,
-    };
-  }
-  return {};
-}
-
-function createAutocompleteSuggestions(items) {
-  return items.map((item) => {
-    const value = String(item.value ?? "");
-    const label = item.label === undefined ? value : String(item.label);
-    return {
-      ...item,
-      value,
-      label,
-      matchText: String(item.matchText ?? label ?? value),
-    };
-  });
-}
-
-function dedupeSuggestions(items) {
-  const seen = new Set();
-  return items.filter((item) => {
-    const key = `${item.value}::${item.kindKey}`;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
+  return createActionKeywordSuggestions(TAPE_SCRIPT_EDITOR_MODEL.actions);
 }
 
 function currentLabelEntries() {

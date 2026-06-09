@@ -9,6 +9,7 @@ if (-not (Test-Path -LiteralPath $node)) {
 $files = @(
   "packages/tapescript-runtime/index.js",
   "packages/game-sim/index.js",
+  "apps/web/src/editor-autocomplete.js",
   "apps/web/src/graphics-studio/config.js",
   "apps/web/src/graphics-studio/entity-visuals.js",
   "apps/web/src/graphics-studio/form-schema.js",

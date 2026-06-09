@@ -98,6 +98,17 @@ import {
   detectRuntimeCause,
   shouldAutoPause,
 } from "../apps/web/src/runtime-feedback.js";
+import {
+  actionInsertSnippet,
+  actionSnippetMeta,
+  createActionKeywordSuggestions,
+  createAutocompleteSuggestions,
+  dedupeSuggestions,
+  matchesCompletion,
+  predicateCallSnippet,
+  predicateSnippetMeta,
+  splitCompletionSegments,
+} from "../apps/web/src/editor-autocomplete.js";
 import { parseCsv, parseI18nCsv } from "../apps/web/src/utils/csv.js";
 import { cloneJson } from "../apps/web/src/utils/json.js";
 
@@ -106,6 +117,7 @@ testI18nParsing();
 testJsonClone();
 testStageHelpers();
 testRuntimeFeedbackHelpers();
+testEditorAutocompleteHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
@@ -221,6 +233,77 @@ function testRuntimeFeedbackHelpers() {
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 1, vm: { pc: 2 } }), true);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["steady"], tick: 2, vm: { pc: 3 } }), false);
   assert.equal(shouldAutoPause({ tick: 1, vm: { pc: 2 } }, { program: okProgram, logs: ["Battery depleted"], tick: 2, vm: { pc: 3 } }), true);
+}
+
+function testEditorAutocompleteHelpers() {
+  assert.equal(matchesCompletion("MoveToward", "mov"), true);
+  assert.equal(matchesCompletion("MoveToward", "tow"), true);
+  assert.equal(matchesCompletion("MoveToward", "@tow"), true);
+  assert.equal(matchesCompletion(1234, "12"), true);
+  assert.equal(matchesCompletion(null, "x"), false);
+  assert.deepEqual(splitCompletionSegments("Move_Toward HomeBase"), ["Move", "Toward", "Home", "Base"]);
+
+  assert.deepEqual(createAutocompleteSuggestions([{ value: 12 }, { value: "Move()", label: "Move", matchText: "Move" }]), [
+    { value: "12", label: "12", matchText: "12" },
+    { value: "Move()", label: "Move", matchText: "Move" },
+  ]);
+  assert.deepEqual(dedupeSuggestions([
+    { value: "Move()", kindKey: "completion.kind.action" },
+    { value: "Move()", kindKey: "completion.kind.action" },
+    { value: "Move()", kindKey: "completion.kind.query" },
+  ]), [
+    { value: "Move()", kindKey: "completion.kind.action" },
+    { value: "Move()", kindKey: "completion.kind.query" },
+  ]);
+
+  assert.equal(predicateCallSnippet("Has"), "Has()");
+  assert.deepEqual(predicateSnippetMeta("Has"), {
+    selectionStartOffset: 4,
+    selectionEndOffset: 4,
+    triggerAutocomplete: true,
+    requiresQueryValue: true,
+  });
+  assert.deepEqual(predicateSnippetMeta("Any"), { completesQueryImmediately: true });
+  assert.deepEqual(predicateSnippetMeta("Unknown"), {});
+
+  assert.equal(actionInsertSnippet("MoveToward"), "MoveToward(Home)");
+  assert.equal(actionInsertSnippet("Craft"), "Craft(Home)");
+  assert.equal(actionInsertSnippet("Turn"), "Turn()");
+  assert.deepEqual(actionSnippetMeta("Move"), {
+    selectionStartOffset: 5,
+    selectionEndOffset: 5,
+    triggerAutocomplete: true,
+  });
+  assert.deepEqual(actionSnippetMeta("Wait"), {});
+  assert.deepEqual(createActionKeywordSuggestions(["Move", "Craft"]), [
+    {
+      value: "Goto @",
+      label: "Goto",
+      kindKey: "completion.kind.branch",
+      hintKey: "completion.goto.loop",
+      selectionStartOffset: 6,
+      selectionEndOffset: 6,
+      triggerAutocomplete: true,
+      matchText: "Goto",
+    },
+    {
+      value: "Move()",
+      label: "Move()",
+      kindKey: "completion.kind.action",
+      hintKey: "completion.hint.action",
+      matchText: "Move",
+      selectionStartOffset: 5,
+      selectionEndOffset: 5,
+      triggerAutocomplete: true,
+    },
+    {
+      value: "Craft(Home)",
+      label: "Craft(Home)",
+      kindKey: "completion.kind.action",
+      hintKey: "completion.hint.action",
+      matchText: "Craft",
+    },
+  ]);
 }
 
 function testGraphicsConfigHelpers() {
