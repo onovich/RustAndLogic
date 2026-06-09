@@ -112,6 +112,8 @@ import {
   buildRuntimeLogItems,
   formatCargoManifestDisplay,
   formatFacilityDescription,
+  formatRuntimeDiffCount,
+  formatRuntimeDiffEmpty,
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
@@ -3541,15 +3543,12 @@ function renderLog(logs) {
 
 function renderDiff(diff) {
   const diffDisplay = buildRuntimeDiffDisplay(diff);
-  elements.diffCount.textContent = t("diff.count", {
-    count: diffDisplay.count,
-    label: t(diffDisplay.countLabelKey),
-  });
+  elements.diffCount.textContent = formatRuntimeDiffCount(diffDisplay, t);
   elements.diffList.replaceChildren();
 
   if (diffDisplay.empty) {
     const item = document.createElement("li");
-    item.textContent = t(diffDisplay.emptyKey);
+    item.textContent = formatRuntimeDiffEmpty(diffDisplay, t);
     elements.diffList.append(item);
     return;
   }

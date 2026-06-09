@@ -112,6 +112,17 @@ export function buildRuntimeDiffDisplay(diff = [], limit = 18) {
   };
 }
 
+export function formatRuntimeDiffCount(diffDisplay = {}, translate = identityTranslate) {
+  return translate("diff.count", {
+    count: diffDisplay.count ?? 0,
+    label: translate(diffDisplay.countLabelKey),
+  });
+}
+
+export function formatRuntimeDiffEmpty(diffDisplay = {}, translate = identityTranslate) {
+  return translate(diffDisplay.emptyKey);
+}
+
 export function formatInstructionUsage(program, capacity = 0) {
   return program ? `${program.instructionUsed}/${capacity}` : `0/${capacity}`;
 }

@@ -136,6 +136,8 @@ import {
   formatCargoManifestDisplay,
   formatFacilityDescription,
   formatInstructionUsage,
+  formatRuntimeDiffCount,
+  formatRuntimeDiffEmpty,
   formatPercentText,
   formatRuntimeDiffItem,
   formatRuntimeValue,
@@ -598,6 +600,17 @@ function testRuntimeDisplayHelpers() {
     emptyKey: "diff.empty",
     items: [],
   });
+  const translateDiff = (key, values = {}) => {
+    const text = {
+      "diff.count": "{count} {label}",
+      "diff.change": "change",
+      "diff.changes": "changes",
+      "diff.empty": "No changes",
+    }[key] ?? key;
+    return Object.entries(values).reduce((result, [name, value]) => result.replaceAll(`{${name}}`, String(value)), text);
+  };
+  assert.equal(formatRuntimeDiffCount(buildRuntimeDiffDisplay([]), translateDiff), "0 changes");
+  assert.equal(formatRuntimeDiffEmpty(buildRuntimeDiffDisplay([]), translateDiff), "No changes");
   assert.deepEqual(buildRuntimeDiffDisplay([{ path: "robot.x", before: "", after: 2 }]), {
     count: 1,
     countLabelKey: "diff.change",
@@ -605,6 +618,7 @@ function testRuntimeDisplayHelpers() {
     emptyKey: "diff.empty",
     items: [{ path: "robot.x", before: "-", after: "2", text: "robot.x: - -> 2" }],
   });
+  assert.equal(formatRuntimeDiffCount(buildRuntimeDiffDisplay([{ path: "robot.x", before: "", after: 2 }]), translateDiff), "1 change");
   assert.equal(buildRuntimeDiffDisplay(Array.from({ length: 20 }, (_, index) => ({ path: `p${index}` }))).items.length, 18);
   assert.equal(formatRuntimeDiffItem({ path: "robot.hp", before: 8, after: null }), "robot.hp: 8 -> -");
   assert.deepEqual(summarizeCargoManifest(["scrap", "cell", "cell", "chip"]), {
