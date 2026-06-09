@@ -1,3 +1,9 @@
+const facilityEntries = [
+  { key: "charger", labelKey: "facilities.charger" },
+  { key: "repairBay", labelKey: "facilities.repairBay" },
+  { key: "fabricator", labelKey: "facilities.fabricator" },
+];
+
 export function buildRuntimeDisplayModel(state = {}) {
   const robot = state.robot ?? {};
   const resources = state.resources ?? {};
@@ -16,6 +22,27 @@ export function buildRuntimeDisplayModel(state = {}) {
       memoryShards: resources.memoryShards ?? 0,
     },
   };
+}
+
+export function buildFacilityDisplayItems(facilities = {}, visibleFacilities = new Set(), entries = facilityEntries) {
+  return entries
+    .filter((entry) => visibleFacilities.has(entry.key) && facilities?.[entry.key])
+    .map((entry) => {
+      const facility = facilities[entry.key];
+      const recipe = entry.key === "fabricator" && facility.recipe
+        ? {
+            scrap: facility.recipe.scrap ?? 0,
+            cells: facility.recipe.cells ?? 0,
+            memoryShards: facility.recipe.memoryShards ?? 1,
+          }
+        : null;
+      return {
+        key: entry.key,
+        labelKey: entry.labelKey,
+        statusKey: `facilities.status.${facility.status}`,
+        recipe,
+      };
+    });
 }
 
 export function formatInstructionUsage(program, capacity = 0) {

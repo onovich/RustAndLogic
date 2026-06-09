@@ -117,6 +117,7 @@ import {
   playbackScheduleDelay,
 } from "../apps/web/src/runtime-controls.js";
 import {
+  buildFacilityDisplayItems,
   buildRuntimeDisplayModel,
   calculateArmorPercent,
   calculateEnergyPercent,
@@ -463,6 +464,39 @@ function testRuntimeDisplayHelpers() {
     energyPercent: 83,
     resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
   });
+  assert.deepEqual(
+    buildFacilityDisplayItems(
+      {
+        charger: { status: "ready" },
+        repairBay: { status: "offline" },
+        fabricator: { status: "active", recipe: { scrap: 2, cells: 1 } },
+      },
+      new Set(["charger", "fabricator"]),
+    ),
+    [
+      { key: "charger", labelKey: "facilities.charger", statusKey: "facilities.status.ready", recipe: null },
+      {
+        key: "fabricator",
+        labelKey: "facilities.fabricator",
+        statusKey: "facilities.status.active",
+        recipe: { scrap: 2, cells: 1, memoryShards: 1 },
+      },
+    ],
+  );
+  assert.deepEqual(
+    buildFacilityDisplayItems(
+      { fabricator: { status: "ready", recipe: { scrap: 3, cells: 2, memoryShards: 4 } } },
+      new Set(["repairBay", "fabricator"]),
+    ),
+    [
+      {
+        key: "fabricator",
+        labelKey: "facilities.fabricator",
+        statusKey: "facilities.status.ready",
+        recipe: { scrap: 3, cells: 2, memoryShards: 4 },
+      },
+    ],
+  );
 }
 
 function testEditorAutocompleteHelpers() {

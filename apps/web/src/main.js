@@ -104,6 +104,7 @@ import {
   playbackScheduleDelay,
 } from "./runtime-controls.js";
 import {
+  buildFacilityDisplayItems,
   buildRuntimeDisplayModel,
   summarizeCargoManifest,
 } from "./runtime-display.js";
@@ -3591,30 +3592,17 @@ function renderFacilities(facilities) {
     return;
   }
   elements.facilityList.replaceChildren();
-  const visibleFacilities = stageVisibleFacilities();
-  const entries = [
-    { key: "charger", labelKey: "facilities.charger" },
-    { key: "repairBay", labelKey: "facilities.repairBay" },
-    { key: "fabricator", labelKey: "facilities.fabricator" },
-  ];
-  for (const entry of entries) {
-    if (!visibleFacilities.has(entry.key)) {
-      continue;
-    }
-    const facility = facilities?.[entry.key];
-    if (!facility) {
-      continue;
-    }
+  for (const facilityItem of buildFacilityDisplayItems(facilities, stageVisibleFacilities())) {
     const row = document.createElement("div");
     const term = document.createElement("dt");
-    term.textContent = t(entry.labelKey);
+    term.textContent = t(facilityItem.labelKey);
     const desc = document.createElement("dd");
-    const status = t(`facilities.status.${facility.status}`);
-    if (entry.key === "fabricator" && facility.recipe) {
-      const outputs = facility.recipe.memoryShards ?? 1;
+    const status = t(facilityItem.statusKey);
+    if (facilityItem.recipe) {
       desc.textContent =
-        `${status} // ${facility.recipe.scrap} ${t("resources.item.scrap")} + ` +
-        `${facility.recipe.cells} ${t("resources.item.battery")} -> ${outputs} ${t("resources.memoryShards")}`;
+        `${status} // ${facilityItem.recipe.scrap} ${t("resources.item.scrap")} + ` +
+        `${facilityItem.recipe.cells} ${t("resources.item.battery")} -> ` +
+        `${facilityItem.recipe.memoryShards} ${t("resources.memoryShards")}`;
     } else {
       desc.textContent = status;
     }
