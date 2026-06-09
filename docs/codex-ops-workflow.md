@@ -41,9 +41,11 @@ lint, typecheck, build, test, structureCheck, docsCheck
 ## Dev Server
 
 Start command: `C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe scripts/serve-web-ui.mjs 4173`
-Health URL: `http://127.0.0.1:4173/`
-Ready text: `Rust & Logic Web UI`
+Health URL: intentionally blank in `.codex/project-ops-workflow.json`.
+Ready text: intentionally blank.
 Timeout seconds: 30
+
+`Smoke.cmd` relies on `scripts/smoke-web-ui.mjs`, which starts its own temporary HTTP server on an available port and closes it after the browser flow finishes. Keep smoke independent from the fixed manual-testing port `4173`, because that port may already be occupied by another local project.
 
 ## Safety Policy
 
