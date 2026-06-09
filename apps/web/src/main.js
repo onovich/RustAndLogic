@@ -113,6 +113,7 @@ import {
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
+  buildAutocompletePositionModel,
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
   dedupeSuggestions,
@@ -3097,13 +3098,19 @@ function updateAutocompletePosition(context = getAutocompleteContext()) {
   const style = getComputedStyle(elements.editor);
   const lineHeight = Number.parseFloat(style.lineHeight) || 20;
   const fontSize = Number.parseFloat(style.fontSize) || 14;
-  const columnWidth = fontSize * 0.62;
   const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
   const paddingTop = Number.parseFloat(style.paddingTop) || 0;
-  const left = paddingLeft + context.column * columnWidth - elements.editor.scrollLeft;
-  const top = paddingTop + context.lineNumber * lineHeight - elements.editor.scrollTop + 4;
-  elements.autocomplete.style.left = `${Math.max(8, Math.min(left, elements.editor.clientWidth - 196))}px`;
-  elements.autocomplete.style.top = `${Math.max(8, top)}px`;
+  const position = buildAutocompletePositionModel(context, {
+    lineHeight,
+    fontSize,
+    paddingLeft,
+    paddingTop,
+    scrollLeft: elements.editor.scrollLeft,
+    scrollTop: elements.editor.scrollTop,
+    clientWidth: elements.editor.clientWidth,
+  });
+  elements.autocomplete.style.left = `${position.left}px`;
+  elements.autocomplete.style.top = `${position.top}px`;
 }
 
 function jumpToLabel(label) {

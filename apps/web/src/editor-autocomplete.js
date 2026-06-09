@@ -57,6 +57,26 @@ export function buildAutocompleteDisplayModel(suggestions = [], activeIndex = 0,
   };
 }
 
+export function buildAutocompletePositionModel(context = {}, editorMetrics = {}) {
+  const lineHeight = Number.parseFloat(editorMetrics.lineHeight) || 20;
+  const fontSize = Number.parseFloat(editorMetrics.fontSize) || 14;
+  const columnWidth = fontSize * (editorMetrics.columnWidthRatio ?? 0.62);
+  const paddingLeft = Number.parseFloat(editorMetrics.paddingLeft) || 0;
+  const paddingTop = Number.parseFloat(editorMetrics.paddingTop) || 0;
+  const scrollLeft = Number(editorMetrics.scrollLeft) || 0;
+  const scrollTop = Number(editorMetrics.scrollTop) || 0;
+  const clientWidth = Number(editorMetrics.clientWidth) || 0;
+  const menuWidth = Number(editorMetrics.menuWidth) || 196;
+  const margin = Number(editorMetrics.margin) || 8;
+  const verticalOffset = Number(editorMetrics.verticalOffset) || 4;
+  const rawLeft = paddingLeft + (Number(context.column) || 0) * columnWidth - scrollLeft;
+  const rawTop = paddingTop + (Number(context.lineNumber) || 0) * lineHeight - scrollTop + verticalOffset;
+  return {
+    left: Math.max(margin, Math.min(rawLeft, clientWidth - menuWidth)),
+    top: Math.max(margin, rawTop),
+  };
+}
+
 export function predicateCallSnippet(predicate) {
   return `${predicate}()`;
 }

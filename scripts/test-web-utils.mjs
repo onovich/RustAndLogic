@@ -135,6 +135,7 @@ import {
 } from "../apps/web/src/runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
+  buildAutocompletePositionModel,
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -662,6 +663,20 @@ function testEditorAutocompleteHelpers() {
       ],
       footerText: "[TAB] Accept   [ESC] Close",
     },
+  );
+  assert.deepEqual(
+    buildAutocompletePositionModel(
+      { column: 10, lineNumber: 3 },
+      { lineHeight: 20, fontSize: 10, paddingLeft: 4, paddingTop: 6, scrollLeft: 2, scrollTop: 10, clientWidth: 260 },
+    ),
+    { left: 64, top: 60 },
+  );
+  assert.deepEqual(
+    buildAutocompletePositionModel(
+      { column: 100, lineNumber: 0 },
+      { fontSize: 12, paddingLeft: 0, paddingTop: 0, clientWidth: 180 },
+    ),
+    { left: 8, top: 8 },
   );
 
   assert.equal(predicateCallSnippet("Has"), "Has()");
