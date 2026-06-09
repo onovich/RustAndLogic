@@ -133,8 +133,10 @@ import {
   formatCargoManifestDisplay,
   formatFacilityDescription,
   formatInstructionUsage,
+  formatPercentText,
   formatRuntimeDiffItem,
   formatRuntimeValue,
+  selectVmStateLabelKey,
   summarizeCargoManifest,
 } from "../apps/web/src/runtime-display.js";
 import {
@@ -599,20 +601,29 @@ function testRuntimeDisplayHelpers() {
   assert.equal(calculateArmorPercent({ hp: 20, armor: 1 }), 100);
   assert.equal(calculateEnergyPercent({ energy: 3, maxEnergy: 6 }), 50);
   assert.equal(calculateEnergyPercent({ energy: 1, maxEnergy: 0 }), 0);
+  assert.equal(selectVmStateLabelKey(null), "state.idle");
+  assert.equal(selectVmStateLabelKey("suspended"), "vm.suspended");
+  assert.equal(formatPercentText(83), "83%");
   assert.deepEqual(buildRuntimeDisplayModel({
     program: { instructionUsed: 5 },
     instructionCapacity: 12,
     cargoCapacity: 3,
+    vm: { state: "suspended" },
     robot: { x: 2, y: 4, dir: "N", cargo: ["cell"], armor: 2, hp: 10, energy: 5, maxEnergy: 6 },
     resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
   }), {
     instructionUsage: "5/12",
+    vmStateKey: "vm.suspended",
     robotPosition: "R1 // 2,4 N",
     cargoCount: "1/3",
     cargoManifestItems: { battery: 1 },
     batteryValue: "5/6",
     armorPercent: 83,
+    armorPercentText: "83%",
+    armorMeterWidth: "83%",
     energyPercent: 83,
+    energyPercentText: "83%",
+    energyMeterWidth: "83%",
     resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
   });
   assert.deepEqual(

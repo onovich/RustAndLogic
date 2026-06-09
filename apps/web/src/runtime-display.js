@@ -7,14 +7,21 @@ const facilityEntries = [
 export function buildRuntimeDisplayModel(state = {}) {
   const robot = state.robot ?? {};
   const resources = state.resources ?? {};
+  const armorPercent = calculateArmorPercent(robot);
+  const energyPercent = calculateEnergyPercent(robot);
   return {
     instructionUsage: formatInstructionUsage(state.program, state.instructionCapacity),
+    vmStateKey: selectVmStateLabelKey(state.vm?.state),
     robotPosition: `R1 // ${robot.x},${robot.y} ${robot.dir}`,
     cargoCount: `${robot.cargo?.length ?? 0}/${state.cargoCapacity ?? 0}`,
     cargoManifestItems: summarizeCargoManifest(robot.cargo ?? []),
     batteryValue: `${robot.energy}/${robot.maxEnergy}`,
-    armorPercent: calculateArmorPercent(robot),
-    energyPercent: calculateEnergyPercent(robot),
+    armorPercent,
+    armorPercentText: formatPercentText(armorPercent),
+    armorMeterWidth: formatPercentText(armorPercent),
+    energyPercent,
+    energyPercentText: formatPercentText(energyPercent),
+    energyMeterWidth: formatPercentText(energyPercent),
     resources: {
       scrap: resources.scrap ?? 0,
       cells: resources.cells ?? 0,
@@ -98,6 +105,14 @@ export function buildRuntimeDiffDisplay(diff = [], limit = 18) {
 
 export function formatInstructionUsage(program, capacity = 0) {
   return program ? `${program.instructionUsed}/${capacity}` : `0/${capacity}`;
+}
+
+export function selectVmStateLabelKey(state) {
+  return state ? `vm.${state}` : "state.idle";
+}
+
+export function formatPercentText(value) {
+  return `${value}%`;
 }
 
 export function formatRuntimeValue(value) {

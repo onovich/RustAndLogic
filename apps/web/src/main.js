@@ -2139,7 +2139,7 @@ function render(state, options = {}) {
 
   elements.tick.textContent = state.tick;
   elements.instructionUsage.textContent = display.instructionUsage;
-  elements.vmState.textContent = translateVmState(state.vm?.state);
+  elements.vmState.textContent = t(display.vmStateKey);
   elements.capacityLabel.textContent = t("capacity", { value: state.instructionCapacity });
   elements.robotPosition.textContent = display.robotPosition;
   elements.scrap.textContent = display.resources.scrap;
@@ -2153,10 +2153,10 @@ function render(state, options = {}) {
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
   elements.batteryValue.textContent = display.batteryValue;
-  elements.armorPercent.textContent = `${display.armorPercent}%`;
-  elements.energyPercent.textContent = `${display.energyPercent}%`;
-  elements.armorMeter.style.width = `${display.armorPercent}%`;
-  elements.energyMeter.style.width = `${display.energyPercent}%`;
+  elements.armorPercent.textContent = display.armorPercentText;
+  elements.energyPercent.textContent = display.energyPercentText;
+  elements.armorMeter.style.width = display.armorMeterWidth;
+  elements.energyMeter.style.width = display.energyMeterWidth;
 
   const compileStatusHost = elements.compileStatus.closest(".stage-mode");
   if (!state.program || state.program.ok) {
@@ -3620,13 +3620,6 @@ function t(key, values = {}) {
     (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
     template,
   );
-}
-
-function translateVmState(state) {
-  if (!state) {
-    return t("state.idle");
-  }
-  return t(`vm.${state}`);
 }
 
 function renderFlow() {
