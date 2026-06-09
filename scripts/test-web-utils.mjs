@@ -605,6 +605,7 @@ function testRuntimeDisplayHelpers() {
   assert.equal(selectVmStateLabelKey("suspended"), "vm.suspended");
   assert.equal(formatPercentText(83), "83%");
   assert.deepEqual(buildRuntimeDisplayModel({
+    tick: 7,
     program: { instructionUsed: 5 },
     instructionCapacity: 12,
     cargoCapacity: 3,
@@ -612,9 +613,13 @@ function testRuntimeDisplayHelpers() {
     robot: { x: 2, y: 4, dir: "N", cargo: ["cell"], armor: 2, hp: 10, energy: 5, maxEnergy: 6 },
     resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
   }), {
+    tick: 7,
     instructionUsage: "5/12",
     vmStateKey: "vm.suspended",
+    capacityLabelKey: "capacity",
+    capacityLabelValues: { value: 12 },
     robotPosition: "R1 // 2,4 N",
+    moduleStats: { armor: 2, weapon: 0, hp: 10 },
     cargoCount: "1/3",
     cargoManifestItems: { battery: 1 },
     batteryValue: "5/6",

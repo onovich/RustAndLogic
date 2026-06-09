@@ -2137,10 +2137,10 @@ function render(state, options = {}) {
   syncFlowState(beforeState, state);
   const display = buildRuntimeDisplayModel(state);
 
-  elements.tick.textContent = state.tick;
+  elements.tick.textContent = display.tick;
   elements.instructionUsage.textContent = display.instructionUsage;
   elements.vmState.textContent = t(display.vmStateKey);
-  elements.capacityLabel.textContent = t("capacity", { value: state.instructionCapacity });
+  elements.capacityLabel.textContent = t(display.capacityLabelKey, display.capacityLabelValues);
   elements.robotPosition.textContent = display.robotPosition;
   elements.scrap.textContent = display.resources.scrap;
   elements.cells.textContent = display.resources.cells;
@@ -2149,9 +2149,9 @@ function render(state, options = {}) {
   elements.cargoCount.textContent = display.cargoCount;
   elements.cargoManifest.textContent = formatCargoManifestDisplay(display.cargoManifestItems, t);
   renderFacilities(state.facilities);
-  elements.armor.textContent = state.robot.armor;
-  elements.weapon.textContent = state.robot.weapon;
-  elements.hp.textContent = state.robot.hp;
+  elements.armor.textContent = display.moduleStats.armor;
+  elements.weapon.textContent = display.moduleStats.weapon;
+  elements.hp.textContent = display.moduleStats.hp;
   elements.batteryValue.textContent = display.batteryValue;
   elements.armorPercent.textContent = display.armorPercentText;
   elements.energyPercent.textContent = display.energyPercentText;

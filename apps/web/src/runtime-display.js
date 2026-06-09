@@ -10,9 +10,17 @@ export function buildRuntimeDisplayModel(state = {}) {
   const armorPercent = calculateArmorPercent(robot);
   const energyPercent = calculateEnergyPercent(robot);
   return {
+    tick: state.tick ?? 0,
     instructionUsage: formatInstructionUsage(state.program, state.instructionCapacity),
     vmStateKey: selectVmStateLabelKey(state.vm?.state),
+    capacityLabelKey: "capacity",
+    capacityLabelValues: { value: state.instructionCapacity ?? 0 },
     robotPosition: `R1 // ${robot.x},${robot.y} ${robot.dir}`,
+    moduleStats: {
+      armor: robot.armor ?? 0,
+      weapon: robot.weapon ?? 0,
+      hp: robot.hp ?? 0,
+    },
     cargoCount: `${robot.cargo?.length ?? 0}/${state.cargoCapacity ?? 0}`,
     cargoManifestItems: summarizeCargoManifest(robot.cargo ?? []),
     batteryValue: `${robot.energy}/${robot.maxEnergy}`,
