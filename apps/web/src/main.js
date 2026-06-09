@@ -105,11 +105,11 @@ import {
   playbackScheduleDelay,
 } from "./runtime-controls.js";
 import {
+  buildCargoManifestDisplayItems,
   buildFacilityDisplayItems,
   buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
   buildRuntimeLogItems,
-  summarizeCargoManifest,
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
@@ -3568,12 +3568,12 @@ function renderDiff(diff) {
 }
 
 function formatCargoManifest(manifestItems) {
-  const entries = manifestItems instanceof Map ? [...manifestItems.entries()] : Object.entries(manifestItems ?? {});
-  if (entries.length === 0) {
+  const manifest = buildCargoManifestDisplayItems(manifestItems);
+  if (manifest.empty) {
     return t("resources.cargoEmpty");
   }
-  return entries
-    .map(([item, count]) => `${t(`resources.item.${item}`)} x${count}`)
+  return manifest.items
+    .map(({ item, count }) => `${t(`resources.item.${item}`)} x${count}`)
     .join(", ");
 }
 

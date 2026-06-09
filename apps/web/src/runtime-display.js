@@ -45,6 +45,14 @@ export function buildFacilityDisplayItems(facilities = {}, visibleFacilities = n
     });
 }
 
+export function buildCargoManifestDisplayItems(manifestItems = {}) {
+  const entries = manifestItems instanceof Map ? [...manifestItems.entries()] : Object.entries(manifestItems ?? {});
+  return {
+    empty: entries.length === 0,
+    items: entries.map(([item, count]) => ({ item, count })),
+  };
+}
+
 export function buildRuntimeLogItems(logs = []) {
   return Array.isArray(logs) ? logs : [];
 }

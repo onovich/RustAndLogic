@@ -123,6 +123,7 @@ import {
   playbackScheduleDelay,
 } from "../apps/web/src/runtime-controls.js";
 import {
+  buildCargoManifestDisplayItems,
   buildFacilityDisplayItems,
   buildRuntimeDiffDisplay,
   buildRuntimeDisplayModel,
@@ -566,6 +567,18 @@ function testRuntimeDisplayHelpers() {
     battery: 2,
     chip: 1,
   });
+  assert.deepEqual(buildCargoManifestDisplayItems({ scrap: 2, battery: 1 }), {
+    empty: false,
+    items: [
+      { item: "scrap", count: 2 },
+      { item: "battery", count: 1 },
+    ],
+  });
+  assert.deepEqual(buildCargoManifestDisplayItems(new Map([["chip", 3]])), {
+    empty: false,
+    items: [{ item: "chip", count: 3 }],
+  });
+  assert.deepEqual(buildCargoManifestDisplayItems(null), { empty: true, items: [] });
   assert.equal(calculateArmorPercent({ hp: 5, armor: 1 }), 50);
   assert.equal(calculateArmorPercent({ hp: 20, armor: 1 }), 100);
   assert.equal(calculateEnergyPercent({ energy: 3, maxEnergy: 6 }), 50);
