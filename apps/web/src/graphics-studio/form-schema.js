@@ -26,6 +26,36 @@ export function resolveGraphicsFieldValue(source, fieldConfig) {
   return rawValue;
 }
 
+export function buildGraphicsFieldModel(scope, source, fieldConfig, optionCatalog = {}, translate = (key) => key) {
+  if (!fieldConfig || !fieldConfig.field || !shouldRenderGraphicsField(fieldConfig, source)) {
+    return null;
+  }
+  const value = resolveGraphicsFieldValue(source, fieldConfig);
+  const baseModel = {
+    scope,
+    field: fieldConfig.field,
+    label: translate(fieldConfig.labelKey ?? fieldConfig.field),
+    value,
+  };
+  if (fieldConfig.type === "select") {
+    return {
+      ...baseModel,
+      kind: "select",
+      options: buildGraphicsSelectOptions(optionCatalog[fieldConfig.optionsKey], translate),
+    };
+  }
+  const type = fieldConfig.type ?? "text";
+  return {
+    ...baseModel,
+    kind: "input",
+    type,
+    valueType: fieldConfig.valueType ?? (type === "number" ? "number" : "string"),
+    min: fieldConfig.min,
+    max: fieldConfig.max,
+    step: fieldConfig.step,
+  };
+}
+
 export function buildGraphicsSelectOptions(options, translate = (key) => key) {
   return (Array.isArray(options) ? options : [])
     .filter((option) => option && typeof option.value === "string")

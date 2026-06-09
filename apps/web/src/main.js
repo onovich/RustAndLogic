@@ -21,11 +21,9 @@ import {
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
-  buildGraphicsSelectOptions,
+  buildGraphicsFieldModel,
   coerceGraphicsFieldValue,
-  resolveGraphicsFieldValue,
   shouldDisableGraphicsFieldControl,
-  shouldRenderGraphicsField,
 } from "./graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
@@ -1387,36 +1385,35 @@ function renderGraphicsForm() {
 
 function renderGraphicsFieldSchema(scope, source, schema) {
   for (const fieldConfig of Array.isArray(schema) ? schema : []) {
-    if (!fieldConfig || !fieldConfig.field || !shouldRenderGraphicsField(fieldConfig, source)) {
+    const fieldModel = buildGraphicsFieldModel(scope, source, fieldConfig, graphicsEditorConfig, t);
+    if (!fieldModel) {
       continue;
     }
-    appendGraphicsFieldFromSchema(scope, source, fieldConfig);
+    appendGraphicsFieldFromModel(fieldModel);
   }
 }
 
-function appendGraphicsFieldFromSchema(scope, source, fieldConfig) {
-  const label = t(fieldConfig.labelKey ?? fieldConfig.field);
-  const value = resolveGraphicsFieldValue(source, fieldConfig);
-  if (fieldConfig.type === "select") {
+function appendGraphicsFieldFromModel(fieldModel) {
+  if (fieldModel.kind === "select") {
     appendGraphicsSelectField({
-      scope,
-      field: fieldConfig.field,
-      label,
-      value,
-      options: buildGraphicsSelectOptions(graphicsEditorConfig[fieldConfig.optionsKey], t),
+      scope: fieldModel.scope,
+      field: fieldModel.field,
+      label: fieldModel.label,
+      value: fieldModel.value,
+      options: fieldModel.options,
     });
     return;
   }
   appendGraphicsField({
-    scope,
-    field: fieldConfig.field,
-    label,
-    type: fieldConfig.type ?? "text",
-    value,
-    valueType: fieldConfig.valueType ?? (fieldConfig.type === "number" ? "number" : "string"),
-    min: fieldConfig.min,
-    max: fieldConfig.max,
-    step: fieldConfig.step,
+    scope: fieldModel.scope,
+    field: fieldModel.field,
+    label: fieldModel.label,
+    type: fieldModel.type,
+    value: fieldModel.value,
+    valueType: fieldModel.valueType,
+    min: fieldModel.min,
+    max: fieldModel.max,
+    step: fieldModel.step,
   });
 }
 

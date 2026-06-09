@@ -11,6 +11,7 @@ import {
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
+  buildGraphicsFieldModel,
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
   resolveGraphicsFieldValue,
@@ -1394,6 +1395,52 @@ function testGraphicsFormSchemaHelpers() {
   assert.equal(shouldDisableGraphicsFieldControl(true, "entity"), false);
   assert.equal(shouldDisableGraphicsFieldControl(false, "layer"), false);
   assert.equal(shouldDisableGraphicsFieldControl(true, undefined), true);
+  assert.equal(
+    buildGraphicsFieldModel(
+      "layer",
+      { textureType: "dither" },
+      { field: "stripeWidth", showWhen: { field: "textureType", equals: "stripes" } },
+    ),
+    null,
+  );
+  assert.deepEqual(
+    buildGraphicsFieldModel(
+      "layer",
+      { shape: "rectangle" },
+      { field: "shape", type: "select", labelKey: "graphics.shape", optionsKey: "shapeOptions" },
+      { shapeOptions: [{ value: "rectangle", labelKey: "graphics.shape.rectangle" }] },
+      (key) => `t:${key}`,
+    ),
+    {
+      kind: "select",
+      scope: "layer",
+      field: "shape",
+      label: "t:graphics.shape",
+      value: "rectangle",
+      options: [{ value: "rectangle", label: "t:graphics.shape.rectangle" }],
+    },
+  );
+  assert.deepEqual(
+    buildGraphicsFieldModel(
+      "layer",
+      {},
+      { field: "width", type: "number", defaultValue: 12, min: 1, max: 24, step: 1 },
+      {},
+      (key) => key,
+    ),
+    {
+      kind: "input",
+      scope: "layer",
+      field: "width",
+      label: "width",
+      type: "number",
+      value: 12,
+      valueType: "number",
+      min: 1,
+      max: 24,
+      step: 1,
+    },
+  );
   assert.deepEqual(
     buildGraphicsSelectOptions(
       [
