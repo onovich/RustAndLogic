@@ -12,6 +12,21 @@ export function toggleCollapsedState(value) {
   return isCollapsed(value) ? "false" : "true";
 }
 
+export function buildDrawerToggleState(kind, state = {}) {
+  const isSettings = kind === "settings";
+  const settingsOpen = isSettings && !isOpen(state.settingsOpen);
+  const devOpen = !isSettings && !isOpen(state.devOpen);
+  return {
+    settingsOpen: String(settingsOpen),
+    devOpen: String(devOpen),
+    closeStudio: !devOpen,
+  };
+}
+
 function isCollapsed(value) {
+  return value === true || value === "true";
+}
+
+function isOpen(value) {
   return value === true || value === "true";
 }

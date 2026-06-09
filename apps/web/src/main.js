@@ -84,7 +84,7 @@ import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
 import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
-import { buildSidebarToggleDisplay, toggleCollapsedState } from "./ui-shell.js";
+import { buildDrawerToggleState, buildSidebarToggleDisplay, toggleCollapsedState } from "./ui-shell.js";
 import {
   buildRuntimeToastModel,
   detectRuntimeCause,
@@ -1832,15 +1832,16 @@ function updateSidebarToggles() {
 }
 
 function toggleDrawer(kind) {
-  const isSettings = kind === "settings";
+  const drawer = buildDrawerToggleState(kind, {
+    settingsOpen: elements.settingsPanel?.dataset.open,
+    devOpen: elements.devPanel?.dataset.open,
+  });
   if (elements.settingsPanel) {
-    const next = isSettings && elements.settingsPanel.dataset.open !== "true";
-    elements.settingsPanel.dataset.open = String(next);
+    elements.settingsPanel.dataset.open = drawer.settingsOpen;
   }
   if (elements.devPanel) {
-    const next = !isSettings && elements.devPanel.dataset.open !== "true";
-    elements.devPanel.dataset.open = String(next);
-    if (!next) {
+    elements.devPanel.dataset.open = drawer.devOpen;
+    if (drawer.closeStudio) {
       elements.devPanel.dataset.studio = "false";
       document.body.dataset.graphicsStudio = "false";
     }

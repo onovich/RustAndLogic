@@ -59,6 +59,7 @@ import {
   resolveLanguage,
 } from "../apps/web/src/language.js";
 import {
+  buildDrawerToggleState,
   buildSidebarToggleDisplay,
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
@@ -277,6 +278,26 @@ function testUiShellHelpers() {
   assert.equal(toggleCollapsedState("true"), "false");
   assert.equal(toggleCollapsedState("false"), "true");
   assert.equal(toggleCollapsedState(undefined), "true");
+  assert.deepEqual(buildDrawerToggleState("settings", { settingsOpen: "false", devOpen: "true" }), {
+    settingsOpen: "true",
+    devOpen: "false",
+    closeStudio: true,
+  });
+  assert.deepEqual(buildDrawerToggleState("settings", { settingsOpen: "true", devOpen: "false" }), {
+    settingsOpen: "false",
+    devOpen: "false",
+    closeStudio: true,
+  });
+  assert.deepEqual(buildDrawerToggleState("dev", { settingsOpen: "true", devOpen: "false" }), {
+    settingsOpen: "false",
+    devOpen: "true",
+    closeStudio: false,
+  });
+  assert.deepEqual(buildDrawerToggleState("dev", { settingsOpen: "false", devOpen: "true" }), {
+    settingsOpen: "false",
+    devOpen: "false",
+    closeStudio: true,
+  });
 }
 
 function testStageHelpers() {

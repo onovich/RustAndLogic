@@ -54,6 +54,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Web UI language-mode normalization and browser-language resolution into reusable pure helpers with direct tests.
 - [x] Rework the Web UI into location art, code, infinite-stage canvas, and collapsible systems columns.
 - [x] Extract Web UI sidebar-collapse labels and dataset toggling into reusable pure shell helpers with direct tests.
+- [x] Extract Web UI settings/devlog drawer toggle state into reusable pure shell helpers with direct tests.
 - [x] Remove player-facing arena preview from the right sidebar; keep locked locations out of the sidebar.
 - [x] Add pan/zoom behavior to the stage canvas and redesign map markers with glitch/noise styling.
 - [x] Split Web UI configuration into `apps/web/app-data.json` and keep player-facing text in `apps/web/i18n.csv`.
