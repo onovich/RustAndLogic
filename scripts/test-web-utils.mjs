@@ -116,6 +116,13 @@ import {
   playbackScheduleDelay,
 } from "../apps/web/src/runtime-controls.js";
 import {
+  buildRuntimeDisplayModel,
+  calculateArmorPercent,
+  calculateEnergyPercent,
+  formatInstructionUsage,
+  summarizeCargoManifest,
+} from "../apps/web/src/runtime-display.js";
+import {
   actionInsertSnippet,
   actionSnippetMeta,
   createActionKeywordSuggestions,
@@ -152,6 +159,7 @@ testRuntimeFeedbackHelpers();
 testRuntimeFlowHelpers();
 testRuntimeTeachingHelpers();
 testRuntimeControlHelpers();
+testRuntimeDisplayHelpers();
 testEditorAutocompleteHelpers();
 testEditorTextHelpers();
 testEditorHighlightHelpers();
@@ -415,6 +423,36 @@ function testRuntimeControlHelpers() {
   });
   assert.equal(playbackScheduleDelay({ interval: 90, duration: 130 }), 150);
   assert.equal(playbackScheduleDelay({ interval: 170, duration: 130 }), 170);
+}
+
+function testRuntimeDisplayHelpers() {
+  assert.equal(formatInstructionUsage({ instructionUsed: 4 }, 12), "4/12");
+  assert.equal(formatInstructionUsage(null, 12), "0/12");
+  assert.deepEqual(summarizeCargoManifest(["scrap", "cell", "cell", "chip"]), {
+    scrap: 1,
+    battery: 2,
+    chip: 1,
+  });
+  assert.equal(calculateArmorPercent({ hp: 5, armor: 1 }), 50);
+  assert.equal(calculateArmorPercent({ hp: 20, armor: 1 }), 100);
+  assert.equal(calculateEnergyPercent({ energy: 3, maxEnergy: 6 }), 50);
+  assert.equal(calculateEnergyPercent({ energy: 1, maxEnergy: 0 }), 0);
+  assert.deepEqual(buildRuntimeDisplayModel({
+    program: { instructionUsed: 5 },
+    instructionCapacity: 12,
+    cargoCapacity: 3,
+    robot: { x: 2, y: 4, dir: "N", cargo: ["cell"], armor: 2, hp: 10, energy: 5, maxEnergy: 6 },
+    resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
+  }), {
+    instructionUsage: "5/12",
+    robotPosition: "R1 // 2,4 N",
+    cargoCount: "1/3",
+    cargoManifestItems: { battery: 1 },
+    batteryValue: "5/6",
+    armorPercent: 83,
+    energyPercent: 83,
+    resources: { scrap: 1, cells: 2, chips: 3, memoryShards: 4 },
+  });
 }
 
 function testEditorAutocompleteHelpers() {

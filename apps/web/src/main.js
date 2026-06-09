@@ -103,6 +103,10 @@ import {
   playbackScheduleDelay,
 } from "./runtime-controls.js";
 import {
+  buildRuntimeDisplayModel,
+  summarizeCargoManifest,
+} from "./runtime-display.js";
+import {
   createActionKeywordSuggestions,
   createAutocompleteSuggestions,
   dedupeSuggestions,
@@ -2119,33 +2123,28 @@ function render(state, options = {}) {
   const diff = beforeState ? diffSnapshots(beforeState, state) : [];
   previousState = state;
   syncFlowState(beforeState, state);
+  const display = buildRuntimeDisplayModel(state);
 
   elements.tick.textContent = state.tick;
-  elements.instructionUsage.textContent = state.program
-    ? `${state.program.instructionUsed}/${state.instructionCapacity}`
-    : `0/${state.instructionCapacity}`;
+  elements.instructionUsage.textContent = display.instructionUsage;
   elements.vmState.textContent = translateVmState(state.vm?.state);
   elements.capacityLabel.textContent = t("capacity", { value: state.instructionCapacity });
-  elements.robotPosition.textContent = `R1 // ${state.robot.x},${state.robot.y} ${state.robot.dir}`;
-  elements.scrap.textContent = state.resources.scrap;
-  elements.cells.textContent = state.resources.cells;
-  elements.chips.textContent = state.resources.chips ?? 0;
-  elements.memoryShards.textContent = state.resources.memoryShards;
-  elements.cargoCount.textContent = `${state.robot.cargo.length}/${state.cargoCapacity}`;
-  elements.cargoManifest.textContent = formatCargoManifest(state.robot.cargo);
+  elements.robotPosition.textContent = display.robotPosition;
+  elements.scrap.textContent = display.resources.scrap;
+  elements.cells.textContent = display.resources.cells;
+  elements.chips.textContent = display.resources.chips;
+  elements.memoryShards.textContent = display.resources.memoryShards;
+  elements.cargoCount.textContent = display.cargoCount;
+  elements.cargoManifest.textContent = formatCargoManifest(display.cargoManifestItems);
   renderFacilities(state.facilities);
   elements.armor.textContent = state.robot.armor;
   elements.weapon.textContent = state.robot.weapon;
   elements.hp.textContent = state.robot.hp;
-  elements.batteryValue.textContent = `${state.robot.energy}/${state.robot.maxEnergy}`;
-  const armorPercent = Math.max(0, Math.min(100, Math.round((state.robot.hp / (8 + state.robot.armor * 2)) * 100)));
-  const energyPercent = state.robot.maxEnergy
-    ? Math.max(0, Math.min(100, Math.round((state.robot.energy / state.robot.maxEnergy) * 100)))
-    : 0;
-  elements.armorPercent.textContent = `${armorPercent}%`;
-  elements.energyPercent.textContent = `${energyPercent}%`;
-  elements.armorMeter.style.width = `${armorPercent}%`;
-  elements.energyMeter.style.width = `${energyPercent}%`;
+  elements.batteryValue.textContent = display.batteryValue;
+  elements.armorPercent.textContent = `${display.armorPercent}%`;
+  elements.energyPercent.textContent = `${display.energyPercent}%`;
+  elements.armorMeter.style.width = `${display.armorPercent}%`;
+  elements.energyMeter.style.width = `${display.energyPercent}%`;
 
   const compileStatusHost = elements.compileStatus.closest(".stage-mode");
   if (!state.program || state.program.ok) {
@@ -3576,16 +3575,12 @@ function formatValue(value) {
   return String(value);
 }
 
-function formatCargoManifest(cargo) {
-  if (!cargo.length) {
+function formatCargoManifest(manifestItems) {
+  const entries = manifestItems instanceof Map ? [...manifestItems.entries()] : Object.entries(manifestItems ?? {});
+  if (entries.length === 0) {
     return t("resources.cargoEmpty");
   }
-  const counts = cargo.reduce((summary, item) => {
-    const key = item === "cell" ? "battery" : item;
-    summary[key] = (summary[key] ?? 0) + 1;
-    return summary;
-  }, {});
-  return Object.entries(counts)
+  return entries
     .map(([item, count]) => `${t(`resources.item.${item}`)} x${count}`)
     .join(", ");
 }
