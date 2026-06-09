@@ -85,6 +85,7 @@ import {
   buildStageSampleActionItems,
   buildStoryDialogueModel,
   formatStageCopyDisplay,
+  formatStoryDialogueDisplay,
   buildTeachingMomentKey,
   getStageCompletionTasks,
   getStageDefinition,
@@ -335,6 +336,22 @@ function testStageHelpers() {
       { index: 0, active: false },
       { index: 1, active: true },
     ],
+  });
+  const translateStory = (key) =>
+    ({
+      "story.speaker.1": "Operator",
+      "story.text.1": "Wake the unit.",
+      "story.prompt.continue": "Continue",
+    })[key] ?? key;
+  assert.deepEqual(formatStoryDialogueDisplay(buildStoryDialogueModel(true, storyPages, 0), translateStory), {
+    speaker: "Operator",
+    text: "Wake the unit.",
+    prompt: "Continue",
+  });
+  assert.deepEqual(formatStoryDialogueDisplay(buildStoryDialogueModel(false, storyPages, 0), translateStory), {
+    speaker: "",
+    text: "",
+    prompt: "",
   });
   assert.deepEqual(getStageTaskDefinitions(stages[0], tasks).map((task) => task.id), ["boot", "collect"]);
   assert.deepEqual(buildStageFlow(stages[0], tasks), { boot: false, collect: false });

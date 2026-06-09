@@ -143,6 +143,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Web UI stage location copy and guidance key selection into reusable pure stage helpers with direct tests.
 - [x] Extract Web UI stage copy and guidance text formatting into reusable pure stage helpers with direct tests.
 - [x] Extract Web UI story dialogue visibility, prompt, and page-dot view model into reusable pure stage helpers with direct tests.
+- [x] Extract Web UI story dialogue text formatting into reusable pure stage helpers with direct tests.
 - [x] Extract Web UI runtime flow list and summary view models into reusable pure flow helpers with direct tests.
 
 ## Milestone 4: Desktop/Web Packaging Path

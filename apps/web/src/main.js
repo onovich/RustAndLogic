@@ -144,6 +144,7 @@ import {
   buildStageSampleActionItems,
   buildStoryDialogueModel,
   formatStageCopyDisplay,
+  formatStoryDialogueDisplay,
   getStageCompletionTasks as selectStageCompletionTasks,
   getStageDefinition as selectStageDefinition,
   getStageRecommendedPreset as selectStageRecommendedPreset,
@@ -2389,10 +2390,11 @@ function renderStoryDialogue() {
   }
   elements.stage.dataset.mode = story.stageMode;
   elements.storyDialogue.hidden = false;
-  elements.storySpeaker.textContent = t(story.speakerKey);
-  elements.storyText.textContent = t(story.textKey);
+  const storyDisplay = formatStoryDialogueDisplay(story, t);
+  elements.storySpeaker.textContent = storyDisplay.speaker;
+  elements.storyText.textContent = storyDisplay.text;
   renderStoryPageDots(story.pageDots);
-  elements.storyPrompt.textContent = t(story.promptKey);
+  elements.storyPrompt.textContent = storyDisplay.prompt;
   applyCanvasTransform();
 }
 

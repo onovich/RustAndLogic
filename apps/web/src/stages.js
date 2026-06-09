@@ -58,6 +58,14 @@ export function buildStoryDialogueModel(storyActive = false, storyPages = [], st
   };
 }
 
+export function formatStoryDialogueDisplay(story = {}, translate = identityTranslate) {
+  return {
+    speaker: story.speakerKey ? translate(story.speakerKey) : "",
+    text: story.textKey ? translate(story.textKey) : "",
+    prompt: story.promptKey ? translate(story.promptKey) : "",
+  };
+}
+
 export function getStageUi(stage) {
   return stage?.ui ?? {};
 }
