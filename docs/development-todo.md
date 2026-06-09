@@ -120,6 +120,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Web UI runtime flow-progress rules into reusable pure helpers with direct tests.
 - [x] Extract Web UI runtime teaching-moment selection into reusable pure helpers with direct tests.
 - [x] Extract Web UI playback control labels, disabled states, speed labels, and timer delay calculations into reusable pure helpers with direct tests.
+- [x] Remove the obsolete playback control fallback that referenced the old pause button after the patched control model became authoritative.
 
 ## Milestone 4: Desktop/Web Packaging Path
 

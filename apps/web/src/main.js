@@ -157,6 +157,7 @@ let runtimeToast = null;
 let seenTeachingMoments = new Set();
 let canvasModeTransitionTimer = 0;
 let currentStageId = null;
+let updateControls = () => {};
 const WORLD_CELL_SIZE = 40;
 const ROBOT_WORLD_SIZE = 24;
 const DEPOSIT_WORLD_SIZE = 22;
@@ -2413,25 +2414,6 @@ function clearPlaybackTimer() {
 
 function currentSpeedProfile() {
   return getSpeedProfile(speeds, speedProfiles, speedIndex);
-}
-
-function updateControls() {
-  elements.play.textContent = "▶";
-  elements.step.textContent = "⏭";
-  elements.reset.textContent = "■";
-  elements.pause.textContent = playbackMode === "paused" ? "▶" : "Ⅱ";
-  elements.pause.disabled = playbackMode === "stopped" || storyActive;
-  elements.play.disabled = playbackMode === "playing" || storyActive;
-  elements.step.disabled = storyActive;
-  elements.speed.disabled = storyActive;
-  elements.speed.textContent = `x${speeds[speedIndex]}`;
-  elements.play.title = t("action.play");
-  elements.step.title = t("action.frame");
-  elements.pause.title = playbackMode === "paused" ? t("action.resume") : t("action.pause");
-  elements.reset.title = t("action.stop");
-  elements.speed.title = t("action.speed", { speed: `x${speeds[speedIndex]}` });
-  elements.play.dataset.active = String(playbackMode === "playing");
-  elements.pause.dataset.active = String(playbackMode === "paused");
 }
 
 function resetFlow() {
