@@ -45,6 +45,19 @@ export function buildFacilityDisplayItems(facilities = {}, visibleFacilities = n
     });
 }
 
+export function formatFacilityDescription(facilityItem = {}, translate = identityTranslate) {
+  const status = translate(facilityItem.statusKey);
+  if (!facilityItem.recipe) {
+    return status;
+  }
+  const recipe = facilityItem.recipe;
+  return (
+    `${status} // ${recipe.scrap} ${translate("resources.item.scrap")} + ` +
+    `${recipe.cells} ${translate("resources.item.battery")} -> ` +
+    `${recipe.memoryShards} ${translate("resources.memoryShards")}`
+  );
+}
+
 export function buildCargoManifestDisplayItems(manifestItems = {}) {
   const entries = manifestItems instanceof Map ? [...manifestItems.entries()] : Object.entries(manifestItems ?? {});
   return {

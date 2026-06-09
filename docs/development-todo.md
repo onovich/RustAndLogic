@@ -129,6 +129,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Web UI runtime display labels, meter percentages, and cargo manifest summaries into reusable pure helpers with direct tests.
 - [x] Extract Web UI cargo manifest display item normalization into reusable pure runtime display helpers with direct tests.
 - [x] Extract Web UI cargo manifest localized text formatting into reusable pure runtime display helpers with direct tests.
+- [x] Extract Web UI facility status and recipe description formatting into reusable pure runtime display helpers with direct tests.
 - [x] Extract Web UI runtime checklist done/active state selection into reusable pure flow helpers with direct tests.
 - [x] Extract Web UI facility list visibility and recipe display data into reusable pure runtime display helpers with direct tests.
 - [x] Extract Web UI runtime log and diff display data into reusable pure runtime display helpers with direct tests.

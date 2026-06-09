@@ -110,6 +110,7 @@ import {
   buildRuntimeDisplayModel,
   buildRuntimeLogItems,
   formatCargoManifestDisplay,
+  formatFacilityDescription,
 } from "./runtime-display.js";
 import {
   buildAutocompleteDisplayModel,
@@ -3577,15 +3578,7 @@ function renderFacilities(facilities) {
     const term = document.createElement("dt");
     term.textContent = t(facilityItem.labelKey);
     const desc = document.createElement("dd");
-    const status = t(facilityItem.statusKey);
-    if (facilityItem.recipe) {
-      desc.textContent =
-        `${status} // ${facilityItem.recipe.scrap} ${t("resources.item.scrap")} + ` +
-        `${facilityItem.recipe.cells} ${t("resources.item.battery")} -> ` +
-        `${facilityItem.recipe.memoryShards} ${t("resources.memoryShards")}`;
-    } else {
-      desc.textContent = status;
-    }
+    desc.textContent = formatFacilityDescription(facilityItem, t);
     row.append(term, desc);
     elements.facilityList.append(row);
   }

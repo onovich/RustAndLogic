@@ -131,6 +131,7 @@ import {
   calculateArmorPercent,
   calculateEnergyPercent,
   formatCargoManifestDisplay,
+  formatFacilityDescription,
   formatInstructionUsage,
   formatRuntimeDiffItem,
   formatRuntimeValue,
@@ -646,6 +647,25 @@ function testRuntimeDisplayHelpers() {
         recipe: { scrap: 3, cells: 2, memoryShards: 4 },
       },
     ],
+  );
+  const translateFacility = (key) =>
+    ({
+      "facilities.status.ready": "Ready",
+      "facilities.status.active": "Active",
+      "resources.item.scrap": "Scrap",
+      "resources.item.battery": "Battery",
+      "resources.memoryShards": "Memory shards",
+    })[key] ?? key;
+  assert.equal(
+    formatFacilityDescription({ statusKey: "facilities.status.ready", recipe: null }, translateFacility),
+    "Ready",
+  );
+  assert.equal(
+    formatFacilityDescription(
+      { statusKey: "facilities.status.active", recipe: { scrap: 2, cells: 1, memoryShards: 3 } },
+      translateFacility,
+    ),
+    "Active // 2 Scrap + 1 Battery -> 3 Memory shards",
   );
 }
 
