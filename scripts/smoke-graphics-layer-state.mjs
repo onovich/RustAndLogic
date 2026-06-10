@@ -163,6 +163,19 @@ try {
     storedRecentHasFrameBot: (localStorage.getItem("rust-and-logic.template-history.v1") ?? "").includes("frameBot"),
   }));
 
+  await page.locator('[data-testid="graphics-recent-templates"] [data-template-action="export"][data-template-id="frameBot"]').click();
+  await page.waitForFunction(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return entityIo.includes('"kind": "graphics-template"') && entityIo.includes('"id": "frameBot"');
+  });
+  const recentExportedTemplate = await page.evaluate(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return {
+      hasTemplateKind: entityIo.includes('"kind": "graphics-template"'),
+      hasFrameBotId: entityIo.includes('"id": "frameBot"'),
+    };
+  });
+
   await page.getByTestId("graphics-entity-io").fill(
     JSON.stringify(
       {
@@ -348,6 +361,7 @@ try {
         exportedTemplate,
         templateApplied: summarizeLayerState(templateApplied),
         templateRecent,
+        recentExportedTemplate,
         imported: summarizeLayerState(imported),
         exportedEntity,
         savedTemplate,

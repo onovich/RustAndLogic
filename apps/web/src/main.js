@@ -56,6 +56,7 @@ import {
   applyGraphicsTemplateFilterSelection,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateClickActionModel,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateExportSelectionModel,
   buildGraphicsTemplateFilterRowModel,
@@ -796,40 +797,8 @@ function initializeGraphicsEditor() {
     }
     applyShapePreset(button.dataset.preset ?? "");
   });
-  elements.graphicsTemplates?.addEventListener("click", (event) => {
-    const exportAction = event.target.closest("[data-template-action='export']");
-    if (exportAction) {
-      exportGraphicsTemplate(exportAction.dataset.templateId ?? "");
-      return;
-    }
-    const deleteAction = event.target.closest("[data-template-action='delete']");
-    if (deleteAction) {
-      removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
-      return;
-    }
-    const button = event.target.closest("[data-template]");
-    if (!button) {
-      return;
-    }
-    applyEntityTemplate(button.dataset.template ?? "");
-  });
-  elements.graphicsRecentTemplates?.addEventListener("click", (event) => {
-    const exportAction = event.target.closest("[data-template-action='export']");
-    if (exportAction) {
-      exportGraphicsTemplate(exportAction.dataset.templateId ?? "");
-      return;
-    }
-    const deleteAction = event.target.closest("[data-template-action='delete']");
-    if (deleteAction) {
-      removeCustomGraphicsTemplate(deleteAction.dataset.templateId ?? "");
-      return;
-    }
-    const button = event.target.closest("[data-template]");
-    if (!button) {
-      return;
-    }
-    applyEntityTemplate(button.dataset.template ?? "");
-  });
+  elements.graphicsTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
+  elements.graphicsRecentTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
   const handleGraphicsTemplateFilterClick = (event) => {
     const button = event.target.closest("[data-filter-kind][data-filter-value]");
     if (!button) {
@@ -878,6 +847,28 @@ function initializeGraphicsEditor() {
   };
   elements.graphicsFillSwatches?.addEventListener("click", handleGraphicsSwatchClick);
   elements.graphicsTextureSwatches?.addEventListener("click", handleGraphicsSwatchClick);
+}
+
+function handleGraphicsTemplateCardClick(event) {
+  const actionButton = event.target.closest("[data-template-action][data-template-id]");
+  const templateButton = actionButton ? null : event.target.closest("[data-template]");
+  const clickAction = buildGraphicsTemplateClickActionModel({
+    templateAction: actionButton?.dataset.templateAction ?? "",
+    templateId: actionButton?.dataset.templateId ?? "",
+    cardTemplateId: templateButton?.dataset.template ?? "",
+  });
+  if (!clickAction.handled) {
+    return;
+  }
+  if (clickAction.action === "export") {
+    exportGraphicsTemplate(clickAction.templateId);
+    return;
+  }
+  if (clickAction.action === "delete") {
+    removeCustomGraphicsTemplate(clickAction.templateId);
+    return;
+  }
+  applyEntityTemplate(clickAction.templateId);
 }
 
 function setGraphicsStudioOpen(isOpen) {

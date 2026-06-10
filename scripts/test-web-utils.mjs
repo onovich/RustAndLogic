@@ -114,6 +114,7 @@ import {
   buildGraphicsTemplateCardActions,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateClickActionModel,
   buildGraphicsTemplateExportSelectionModel,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateFilterRowModel,
@@ -2404,6 +2405,29 @@ function testGraphicsTemplateLibraryHelpers() {
     { action: "export", templateId: "custom-old", label: "Export", title: "Export" },
     { action: "delete", templateId: "custom-old", label: "Delete", title: "Delete" },
   ]);
+  assert.deepEqual(
+    buildGraphicsTemplateClickActionModel({
+      templateAction: "export",
+      templateId: "frameBot",
+      cardTemplateId: "custom-old",
+    }),
+    { handled: true, action: "export", templateId: "frameBot" },
+  );
+  assert.deepEqual(buildGraphicsTemplateClickActionModel({ templateAction: "delete", templateId: "custom-old" }), {
+    handled: true,
+    action: "delete",
+    templateId: "custom-old",
+  });
+  assert.deepEqual(buildGraphicsTemplateClickActionModel({ cardTemplateId: "frameBot" }), {
+    handled: true,
+    action: "apply",
+    templateId: "frameBot",
+  });
+  assert.deepEqual(buildGraphicsTemplateClickActionModel({ templateAction: "delete" }), {
+    handled: false,
+    action: "",
+    templateId: "",
+  });
   assert.deepEqual(buildGraphicsTemplateCardModel(defaultTemplates[1], "actor", translate).metaText, "Pickup");
   assert.deepEqual(buildGraphicsTemplateLibraryModel(grouped, true), {
     hidden: false,

@@ -588,6 +588,25 @@ export function buildGraphicsTemplateCardActions(template, translate = (key) => 
   return actions;
 }
 
+export function buildGraphicsTemplateClickActionModel({ templateAction = "", templateId = "", cardTemplateId = "" } = {}) {
+  const action = String(templateAction ?? "");
+  const actionTemplateId = String(templateId ?? "");
+  if ((action === "export" || action === "delete") && actionTemplateId) {
+    return {
+      handled: true,
+      action,
+      templateId: actionTemplateId,
+    };
+  }
+
+  const applyTemplateId = String(cardTemplateId ?? "");
+  return {
+    handled: Boolean(applyTemplateId),
+    action: applyTemplateId ? "apply" : "",
+    templateId: applyTemplateId,
+  };
+}
+
 export function buildGraphicsTemplateLibraryModel(templateGroups, hasSelectedEntity = true) {
   const groups = Array.isArray(templateGroups) ? templateGroups : [];
   return {
