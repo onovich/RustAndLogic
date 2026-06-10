@@ -66,11 +66,11 @@ import {
   getGroupedGraphicsTemplates,
   getRecentGraphicsTemplates,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  normalizeGraphicsTemplateImport,
   normalizeGraphicsTemplateLibraryImport,
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
-  resolveGraphicsTemplateImportId,
   upsertGraphicsTemplate,
   upsertGraphicsTemplates,
 } from "./graphics-studio/template-library.js";
@@ -1641,23 +1641,12 @@ function importGraphicsTemplate(source) {
       importGraphicsTemplateLibrary(parsed);
       return;
     }
-    if (parsed?.kind && parsed.kind !== "graphics-template") {
-      throw new Error("Unsupported template payload.");
-    }
-    if (!parsed || typeof parsed !== "object" || !parsed.visual || !Array.isArray(parsed.visual.layers)) {
-      throw new Error("Missing visual.layers in template payload.");
-    }
-    const normalizedTemplate = normalizeGraphicsCustomTemplate(
-      {
-        ...parsed,
-        id: resolveImportedGraphicsTemplateId(parsed),
-        updatedAt: Date.now(),
-      },
-      customGraphicsTemplates.length,
-    );
-    if (!normalizedTemplate) {
-      throw new Error("Template payload could not be normalized.");
-    }
+    const normalizedTemplate = normalizeGraphicsTemplateImport(parsed, {
+      defaultTemplates: defaultGraphicsTemplates,
+      selectedEntityKey: selectedVisualEntityKey,
+      templateOffset: customGraphicsTemplates.length,
+      now: Date.now,
+    });
     upsertCustomGraphicsTemplate(normalizedTemplate);
     if (elements.graphicsTemplateName && !elements.graphicsTemplateName.value.trim()) {
       elements.graphicsTemplateName.value = normalizedTemplate.label;
@@ -1722,14 +1711,6 @@ function upsertCustomGraphicsTemplates(templates) {
   customGraphicsTemplates = upsertGraphicsTemplates(customGraphicsTemplates, templates);
   persistCustomGraphicsTemplates();
   recordRecentGraphicsTemplates(templates.map((template) => template.id));
-}
-
-function resolveImportedGraphicsTemplateId(template) {
-  return resolveGraphicsTemplateImportId(template, {
-    defaultTemplates: defaultGraphicsTemplates,
-    selectedEntityKey: selectedVisualEntityKey,
-    now: Date.now,
-  });
 }
 
 function buildDefaultCustomTemplateLabel(entityKey) {

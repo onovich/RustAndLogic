@@ -111,6 +111,7 @@ import {
   isCustomGraphicsTemplate,
   isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  normalizeGraphicsTemplateImport,
   normalizeGraphicsTemplateLibraryImport,
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
@@ -2244,6 +2245,56 @@ function testGraphicsTemplateLibraryHelpers() {
     "custom-import-1000",
   );
   assert.equal(resolveGraphicsTemplateImportId({ label: "Imported Template" }, { selectedEntityKey: "robot", now: () => 1 }), "custom-robot-imported-template-1");
+  assert.deepEqual(
+    ((template) => ({
+      id: template.id,
+      label: template.label,
+      updatedAt: template.updatedAt,
+      layerIds: template.visual.layers.map((layer) => layer.id),
+    }))(
+      normalizeGraphicsTemplateImport(
+        {
+          kind: "graphics-template",
+          id: "frameBot",
+          label: "Imported Frame",
+          visual: { layers: [{ id: "body" }] },
+        },
+        {
+          defaultTemplates,
+          selectedEntityKey: "robot",
+          templateOffset: 2,
+          now: () => 46656,
+        },
+      ),
+    ),
+    {
+      id: "custom-import-1000",
+      label: "Imported Frame",
+      updatedAt: 46656,
+      layerIds: ["body"],
+    },
+  );
+  assert.deepEqual(
+    ((template) => ({ id: template.id, label: template.label, updatedAt: template.updatedAt }))(
+      normalizeGraphicsTemplateImport(
+        {
+          label: "Imported Solo",
+          visual: { layers: [{ id: "solo" }] },
+        },
+        { selectedEntityKey: "robot", templateOffset: 4, now: () => 3 },
+      ),
+    ),
+    { id: "custom-robot-imported-solo-3", label: "Imported Solo", updatedAt: 3 },
+  );
+  assert.throws(
+    () => normalizeGraphicsTemplateImport({ kind: "not-a-template", visual: { layers: [] } }),
+    /Unsupported template payload/,
+  );
+  assert.throws(() => normalizeGraphicsTemplateImport({ kind: "graphics-template" }), /Missing visual.layers/);
+  assert.throws(
+    () => normalizeGraphicsTemplateImport({ kind: "graphics-template", id: "bad", label: "Bad", visual: { layers: "bad" } }),
+    /Missing visual.layers/,
+  );
   assert.deepEqual(
     normalizeGraphicsTemplateLibraryImport(
       {

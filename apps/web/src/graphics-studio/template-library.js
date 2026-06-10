@@ -148,6 +148,27 @@ export function resolveGraphicsTemplateImportId(template, options = {}) {
   return desiredId;
 }
 
+export function normalizeGraphicsTemplateImport(template, options = {}) {
+  if (template?.kind && template.kind !== "graphics-template") {
+    throw new Error("Unsupported template payload.");
+  }
+  if (!template || typeof template !== "object" || !template.visual || !Array.isArray(template.visual.layers)) {
+    throw new Error("Missing visual.layers in template payload.");
+  }
+  const normalizedTemplate = normalizeGraphicsCustomTemplate(
+    {
+      ...template,
+      id: resolveGraphicsTemplateImportId(template, options),
+      updatedAt: resolveNow(options.now),
+    },
+    Number(options.templateOffset ?? 0),
+  );
+  if (!normalizedTemplate) {
+    throw new Error("Template payload could not be normalized.");
+  }
+  return normalizedTemplate;
+}
+
 export function normalizeGraphicsTemplateLibraryImport(payload, options = {}) {
   const templates = Array.isArray(payload?.templates) ? payload.templates : [];
   if (templates.length === 0) {
