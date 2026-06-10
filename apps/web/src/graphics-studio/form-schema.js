@@ -116,6 +116,22 @@ export function buildGraphicsFormControlState(layerLocked, scopes = []) {
   }));
 }
 
+export function buildGraphicsFormFieldEditActionModel({
+  scope = "layer",
+  field = "",
+  valueType = "string",
+  rawValue = "",
+} = {}) {
+  const editField = String(field ?? "");
+  return {
+    handled: Boolean(editField),
+    scope: String(scope ?? "layer") || "layer",
+    field: editField,
+    valueType: String(valueType ?? "string") || "string",
+    rawValue,
+  };
+}
+
 export function applyGraphicsFormFieldEdit(visual, selectedLayerId, edit = {}, options = {}) {
   const scope = edit.scope ?? "layer";
   const field = edit.field;

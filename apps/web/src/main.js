@@ -31,6 +31,7 @@ import {
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
   applyGraphicsFormFieldEdit,
+  buildGraphicsFormFieldEditActionModel,
   buildGraphicsFormModel,
   buildGraphicsFormControlState,
 } from "./graphics-studio/form-schema.js";
@@ -732,22 +733,20 @@ function initializeGraphicsEditor() {
 
   const handleGraphicsFormInput = (event) => {
     const input = event.target.closest("[data-field]");
-    if (!input) {
+    const editAction = buildGraphicsFormFieldEditActionModel({
+      scope: input?.dataset.scope ?? "layer",
+      field: input?.dataset.field ?? "",
+      valueType: input?.dataset.valueType ?? "string",
+      rawValue: input?.value ?? "",
+    });
+    if (!editAction.handled) {
       return;
     }
-    const scope = input.dataset.scope ?? "layer";
-    const field = input.dataset.field;
-    const valueType = input.dataset.valueType ?? "string";
     const targetVisual = getSelectedEntityVisual();
     const result = applyGraphicsFormFieldEdit(
       targetVisual,
       selectedVisualLayerId,
-      {
-        scope,
-        field,
-        valueType,
-        rawValue: input.value,
-      },
+      editAction,
       { layerOptions: graphicsLayerOptions() },
     );
     if (!result.changed) {

@@ -26,6 +26,7 @@ import {
   applyGraphicsFormFieldEdit,
   buildGraphicsFieldModel,
   buildGraphicsFieldSchemaModels,
+  buildGraphicsFormFieldEditActionModel,
   buildGraphicsFormModel,
   buildGraphicsFormControlState,
   buildGraphicsSelectOptions,
@@ -1757,6 +1758,35 @@ function testGraphicsFormSchemaHelpers() {
     label: "Robot",
     layers: [{ id: "body", type: "shape", shape: "rectangle", x: 3, y: 4 }],
   };
+  assert.deepEqual(
+    buildGraphicsFormFieldEditActionModel({
+      scope: "entity",
+      field: "canvasSize",
+      valueType: "integer",
+      rawValue: "32.8",
+    }),
+    {
+      handled: true,
+      scope: "entity",
+      field: "canvasSize",
+      valueType: "integer",
+      rawValue: "32.8",
+    },
+  );
+  assert.deepEqual(buildGraphicsFormFieldEditActionModel({ field: "fill", rawValue: "#00ff88" }), {
+    handled: true,
+    scope: "layer",
+    field: "fill",
+    valueType: "string",
+    rawValue: "#00ff88",
+  });
+  assert.deepEqual(buildGraphicsFormFieldEditActionModel({ field: "" }), {
+    handled: false,
+    scope: "layer",
+    field: "",
+    valueType: "string",
+    rawValue: "",
+  });
   assert.deepEqual(
     applyGraphicsFormFieldEdit(editVisual, "body", {
       scope: "entity",

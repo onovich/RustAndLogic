@@ -85,6 +85,17 @@ try {
     const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
     return !exportValue.includes('"visible": false') && !exportValue.includes('"locked": true');
   });
+  await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id="robot-body"]:not([data-layer-action])').click();
+  await page.waitForFunction(() => {
+    const active = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    return active?.dataset.layerId === "robot-body";
+  });
+  await page.locator('[data-testid="graphics-form"] [data-field="fill"]').fill("#db5a42");
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-export"]')?.value.includes('"fill": "#db5a42"'));
+  const formEdited = await readLayerState(page);
+  if (formEdited.activeLayerId !== "robot-body" || !formEdited.exportValue.includes('"fill": "#db5a42"')) {
+    throw new Error(`Expected form edit to update selected body fill, got ${JSON.stringify(summarizeLayerState(formEdited))}.`);
+  }
 
   await page.getByTestId("graphics-add-shape-button").click();
   await page.waitForFunction(() => {
@@ -410,6 +421,7 @@ try {
         initial: summarizeLayerState(initial),
         toggled: summarizeLayerState(toggled),
         selectedGlyph: summarizeLayerState(selectedGlyph),
+        formEdited: summarizeLayerState(formEdited),
         addedLayerId,
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
