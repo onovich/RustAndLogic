@@ -40,6 +40,13 @@ export function buildGraphicsStudioButtonModel(studioOpen) {
   };
 }
 
+export function buildGraphicsEditorShellControlModel({ studioOpen, copyResetPending = false } = {}) {
+  return {
+    copyLabelKey: copyResetPending ? "" : "graphics.copy",
+    studioButton: buildGraphicsStudioButtonModel(studioOpen),
+  };
+}
+
 function isCollapsed(value) {
   return value === true || value === "true";
 }

@@ -92,7 +92,7 @@ import { cloneJson } from "./utils/json.js";
 import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
 import {
   buildDrawerToggleState,
-  buildGraphicsStudioButtonModel,
+  buildGraphicsEditorShellControlModel,
   buildGraphicsStudioOpenState,
   buildSidebarToggleDisplay,
   toggleCollapsedState,
@@ -1007,13 +1007,16 @@ function renderGraphicsEditor() {
   if (elements.graphicsDeleteLayerButton) {
     elements.graphicsDeleteLayerButton.disabled = layerToolbar.deleteDisabled;
   }
-  if (elements.graphicsCopyButton && !graphicsCopyResetTimer) {
-    elements.graphicsCopyButton.textContent = t("graphics.copy");
+  const shellControls = buildGraphicsEditorShellControlModel({
+    studioOpen: elements.devPanel?.dataset.studio,
+    copyResetPending: Boolean(graphicsCopyResetTimer),
+  });
+  if (elements.graphicsCopyButton && shellControls.copyLabelKey) {
+    elements.graphicsCopyButton.textContent = t(shellControls.copyLabelKey);
   }
   if (elements.graphicsStudioButton) {
-    const studioButton = buildGraphicsStudioButtonModel(elements.devPanel?.dataset.studio);
-    elements.graphicsStudioButton.textContent = t(studioButton.labelKey);
-    elements.graphicsStudioButton.dataset.active = studioButton.active;
+    elements.graphicsStudioButton.textContent = t(shellControls.studioButton.labelKey);
+    elements.graphicsStudioButton.dataset.active = shellControls.studioButton.active;
   }
   if (elements.graphicsExportEntityButton) {
     elements.graphicsExportEntityButton.textContent = entityIoModel.exportEntityLabel;

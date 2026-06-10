@@ -72,6 +72,7 @@ import {
 } from "../apps/web/src/language.js";
 import {
   buildDrawerToggleState,
+  buildGraphicsEditorShellControlModel,
   buildGraphicsStudioButtonModel,
   buildGraphicsStudioOpenState,
   buildSidebarToggleDisplay,
@@ -335,6 +336,20 @@ function testUiShellHelpers() {
   assert.deepEqual(buildGraphicsStudioButtonModel("false"), {
     labelKey: "graphics.openStudio",
     active: "false",
+  });
+  assert.deepEqual(buildGraphicsEditorShellControlModel({ studioOpen: "true", copyResetPending: false }), {
+    copyLabelKey: "graphics.copy",
+    studioButton: {
+      labelKey: "graphics.closeStudio",
+      active: "true",
+    },
+  });
+  assert.deepEqual(buildGraphicsEditorShellControlModel({ studioOpen: "false", copyResetPending: true }), {
+    copyLabelKey: "",
+    studioButton: {
+      labelKey: "graphics.openStudio",
+      active: "false",
+    },
   });
 }
 
