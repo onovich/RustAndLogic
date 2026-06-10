@@ -66,6 +66,7 @@ import {
   getGroupedGraphicsTemplates,
   getRecentGraphicsTemplates,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  normalizeGraphicsTemplateLibraryImport,
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
@@ -1669,25 +1670,12 @@ function importGraphicsTemplate(source) {
 }
 
 function importGraphicsTemplateLibrary(payload) {
-  const templates = Array.isArray(payload?.templates) ? payload.templates : [];
-  if (templates.length === 0) {
-    throw new Error("Template library payload is empty.");
-  }
-  const normalizedTemplates = templates
-    .map((template, index) =>
-      normalizeGraphicsCustomTemplate(
-        {
-          ...template,
-          id: resolveImportedGraphicsTemplateId(template),
-          updatedAt: Date.now() + index,
-        },
-        customGraphicsTemplates.length + index,
-      ),
-    )
-    .filter(Boolean);
-  if (normalizedTemplates.length === 0) {
-    throw new Error("Template library payload could not be normalized.");
-  }
+  const normalizedTemplates = normalizeGraphicsTemplateLibraryImport(payload, {
+    defaultTemplates: defaultGraphicsTemplates,
+    selectedEntityKey: selectedVisualEntityKey,
+    templateOffset: customGraphicsTemplates.length,
+    now: Date.now,
+  });
   upsertCustomGraphicsTemplates(normalizedTemplates);
   showToast(
     {

@@ -1,4 +1,4 @@
-import { buildCustomTemplateId } from "./templates.js";
+import { buildCustomTemplateId, normalizeGraphicsCustomTemplate } from "./templates.js";
 
 export function getAllGraphicsTemplates(customTemplates = [], defaultTemplates = []) {
   return [
@@ -146,6 +146,31 @@ export function resolveGraphicsTemplateImportId(template, options = {}) {
     return `custom-import-${resolveNow(options.now).toString(36)}`;
   }
   return desiredId;
+}
+
+export function normalizeGraphicsTemplateLibraryImport(payload, options = {}) {
+  const templates = Array.isArray(payload?.templates) ? payload.templates : [];
+  if (templates.length === 0) {
+    throw new Error("Template library payload is empty.");
+  }
+  const templateOffset = Number(options.templateOffset ?? 0);
+  const importedAt = resolveNow(options.now);
+  const normalizedTemplates = templates
+    .map((template, index) =>
+      normalizeGraphicsCustomTemplate(
+        {
+          ...template,
+          id: resolveGraphicsTemplateImportId(template, options),
+          updatedAt: importedAt + index,
+        },
+        templateOffset + index,
+      ),
+    )
+    .filter(Boolean);
+  if (normalizedTemplates.length === 0) {
+    throw new Error("Template library payload could not be normalized.");
+  }
+  return normalizedTemplates;
 }
 
 export function buildGraphicsTemplateDefaultLabel(entityLabel, templates, entityKey) {

@@ -111,6 +111,7 @@ import {
   isCustomGraphicsTemplate,
   isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
+  normalizeGraphicsTemplateLibraryImport,
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
@@ -2243,6 +2244,55 @@ function testGraphicsTemplateLibraryHelpers() {
     "custom-import-1000",
   );
   assert.equal(resolveGraphicsTemplateImportId({ label: "Imported Template" }, { selectedEntityKey: "robot", now: () => 1 }), "custom-robot-imported-template-1");
+  assert.deepEqual(
+    normalizeGraphicsTemplateLibraryImport(
+      {
+        templates: [
+          { id: "frameBot", label: "Imported Frame", visual: { layers: [{ id: "body" }] } },
+          { label: "Imported Token", visual: { layers: [{ id: "token" }] } },
+        ],
+      },
+      {
+        defaultTemplates,
+        selectedEntityKey: "robot",
+        templateOffset: 3,
+        now: () => 46656,
+      },
+    ).map((template) => ({
+      id: template.id,
+      label: template.label,
+      updatedAt: template.updatedAt,
+      layerIds: template.visual.layers.map((layer) => layer.id),
+    })),
+    [
+      {
+        id: "custom-import-1000",
+        label: "Imported Frame",
+        updatedAt: 46656,
+        layerIds: ["body"],
+      },
+      {
+        id: "custom-robot-imported-token-1000",
+        label: "Imported Token",
+        updatedAt: 46657,
+        layerIds: ["token"],
+      },
+    ],
+  );
+  assert.deepEqual(
+    normalizeGraphicsTemplateLibraryImport(
+      {
+        templates: [{ visual: { layers: [{ id: "only" }] } }],
+      },
+      { selectedEntityKey: "robot", templateOffset: 4, now: () => 2 },
+    ).map((template) => ({ id: template.id, label: template.label, updatedAt: template.updatedAt })),
+    [{ id: "custom-robot-imported-2", label: "Template 05", updatedAt: 2 }],
+  );
+  assert.throws(() => normalizeGraphicsTemplateLibraryImport({ templates: [] }), /Template library payload is empty/);
+  assert.throws(
+    () => normalizeGraphicsTemplateLibraryImport({ templates: [{ id: "bad", label: "Bad" }] }),
+    /Template library payload could not be normalized/,
+  );
   assert.equal(buildGraphicsTemplateDefaultLabel("Robot", [{ originEntityKey: "robot" }, { originEntityKey: "scrap" }], "robot"), "Robot // 02");
 }
 
