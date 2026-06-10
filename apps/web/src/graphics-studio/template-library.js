@@ -335,6 +335,23 @@ export function buildGraphicsTemplateCardActions(template, translate = (key) => 
   return actions;
 }
 
+export function buildGraphicsTemplateLibraryModel(templateGroups, hasSelectedEntity = true) {
+  const groups = Array.isArray(templateGroups) ? templateGroups : [];
+  return {
+    hidden: !hasSelectedEntity,
+    empty: Boolean(hasSelectedEntity && groups.length === 0),
+    groups,
+  };
+}
+
+export function buildGraphicsRecentTemplateStripModel(templates, hasSelectedEntity = true) {
+  const items = Array.isArray(templates) ? templates : [];
+  return {
+    hidden: !hasSelectedEntity || items.length === 0,
+    templates: items,
+  };
+}
+
 export function normalizeGraphicsTemplateFilterForAvailableCategories(templates, filterState, entityKind) {
   const mode = filterState?.mode === "fit" ? "fit" : "all";
   const category = typeof filterState?.category === "string" && filterState.category.trim() ? filterState.category.trim() : "all";

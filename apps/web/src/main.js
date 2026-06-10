@@ -46,9 +46,11 @@ import {
   serializeGraphicsTemplateLibrary,
 } from "./graphics-studio/templates.js";
 import {
+  buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateFilterRowModel,
+  buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
   buildGraphicsTemplateDefaultLabel,
   getAllGraphicsTemplates,
@@ -1040,28 +1042,28 @@ function renderGraphicsTemplates() {
   }
   elements.graphicsTemplates.replaceChildren();
   const group = elements.graphicsTemplates.closest(".visual-preset-group");
-  if (!selectedVisualEntityKey) {
-    elements.graphicsTemplates.hidden = true;
-    if (group) {
-      group.hidden = true;
-    }
+  const hasSelectedEntity = Boolean(selectedVisualEntityKey);
+  const templateGroups = hasSelectedEntity
+    ? getGroupedGraphicsTemplates(
+        getGraphicsTemplates(),
+        graphicsTemplateFilterState,
+        getSelectedGraphicsEntityKind(),
+        t,
+      )
+    : [];
+  const templateLibrary = buildGraphicsTemplateLibraryModel(templateGroups, hasSelectedEntity);
+  elements.graphicsTemplates.hidden = templateLibrary.hidden;
+  if (group) {
+    group.hidden = templateLibrary.hidden;
+  }
+  if (templateLibrary.hidden) {
     return;
   }
-  elements.graphicsTemplates.hidden = false;
-  if (group) {
-    group.hidden = false;
-  }
-  const templateGroups = getGroupedGraphicsTemplates(
-    getGraphicsTemplates(),
-    graphicsTemplateFilterState,
-    getSelectedGraphicsEntityKind(),
-    t,
-  );
-  if (templateGroups.length === 0) {
+  if (templateLibrary.empty) {
     elements.graphicsTemplates.append(createGraphicsTemplateEmptyState());
     return;
   }
-  for (const templateGroup of templateGroups) {
+  for (const templateGroup of templateLibrary.groups) {
     elements.graphicsTemplates.append(createGraphicsTemplateSection(templateGroup));
   }
 }
@@ -1109,19 +1111,19 @@ function renderGraphicsRecentTemplates() {
   }
   elements.graphicsRecentTemplates.replaceChildren();
   const group = elements.graphicsRecentTemplates.closest(".visual-preset-group");
-  const recentTemplates = getRecentGraphicsTemplates(recentGraphicsTemplateIds, getGraphicsTemplates());
-  if (!selectedVisualEntityKey || recentTemplates.length === 0) {
-    elements.graphicsRecentTemplates.hidden = true;
-    if (group) {
-      group.hidden = true;
-    }
+  const hasSelectedEntity = Boolean(selectedVisualEntityKey);
+  const recentTemplates = hasSelectedEntity
+    ? getRecentGraphicsTemplates(recentGraphicsTemplateIds, getGraphicsTemplates())
+    : [];
+  const recentStrip = buildGraphicsRecentTemplateStripModel(recentTemplates, hasSelectedEntity);
+  elements.graphicsRecentTemplates.hidden = recentStrip.hidden;
+  if (group) {
+    group.hidden = recentStrip.hidden;
+  }
+  if (recentStrip.hidden) {
     return;
   }
-  elements.graphicsRecentTemplates.hidden = false;
-  if (group) {
-    group.hidden = false;
-  }
-  for (const template of recentTemplates) {
+  for (const template of recentStrip.templates) {
     elements.graphicsRecentTemplates.append(createGraphicsTemplateCard(template));
   }
 }

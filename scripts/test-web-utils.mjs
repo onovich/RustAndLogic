@@ -73,11 +73,13 @@ import {
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
 import {
+  buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCardActions,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateFilterRowModel,
+  buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
@@ -1839,6 +1841,34 @@ function testGraphicsTemplateLibraryHelpers() {
     { action: "delete", templateId: "custom-old", label: "Delete", title: "Delete" },
   ]);
   assert.deepEqual(buildGraphicsTemplateCardModel(defaultTemplates[1], "actor", translate).metaText, "Pickup");
+  assert.deepEqual(buildGraphicsTemplateLibraryModel(grouped, true), {
+    hidden: false,
+    empty: false,
+    groups: grouped,
+  });
+  assert.deepEqual(buildGraphicsTemplateLibraryModel([], true), {
+    hidden: false,
+    empty: true,
+    groups: [],
+  });
+  assert.deepEqual(buildGraphicsTemplateLibraryModel(grouped, false), {
+    hidden: true,
+    empty: false,
+    groups: grouped,
+  });
+  const recentTemplateItems = getRecentGraphicsTemplates(["signalToken", "custom-new"], templates);
+  assert.deepEqual(buildGraphicsRecentTemplateStripModel(recentTemplateItems, true), {
+    hidden: false,
+    templates: recentTemplateItems,
+  });
+  assert.deepEqual(buildGraphicsRecentTemplateStripModel([], true), {
+    hidden: true,
+    templates: [],
+  });
+  assert.deepEqual(buildGraphicsRecentTemplateStripModel(recentTemplateItems, false), {
+    hidden: true,
+    templates: recentTemplateItems,
+  });
 
   assert.deepEqual(recordRecentGraphicsTemplateId(["a", "b", "a"], "b"), ["b", "a", "a"]);
   assert.deepEqual(recordRecentGraphicsTemplateId(["a"], ""), ["a"]);
