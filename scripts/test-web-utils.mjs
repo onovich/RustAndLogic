@@ -73,6 +73,8 @@ import {
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
 import {
+  buildGraphicsTemplateCardActions,
+  buildGraphicsTemplateCardModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateFilterRowModel,
@@ -1712,6 +1714,9 @@ function testGraphicsTemplateLibraryHelpers() {
       "graphics.templateFilter.all": "All",
       "graphics.templateFilter.fit": "Fits current",
       "graphics.templateFilter.categoryAll": "Any type",
+      "graphics.templateRecommended": "Recommended",
+      "graphics.exportTemplate": "Export",
+      "graphics.deleteTemplate": "Delete",
     })[key] ?? key;
   const customTemplates = [
     {
@@ -1820,6 +1825,20 @@ function testGraphicsTemplateLibraryHelpers() {
     hidden: true,
     items: [],
   });
+  assert.deepEqual(buildGraphicsTemplateCardModel(defaultTemplates[0], "actor", translate), {
+    id: "frameBot",
+    source: "builtin",
+    recommended: true,
+    title: "Layered chassis",
+    label: "Frame Bot",
+    metaText: "Recommended // Actor",
+    actions: [{ action: "export", templateId: "frameBot", label: "Export", title: "Export" }],
+  });
+  assert.deepEqual(buildGraphicsTemplateCardActions(templates[0], translate), [
+    { action: "export", templateId: "custom-old", label: "Export", title: "Export" },
+    { action: "delete", templateId: "custom-old", label: "Delete", title: "Delete" },
+  ]);
+  assert.deepEqual(buildGraphicsTemplateCardModel(defaultTemplates[1], "actor", translate).metaText, "Pickup");
 
   assert.deepEqual(recordRecentGraphicsTemplateId(["a", "b", "a"], "b"), ["b", "a", "a"]);
   assert.deepEqual(recordRecentGraphicsTemplateId(["a"], ""), ["a"]);

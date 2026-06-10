@@ -47,19 +47,16 @@ import {
 } from "./graphics-studio/templates.js";
 import {
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateCardModel,
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateModeOptions,
   buildGraphicsTemplateDefaultLabel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
-  getGraphicsTemplateCategory,
   getGraphicsTemplateDescription,
   getGraphicsTemplateLabel,
-  getGraphicsTemplateSource,
   getGroupedGraphicsTemplates,
   getRecentGraphicsTemplates,
-  isCustomGraphicsTemplate,
-  isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
@@ -1130,62 +1127,46 @@ function renderGraphicsRecentTemplates() {
 }
 
 function createGraphicsTemplateCard(template) {
+  const cardModel = buildGraphicsTemplateCardModel(template, getSelectedGraphicsEntityKind(), t);
   const card = document.createElement("div");
   card.className = "visual-template-card";
-  card.dataset.templateSource = getGraphicsTemplateSource(template);
+  card.dataset.templateSource = cardModel.source;
   const button = document.createElement("button");
   button.type = "button";
   button.className = "visual-template-button";
-  button.dataset.template = template.id;
-  button.dataset.templateSource = getGraphicsTemplateSource(template);
-  button.dataset.recommended = String(isGraphicsTemplateRecommended(template, getSelectedGraphicsEntityKind()));
-  const description = getGraphicsTemplateDescription(template, t);
-  if (description) {
-    button.title = description;
+  button.dataset.template = cardModel.id;
+  button.dataset.templateSource = cardModel.source;
+  button.dataset.recommended = String(cardModel.recommended);
+  if (cardModel.title) {
+    button.title = cardModel.title;
   }
   const preview = document.createElement("span");
   preview.className = "visual-template-preview";
   preview.style.backgroundImage = buildGraphicsTemplatePreview(template);
   const label = document.createElement("span");
   label.className = "visual-template-label";
-  label.textContent = getGraphicsTemplateLabel(template, t);
+  label.textContent = cardModel.label;
   const meta = document.createElement("span");
   meta.className = "visual-template-meta";
-  const metaParts = [];
-  if (isGraphicsTemplateRecommended(template, getSelectedGraphicsEntityKind())) {
-    metaParts.push(t("graphics.templateRecommended"));
-  }
-  const category = getGraphicsTemplateCategory(template, t);
-  if (category) {
-    metaParts.push(category);
-  }
-  meta.textContent = metaParts.join(" // ");
+  meta.textContent = cardModel.metaText;
   button.append(preview, label, meta);
   card.append(button);
-  card.append(createGraphicsTemplateActionRow(template));
+  card.append(createGraphicsTemplateActionRow(cardModel.actions));
   return card;
 }
 
-function createGraphicsTemplateActionRow(template) {
+function createGraphicsTemplateActionRow(actionsModel) {
   const actions = document.createElement("div");
   actions.className = "visual-template-actions";
-  const exportButton = document.createElement("button");
-  exportButton.type = "button";
-  exportButton.className = "visual-template-action";
-  exportButton.dataset.templateAction = "export";
-  exportButton.dataset.templateId = template.id;
-  exportButton.textContent = t("graphics.exportTemplate");
-  exportButton.title = t("graphics.exportTemplate");
-  actions.append(exportButton);
-  if (isCustomGraphicsTemplate(template)) {
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "visual-template-action";
-    deleteButton.dataset.templateAction = "delete";
-    deleteButton.dataset.templateId = template.id;
-    deleteButton.textContent = t("graphics.deleteTemplate");
-    deleteButton.title = t("graphics.deleteTemplate");
-    actions.append(deleteButton);
+  for (const actionModel of actionsModel) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "visual-template-action";
+    button.dataset.templateAction = actionModel.action;
+    button.dataset.templateId = actionModel.templateId;
+    button.textContent = actionModel.label;
+    button.title = actionModel.title;
+    actions.append(button);
   }
   return actions;
 }

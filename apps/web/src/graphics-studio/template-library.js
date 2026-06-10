@@ -298,6 +298,43 @@ export function buildGraphicsTemplateFilterRowModel(options, hasSelectedEntity =
   };
 }
 
+export function buildGraphicsTemplateCardModel(template, entityKind, translate = (key) => key) {
+  const recommended = isGraphicsTemplateRecommended(template, entityKind);
+  const category = getGraphicsTemplateCategory(template, translate);
+  return {
+    id: template?.id ?? "",
+    source: getGraphicsTemplateSource(template),
+    recommended,
+    title: getGraphicsTemplateDescription(template, translate),
+    label: getGraphicsTemplateLabel(template, translate),
+    metaText: [recommended ? translate("graphics.templateRecommended") : "", category].filter(Boolean).join(" // "),
+    actions: buildGraphicsTemplateCardActions(template, translate),
+  };
+}
+
+export function buildGraphicsTemplateCardActions(template, translate = (key) => key) {
+  const templateId = template?.id ?? "";
+  const exportLabel = translate("graphics.exportTemplate");
+  const actions = [
+    {
+      action: "export",
+      templateId,
+      label: exportLabel,
+      title: exportLabel,
+    },
+  ];
+  if (isCustomGraphicsTemplate(template)) {
+    const deleteLabel = translate("graphics.deleteTemplate");
+    actions.push({
+      action: "delete",
+      templateId,
+      label: deleteLabel,
+      title: deleteLabel,
+    });
+  }
+  return actions;
+}
+
 export function normalizeGraphicsTemplateFilterForAvailableCategories(templates, filterState, entityKind) {
   const mode = filterState?.mode === "fit" ? "fit" : "all";
   const category = typeof filterState?.category === "string" && filterState.category.trim() ? filterState.category.trim() : "all";
