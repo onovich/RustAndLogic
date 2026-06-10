@@ -18,6 +18,8 @@ import {
 } from "../../../packages/tapescript-runtime/index.js";
 import {
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
+  buildGraphicsEntityListItems,
+  getGraphicsEntityDisplayLabel,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
@@ -1026,12 +1028,13 @@ function renderGraphicsEntityList() {
     return;
   }
   elements.graphicsEntityList.replaceChildren();
-  for (const entityKey of Object.keys(entityVisualCatalog.entities ?? {})) {
+  const entityItems = buildGraphicsEntityListItems(entityVisualCatalog, selectedVisualEntityKey, t);
+  for (const entityItem of entityItems) {
     const button = document.createElement("button");
     button.type = "button";
-    button.dataset.entityKey = entityKey;
-    button.dataset.active = String(entityKey === selectedVisualEntityKey);
-    button.textContent = getGraphicsEntityLabel(entityKey);
+    button.dataset.entityKey = entityItem.entityKey;
+    button.dataset.active = String(entityItem.active);
+    button.textContent = entityItem.label;
     elements.graphicsEntityList.append(button);
   }
 }
@@ -1478,12 +1481,7 @@ function getEntityVisual(entityKey) {
 }
 
 function getGraphicsEntityLabel(entityKey) {
-  const labelKey = `graphics.entity.${entityKey}`;
-  const translated = t(labelKey);
-  if (translated !== labelKey) {
-    return translated;
-  }
-  return getEntityVisual(entityKey)?.label ?? entityKey;
+  return getGraphicsEntityDisplayLabel(entityKey, getEntityVisual(entityKey), t);
 }
 
 function moveSelectedVisualLayer(delta) {

@@ -5,8 +5,10 @@ import {
 } from "../apps/web/src/graphics-studio/config.js";
 import {
   buildEntityVisualDataUrl,
+  buildGraphicsEntityListItems,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
+  getGraphicsEntityDisplayLabel,
   normalizeColorValue,
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
@@ -222,6 +224,7 @@ testEditorHighlightHelpers();
 testGraphicsConfigHelpers();
 testEntityVisualRendering();
 testEntityVisualDataUrlCache();
+testGraphicsEntityListHelpers();
 testGraphicsPreviews();
 testGraphicsTemplateHelpers();
 testGraphicsStorageHelpers();
@@ -1232,6 +1235,24 @@ function testEntityVisualDataUrlCache() {
   assert.equal(first, second);
   assert.equal(cache.size, 1);
   assert.ok(decodeURIComponent(first).includes("<ellipse"));
+}
+
+function testGraphicsEntityListHelpers() {
+  const translate = (key) => ({ "graphics.entity.robot": "Robot" })[key] ?? key;
+  const catalog = {
+    entities: {
+      robot: { label: "Fallback Robot" },
+      wall: { label: "Wall" },
+    },
+  };
+  assert.equal(getGraphicsEntityDisplayLabel("robot", catalog.entities.robot, translate), "Robot");
+  assert.equal(getGraphicsEntityDisplayLabel("wall", catalog.entities.wall, translate), "Wall");
+  assert.equal(getGraphicsEntityDisplayLabel("missing", null, translate), "missing");
+  assert.deepEqual(buildGraphicsEntityListItems(catalog, "wall", translate), [
+    { entityKey: "robot", active: false, label: "Robot" },
+    { entityKey: "wall", active: true, label: "Wall" },
+  ]);
+  assert.deepEqual(buildGraphicsEntityListItems(null, "robot", translate), []);
 }
 
 function testGraphicsPreviews() {

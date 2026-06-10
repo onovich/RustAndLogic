@@ -44,6 +44,24 @@ export function buildGraphicsTexturePreview(color, textureType) {
   return `radial-gradient(circle at 25% 25%, ${color} 0 1px, transparent 1px 100%), radial-gradient(circle at 75% 75%, ${color} 0 1px, transparent 1px 100%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))`;
 }
 
+export function getGraphicsEntityDisplayLabel(entityKey, visual, translate = (key) => key) {
+  const labelKey = `graphics.entity.${entityKey}`;
+  const translated = translate(labelKey);
+  if (translated !== labelKey) {
+    return translated;
+  }
+  return visual?.label ?? entityKey;
+}
+
+export function buildGraphicsEntityListItems(catalog, selectedEntityKey = "", translate = (key) => key) {
+  const entities = catalog?.entities ?? {};
+  return Object.keys(entities).map((entityKey) => ({
+    entityKey,
+    active: entityKey === selectedEntityKey,
+    label: getGraphicsEntityDisplayLabel(entityKey, entities[entityKey], translate),
+  }));
+}
+
 function renderEntityVisualLayer(layer, index, defs) {
   if (layer.visible === false) {
     return "";
