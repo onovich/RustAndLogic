@@ -19,6 +19,7 @@ import {
 import {
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
   buildGraphicsEntityListItems,
+  buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
   getGraphicsEntityDisplayLabel,
 } from "./graphics-studio/entity-visuals.js";
@@ -970,10 +971,15 @@ function renderGraphicsEditor() {
   elements.graphicsPreview.style.backgroundImage = previewModel.backgroundImage;
   elements.graphicsPreview.setAttribute("aria-label", previewModel.ariaLabel);
   elements.graphicsEntityName.textContent = previewModel.label;
-  if (elements.graphicsEntityIo && !elements.graphicsEntityIo.value.trim()) {
-    elements.graphicsEntityIo.placeholder = t("graphics.entityIoPlaceholder");
+  const entityIoModel = buildGraphicsEntityIoModel({
+    catalog: entityVisualCatalog,
+    ioValue: elements.graphicsEntityIo?.value,
+    translate: t,
+  });
+  if (elements.graphicsEntityIo && entityIoModel.placeholder) {
+    elements.graphicsEntityIo.placeholder = entityIoModel.placeholder;
   }
-  elements.graphicsExport.value = JSON.stringify(entityVisualCatalog, null, 2);
+  elements.graphicsExport.value = entityIoModel.exportValue;
   const templateActions = buildGraphicsTemplateActionState({
     selectedEntityKey: selectedVisualEntityKey,
     ioValue: elements.graphicsEntityIo?.value,
@@ -1012,10 +1018,10 @@ function renderGraphicsEditor() {
     elements.graphicsStudioButton.dataset.active = studioButton.active;
   }
   if (elements.graphicsExportEntityButton) {
-    elements.graphicsExportEntityButton.textContent = t("graphics.exportEntity");
+    elements.graphicsExportEntityButton.textContent = entityIoModel.exportEntityLabel;
   }
   if (elements.graphicsImportEntityButton) {
-    elements.graphicsImportEntityButton.textContent = t("graphics.importEntity");
+    elements.graphicsImportEntityButton.textContent = entityIoModel.importEntityLabel;
   }
   if (elements.graphicsForm) {
     for (const input of elements.graphicsForm.querySelectorAll("input, select")) {

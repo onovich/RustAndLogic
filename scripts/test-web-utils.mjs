@@ -6,6 +6,7 @@ import {
 import {
   buildEntityVisualDataUrl,
   buildGraphicsEntityListItems,
+  buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
@@ -1239,8 +1240,15 @@ function testEntityVisualDataUrlCache() {
 }
 
 function testGraphicsEntityListHelpers() {
-  const translate = (key) => ({ "graphics.entity.robot": "Robot" })[key] ?? key;
+  const translate = (key) =>
+    ({
+      "graphics.entity.robot": "Robot",
+      "graphics.entityIoPlaceholder": "Paste entity JSON",
+      "graphics.exportEntity": "Export entity",
+      "graphics.importEntity": "Import entity",
+    })[key] ?? key;
   const catalog = {
+    version: 1,
     entities: {
       robot: { label: "Fallback Robot" },
       wall: { label: "Wall" },
@@ -1271,6 +1279,13 @@ function testGraphicsEntityListHelpers() {
     label: "missing",
     ariaLabel: "missing",
   });
+  assert.deepEqual(buildGraphicsEntityIoModel({ catalog, ioValue: "", translate }), {
+    exportValue: JSON.stringify(catalog, null, 2),
+    placeholder: "Paste entity JSON",
+    exportEntityLabel: "Export entity",
+    importEntityLabel: "Import entity",
+  });
+  assert.equal(buildGraphicsEntityIoModel({ catalog, ioValue: "{}", translate }).placeholder, "");
 }
 
 function testGraphicsPreviews() {

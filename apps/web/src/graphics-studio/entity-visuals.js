@@ -72,6 +72,16 @@ export function buildGraphicsEntityPreviewModel(entityKey, visual, translate = (
   };
 }
 
+export function buildGraphicsEntityIoModel({ catalog, ioValue = "", translate = (key) => key } = {}) {
+  const currentIoValue = typeof ioValue === "string" ? ioValue : "";
+  return {
+    exportValue: JSON.stringify(catalog, null, 2),
+    placeholder: currentIoValue.trim() ? "" : translate("graphics.entityIoPlaceholder"),
+    exportEntityLabel: translate("graphics.exportEntity"),
+    importEntityLabel: translate("graphics.importEntity"),
+  };
+}
+
 function renderEntityVisualLayer(layer, index, defs) {
   if (layer.visible === false) {
     return "";
