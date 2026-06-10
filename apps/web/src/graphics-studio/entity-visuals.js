@@ -35,6 +35,16 @@ export function applyGraphicsEntitySelection(catalog, currentEntityKey = "", req
   };
 }
 
+export function resetGraphicsEntityVisualCatalog(defaultCatalog, currentEntityKey = "", selectedLayerId = "") {
+  const entityVisualCatalog = cloneJson(defaultCatalog);
+  const visual = entityVisualCatalog.entities?.[currentEntityKey] ?? null;
+  return {
+    entityVisualCatalog,
+    selectedEntityKey: currentEntityKey,
+    selectedLayerId: resolveSelectedVisualLayerId(visual, selectedLayerId),
+  };
+}
+
 export function buildEntityVisualDataUrl(entityKey, visual, cache = null) {
   if (!visual) {
     return "";

@@ -229,6 +229,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio template export payload models into reusable pure template helpers with direct tests.
 - [x] Extract Graphics Studio template filter state transitions into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio entity selection state resolution into reusable pure entity-visual helpers with direct tests.
+- [x] Extract Graphics Studio entity visual reset state resolution into reusable pure entity-visual helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

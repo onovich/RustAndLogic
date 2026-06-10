@@ -25,6 +25,7 @@ import {
   buildGraphicsEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
   parseImportedEntityVisual,
+  resetGraphicsEntityVisualCatalog,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
@@ -714,13 +715,19 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsResetButton?.addEventListener("click", () => {
-    entityVisualCatalog = cloneJson(defaultEntityVisualCatalog);
+    const resetState = resetGraphicsEntityVisualCatalog(
+      defaultEntityVisualCatalog,
+      selectedVisualEntityKey,
+      selectedVisualLayerId,
+    );
+    entityVisualCatalog = resetState.entityVisualCatalog;
+    selectedVisualEntityKey = resetState.selectedEntityKey;
+    selectedVisualLayerId = resetState.selectedLayerId;
     localStorage.removeItem(entityVisualsKey);
     clearGraphicsCopyResetTimer();
     if (elements.graphicsCopyButton) {
       elements.graphicsCopyButton.textContent = t("graphics.copy");
     }
-    ensureSelectedVisualLayer();
     renderGraphicsEditor();
     refreshWorldVisuals();
   });

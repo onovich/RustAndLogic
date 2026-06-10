@@ -16,6 +16,7 @@ import {
   normalizeColorValue,
   normalizeImportedEntityVisual,
   parseImportedEntityVisual,
+  resetGraphicsEntityVisualCatalog,
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
@@ -1311,6 +1312,12 @@ function testGraphicsEntityListHelpers() {
     entityKey: "robot",
     selectedLayerId: "body",
   });
+  const resetState = resetGraphicsEntityVisualCatalog(catalog, "wall", "mortar");
+  assert.equal(resetState.selectedEntityKey, "wall");
+  assert.equal(resetState.selectedLayerId, "mortar");
+  resetState.entityVisualCatalog.entities.wall.layers[1].id = "changed";
+  assert.equal(catalog.entities.wall.layers[1].id, "mortar");
+  assert.equal(resetGraphicsEntityVisualCatalog(catalog, "wall", "missing").selectedLayerId, "brick");
   const preview = buildGraphicsEntityPreviewModel(
     "wall",
     {
