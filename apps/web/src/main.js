@@ -968,6 +968,14 @@ function renderGraphicsEditor() {
 
   const visual = getSelectedEntityVisual();
   const entityIoModel = renderGraphicsEditorEntitySurface(visual);
+  renderGraphicsTemplateActionControls();
+  const layerToolbar = buildVisualLayerToolbarModel(visual?.layers, selectedVisualLayerId);
+  renderGraphicsLayerToolbarControls(layerToolbar);
+  renderGraphicsEditorShellControls(entityIoModel);
+  renderGraphicsFormControlStates(layerToolbar);
+}
+
+function renderGraphicsTemplateActionControls() {
   const templateActions = buildGraphicsTemplateActionState({
     selectedEntityKey: selectedVisualEntityKey,
     ioValue: elements.graphicsEntityIo?.value,
@@ -982,7 +990,9 @@ function renderGraphicsEditor() {
   if (elements.graphicsExportLibraryButton) {
     elements.graphicsExportLibraryButton.disabled = templateActions.exportLibraryDisabled;
   }
-  const layerToolbar = buildVisualLayerToolbarModel(visual?.layers, selectedVisualLayerId);
+}
+
+function renderGraphicsLayerToolbarControls(layerToolbar) {
   if (elements.graphicsDuplicateLayerButton) {
     elements.graphicsDuplicateLayerButton.disabled = layerToolbar.duplicateDisabled;
   }
@@ -995,6 +1005,9 @@ function renderGraphicsEditor() {
   if (elements.graphicsDeleteLayerButton) {
     elements.graphicsDeleteLayerButton.disabled = layerToolbar.deleteDisabled;
   }
+}
+
+function renderGraphicsEditorShellControls(entityIoModel) {
   const shellControls = buildGraphicsEditorShellControlModel({
     studioOpen: elements.devPanel?.dataset.studio,
     copyResetPending: Boolean(graphicsCopyResetTimer),
@@ -1012,6 +1025,9 @@ function renderGraphicsEditor() {
   if (elements.graphicsImportEntityButton) {
     elements.graphicsImportEntityButton.textContent = entityIoModel.importEntityLabel;
   }
+}
+
+function renderGraphicsFormControlStates(layerToolbar) {
   if (elements.graphicsForm) {
     const controls = [...elements.graphicsForm.querySelectorAll("input, select")];
     const controlState = buildGraphicsFormControlState(

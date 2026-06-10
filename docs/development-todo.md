@@ -211,6 +211,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio copy/reset and studio-shell button model into reusable pure shell helpers with direct tests.
 - [x] Extract Graphics Studio form-control disabled-state list into reusable pure form-schema helpers with direct tests.
 - [x] Split Graphics Studio entity preview and IO DOM application into a focused internal render helper with smoke coverage.
+- [x] Split Graphics Studio template action, layer toolbar, shell control, and form-control DOM application into focused internal render helpers with smoke coverage.
 
 ## Definition Of Done For A Small Item
 
