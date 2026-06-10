@@ -40,7 +40,7 @@ import {
   buildVisualLayerToolbarModel,
   duplicateSelectedVisualLayer,
   buildVisualLayerListItems,
-  moveVisualLayer,
+  moveSelectedVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
@@ -684,11 +684,11 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsMoveLayerUpButton?.addEventListener("click", () => {
-    moveSelectedVisualLayer(-1);
+    moveSelectedVisualLayerInCatalog(-1);
   });
 
   elements.graphicsMoveLayerDownButton?.addEventListener("click", () => {
-    moveSelectedVisualLayer(1);
+    moveSelectedVisualLayerInCatalog(1);
   });
 
   elements.graphicsStudioButton?.addEventListener("click", () => {
@@ -1512,11 +1512,12 @@ function getGraphicsEntityLabel(entityKey) {
   return getGraphicsEntityDisplayLabel(entityKey, getEntityVisual(entityKey), t);
 }
 
-function moveSelectedVisualLayer(delta) {
-  const visual = getSelectedEntityVisual();
-  if (!moveVisualLayer(visual?.layers, selectedVisualLayerId, delta)) {
+function moveSelectedVisualLayerInCatalog(delta) {
+  const moveState = moveSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, delta);
+  if (!moveState.changed) {
     return;
   }
+  selectedVisualLayerId = moveState.selectedLayerId;
   persistEntityVisualCatalog();
 }
 

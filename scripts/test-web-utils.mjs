@@ -45,6 +45,7 @@ import {
   describeVisualLayerTitle,
   duplicateSelectedVisualLayer,
   duplicateVisualLayer,
+  moveSelectedVisualLayer,
   moveVisualLayer,
   normalizeShapeLayer,
   removeVisualLayer,
@@ -1935,6 +1936,11 @@ function testGraphicsLayerHelpers() {
   assert.equal(moveVisualLayer(layers, "b", -1), true);
   assert.deepEqual(layers.map((item) => item.id), ["b", "a", "c"]);
   assert.equal(moveVisualLayer(layers, "b", -1), false);
+  const movableVisual = { layers: [{ id: "a" }, { id: "b" }, { id: "c" }] };
+  assert.deepEqual(moveSelectedVisualLayer(movableVisual, "b", -1), { changed: true, selectedLayerId: "b" });
+  assert.deepEqual(movableVisual.layers.map((item) => item.id), ["b", "a", "c"]);
+  assert.deepEqual(moveSelectedVisualLayer(movableVisual, "b", -1), { changed: false, selectedLayerId: "b" });
+  assert.deepEqual(moveSelectedVisualLayer(movableVisual, "missing", 1), { changed: false, selectedLayerId: "missing" });
   const duplicateLayers = [{ id: "body", style: { fill: "#f28d35" } }, { id: "glyph" }];
   const duplicateLayer = duplicateVisualLayer(duplicateLayers, "body", { now: () => 46658 });
   assert.deepEqual(duplicateLayers.map((item) => item.id), ["body", "body-copy-1002", "glyph"]);

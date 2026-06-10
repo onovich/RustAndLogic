@@ -233,6 +233,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio layer removal selection fallback into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio layer duplication selection state into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio default layer addition selection state into reusable pure layer helpers with direct tests.
+- [x] Extract Graphics Studio layer movement selection state into reusable pure layer helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

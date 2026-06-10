@@ -142,6 +142,14 @@ export function moveVisualLayer(layers, selectedLayerId, delta) {
   return true;
 }
 
+export function moveSelectedVisualLayer(visual, selectedLayerId = "", delta = 0) {
+  const moved = moveVisualLayer(visual?.layers, selectedLayerId, delta);
+  return {
+    changed: moved,
+    selectedLayerId,
+  };
+}
+
 export function duplicateVisualLayer(layers, selectedLayerId, options = {}) {
   if (!Array.isArray(layers) || !selectedLayerId) {
     return null;
