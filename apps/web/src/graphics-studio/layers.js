@@ -148,6 +148,15 @@ export function duplicateVisualLayer(layers, selectedLayerId, options = {}) {
   return duplicate;
 }
 
+export function duplicateSelectedVisualLayer(visual, selectedLayerId = "", options = {}) {
+  const duplicate = duplicateVisualLayer(visual?.layers, selectedLayerId, options);
+  return {
+    changed: Boolean(duplicate),
+    selectedLayerId: duplicate?.id ?? selectedLayerId,
+    layer: duplicate,
+  };
+}
+
 export function removeVisualLayer(layers, layerId) {
   if (!Array.isArray(layers) || !layerId) {
     return false;

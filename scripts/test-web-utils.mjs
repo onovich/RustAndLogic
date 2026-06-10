@@ -42,6 +42,7 @@ import {
   createDefaultShapeLayer,
   describeVisualLayerMeta,
   describeVisualLayerTitle,
+  duplicateSelectedVisualLayer,
   duplicateVisualLayer,
   moveVisualLayer,
   normalizeShapeLayer,
@@ -1918,6 +1919,17 @@ function testGraphicsLayerHelpers() {
   duplicateLayer.style.fill = "#00ff88";
   assert.equal(duplicateLayers[0].style.fill, "#f28d35");
   assert.equal(duplicateVisualLayer(duplicateLayers, "missing", { now: () => 1 }), null);
+  const duplicateVisual = { layers: [{ id: "body", style: { fill: "#f28d35" } }, { id: "glyph" }] };
+  const duplicateState = duplicateSelectedVisualLayer(duplicateVisual, "body", { now: () => 46658 });
+  assert.equal(duplicateState.changed, true);
+  assert.equal(duplicateState.selectedLayerId, "body-copy-1002");
+  assert.deepEqual(duplicateState.layer, { id: "body-copy-1002", style: { fill: "#f28d35" } });
+  assert.deepEqual(duplicateVisual.layers.map((item) => item.id), ["body", "body-copy-1002", "glyph"]);
+  assert.deepEqual(duplicateSelectedVisualLayer(duplicateVisual, "missing", { now: () => 1 }), {
+    changed: false,
+    selectedLayerId: "missing",
+    layer: null,
+  });
   const removableLayers = [{ id: "body" }, { id: "accent" }, { id: "glyph" }];
   assert.equal(removeVisualLayer(removableLayers, "accent"), true);
   assert.deepEqual(removableLayers.map((item) => item.id), ["body", "glyph"]);

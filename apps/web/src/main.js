@@ -38,7 +38,7 @@ import {
   applyShapePresetToLayer,
   buildShapePresetListModel,
   buildVisualLayerToolbarModel,
-  duplicateVisualLayer,
+  duplicateSelectedVisualLayer,
   buildVisualLayerListItems,
   moveVisualLayer,
   removeSelectedVisualLayer,
@@ -667,12 +667,11 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsDuplicateLayerButton?.addEventListener("click", () => {
-    const visual = getSelectedEntityVisual();
-    const duplicate = duplicateVisualLayer(visual?.layers, selectedVisualLayerId);
-    if (!duplicate) {
+    const duplicateState = duplicateSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+    if (!duplicateState.changed) {
       return;
     }
-    selectedVisualLayerId = duplicate.id;
+    selectedVisualLayerId = duplicateState.selectedLayerId;
     persistEntityVisualCatalog();
   });
 
