@@ -1,4 +1,5 @@
 import { cloneJson } from "../utils/json.js";
+import { resolveSelectedVisualLayerId } from "./layers.js";
 
 export function normalizeColorValue(value, fallback) {
   if (typeof value === "string" && /^#[0-9A-Fa-f]{6}$/.test(value)) {
@@ -22,6 +23,15 @@ export function buildGraphicsEntityVisualExportModel(visual) {
   return {
     disabled: !visual,
     value: visual ? JSON.stringify(visual, null, 2) : "",
+  };
+}
+
+export function applyGraphicsEntitySelection(catalog, currentEntityKey = "", requestedEntityKey = "", selectedLayerId = "") {
+  const entities = catalog?.entities ?? {};
+  const entityKey = typeof requestedEntityKey === "string" && requestedEntityKey in entities ? requestedEntityKey : currentEntityKey;
+  return {
+    entityKey,
+    selectedLayerId: resolveSelectedVisualLayerId(entities[entityKey], selectedLayerId),
   };
 }
 

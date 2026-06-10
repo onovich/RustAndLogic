@@ -4,6 +4,7 @@ import {
   normalizeGraphicsEditorConfig,
 } from "../apps/web/src/graphics-studio/config.js";
 import {
+  applyGraphicsEntitySelection,
   buildEntityVisualDataUrl,
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
@@ -1286,8 +1287,8 @@ function testGraphicsEntityListHelpers() {
   const catalog = {
     version: 1,
     entities: {
-      robot: { label: "Fallback Robot" },
-      wall: { label: "Wall" },
+      robot: { label: "Fallback Robot", layers: [{ id: "body" }] },
+      wall: { label: "Wall", layers: [{ id: "brick" }, { id: "mortar" }] },
     },
   };
   assert.equal(getGraphicsEntityDisplayLabel("robot", catalog.entities.robot, translate), "Robot");
@@ -1298,6 +1299,18 @@ function testGraphicsEntityListHelpers() {
     { entityKey: "wall", active: true, label: "Wall" },
   ]);
   assert.deepEqual(buildGraphicsEntityListItems(null, "robot", translate), []);
+  assert.deepEqual(applyGraphicsEntitySelection(catalog, "robot", "wall", "mortar"), {
+    entityKey: "wall",
+    selectedLayerId: "mortar",
+  });
+  assert.deepEqual(applyGraphicsEntitySelection(catalog, "robot", "wall", "missing"), {
+    entityKey: "wall",
+    selectedLayerId: "brick",
+  });
+  assert.deepEqual(applyGraphicsEntitySelection(catalog, "robot", "missing", "body"), {
+    entityKey: "robot",
+    selectedLayerId: "body",
+  });
   const preview = buildGraphicsEntityPreviewModel(
     "wall",
     {

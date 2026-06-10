@@ -17,6 +17,7 @@ import {
   getTapeScriptCheckValues,
 } from "../../../packages/tapescript-runtime/index.js";
 import {
+  applyGraphicsEntitySelection,
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
@@ -613,8 +614,14 @@ function initializeGraphicsEditor() {
     if (!button) {
       return;
     }
-    selectedVisualEntityKey = button.dataset.entityKey ?? selectedVisualEntityKey;
-    ensureSelectedVisualLayer();
+    const selection = applyGraphicsEntitySelection(
+      entityVisualCatalog,
+      selectedVisualEntityKey,
+      button.dataset.entityKey ?? "",
+      selectedVisualLayerId,
+    );
+    selectedVisualEntityKey = selection.entityKey;
+    selectedVisualLayerId = selection.selectedLayerId;
     renderGraphicsEditor();
   });
 
