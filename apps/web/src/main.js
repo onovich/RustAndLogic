@@ -41,7 +41,7 @@ import {
   duplicateVisualLayer,
   buildVisualLayerListItems,
   moveVisualLayer,
-  removeVisualLayer,
+  removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
@@ -706,11 +706,11 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
-    const visual = getSelectedEntityVisual();
-    if (!removeVisualLayer(visual?.layers, selectedVisualLayerId)) {
+    const result = removeSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+    if (!result.changed) {
       return;
     }
-    ensureSelectedVisualLayer();
+    selectedVisualLayerId = result.selectedLayerId;
     persistEntityVisualCatalog();
   });
 

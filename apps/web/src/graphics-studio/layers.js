@@ -160,6 +160,14 @@ export function removeVisualLayer(layers, layerId) {
   return true;
 }
 
+export function removeSelectedVisualLayer(visual, selectedLayerId = "") {
+  const removed = removeVisualLayer(visual?.layers, selectedLayerId);
+  return {
+    changed: removed,
+    selectedLayerId: removed ? resolveSelectedVisualLayerId(visual, selectedLayerId) : selectedLayerId,
+  };
+}
+
 export function toggleVisualLayerVisible(layers, layerId) {
   const layer = findVisualLayer(layers, layerId);
   if (!layer) {

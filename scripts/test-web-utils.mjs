@@ -46,6 +46,7 @@ import {
   moveVisualLayer,
   normalizeShapeLayer,
   removeVisualLayer,
+  removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
@@ -1923,6 +1924,10 @@ function testGraphicsLayerHelpers() {
   assert.equal(removeVisualLayer(removableLayers, "missing"), false);
   assert.deepEqual(removableLayers.map((item) => item.id), ["body", "glyph"]);
   assert.equal(removeVisualLayer(null, "body"), false);
+  const removableVisual = { layers: [{ id: "body" }, { id: "accent" }, { id: "glyph" }] };
+  assert.deepEqual(removeSelectedVisualLayer(removableVisual, "accent"), { changed: true, selectedLayerId: "body" });
+  assert.deepEqual(removableVisual.layers.map((item) => item.id), ["body", "glyph"]);
+  assert.deepEqual(removeSelectedVisualLayer(removableVisual, "missing"), { changed: false, selectedLayerId: "missing" });
   const toggleLayers = [{ id: "body" }, { id: "glyph", visible: false, locked: true }];
   assert.equal(toggleVisualLayerVisible(toggleLayers, "body"), true);
   assert.equal(toggleLayers[0].visible, false);
