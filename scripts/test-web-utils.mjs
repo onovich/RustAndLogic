@@ -2514,7 +2514,7 @@ function testGraphicsTemplateLibraryHelpers() {
       },
     ],
     "frameBot",
-    { entityLabel: "Robot" },
+    { entityLabel: "Robot", recentTemplateIds: ["old-template", "frameBot"] },
   );
   assert.equal(appliedTemplateState.changed, true);
   assert.equal(appliedTemplateState.selectedEntityKey, "robot");
@@ -2525,12 +2525,16 @@ function testGraphicsTemplateLibraryHelpers() {
     canvasSize: 18,
     layers: [{ id: "template-body" }, { id: "template-glyph" }],
   });
+  assert.deepEqual(appliedTemplateState.recentTemplateIds, ["frameBot", "old-template"]);
   assert.equal(appliedTemplateState.entityVisualCatalog.entities.robot.layers[0].id, "template-body");
   assert.equal(sourceTemplateCatalog.entities.robot.layers[0].id, "old-body");
   const templateCatalog = { entities: { robot: { label: "Runner", layers: [{ id: "old-body" }] } } };
-  const missingTemplateState = applyGraphicsTemplateToSelectedEntity(templateCatalog, "robot", "old-body", [], "missing");
+  const missingTemplateState = applyGraphicsTemplateToSelectedEntity(templateCatalog, "robot", "old-body", [], "missing", {
+    recentTemplateIds: ["old-template"],
+  });
   assert.equal(missingTemplateState.changed, false);
   assert.equal(missingTemplateState.entityVisualCatalog, templateCatalog);
+  assert.deepEqual(missingTemplateState.recentTemplateIds, ["old-template"]);
   assert.equal(templateCatalog.entities.robot.layers[0].id, "old-body");
   const customVisual = { canvasSize: 24, layers: [{ id: "body", glyph: "R" }] };
   const savedTemplate = createGraphicsTemplateFromEntityVisual({

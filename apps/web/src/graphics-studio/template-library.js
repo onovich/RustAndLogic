@@ -227,6 +227,7 @@ export function applyGraphicsTemplateToSelectedEntity(
   const entityKey = String(selectedEntityKey ?? "").trim();
   const template = Array.isArray(templates) ? templates.find((item) => item.id === templateId) ?? null : null;
   const currentVisual = catalog?.entities?.[entityKey] ?? null;
+  const currentRecentIds = Array.isArray(options.recentTemplateIds) ? options.recentTemplateIds : [];
   const visual = applyGraphicsTemplateToEntityVisual(template, {
     currentVisual,
     entityKey,
@@ -240,6 +241,7 @@ export function applyGraphicsTemplateToSelectedEntity(
       selectedLayerId,
       template,
       visual: null,
+      recentTemplateIds: [...currentRecentIds],
     };
   }
 
@@ -255,6 +257,7 @@ export function applyGraphicsTemplateToSelectedEntity(
     selectedLayerId: resolveSelectedVisualLayerId(visual, selectedLayerId),
     template,
     visual,
+    recentTemplateIds: recordRecentGraphicsTemplateId(currentRecentIds, template.id),
   };
 }
 

@@ -140,6 +140,15 @@ try {
     layerIds: ["template-body", "template-glyph"],
     exportedRobotLayerIds: ["template-body", "template-glyph"],
   });
+  await page.waitForFunction(() => {
+    const recent = document.querySelector('[data-testid="graphics-recent-templates"] [data-template]');
+    const storedRecent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+    return recent?.getAttribute("data-template") === "frameBot" && storedRecent.includes("frameBot");
+  });
+  const templateRecent = await page.evaluate(() => ({
+    recentId: document.querySelector('[data-testid="graphics-recent-templates"] [data-template]')?.getAttribute("data-template") ?? "",
+    storedRecentHasFrameBot: (localStorage.getItem("rust-and-logic.template-history.v1") ?? "").includes("frameBot"),
+  }));
 
   await page.getByTestId("graphics-entity-io").fill(
     JSON.stringify(
@@ -311,6 +320,7 @@ try {
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
         templateApplied: summarizeLayerState(templateApplied),
+        templateRecent,
         imported: summarizeLayerState(imported),
         savedTemplate,
         importedTemplate,

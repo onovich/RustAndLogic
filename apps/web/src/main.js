@@ -69,7 +69,6 @@ import {
   getRecentGraphicsTemplates,
   importGraphicsTemplatePayload,
   normalizeGraphicsTemplateFilterForAvailableCategories,
-  recordRecentGraphicsTemplateId,
   removeGraphicsTemplateFromLibrary,
   saveGraphicsTemplateFromSelectedEntity,
 } from "./graphics-studio/template-library.js";
@@ -1615,7 +1614,10 @@ function applyEntityTemplate(templateId) {
     selectedVisualLayerId,
     getGraphicsTemplates(),
     templateId,
-    { entityLabel: getGraphicsEntityLabel(selectedVisualEntityKey) },
+    {
+      entityLabel: getGraphicsEntityLabel(selectedVisualEntityKey),
+      recentTemplateIds: recentGraphicsTemplateIds,
+    },
   );
   if (!templateState.changed) {
     return;
@@ -1623,8 +1625,9 @@ function applyEntityTemplate(templateId) {
   entityVisualCatalog = templateState.entityVisualCatalog;
   selectedVisualEntityKey = templateState.selectedEntityKey;
   selectedVisualLayerId = templateState.selectedLayerId;
+  recentGraphicsTemplateIds = templateState.recentTemplateIds;
   persistEntityVisualCatalog();
-  recordRecentGraphicsTemplate(templateState.template.id);
+  persistRecentGraphicsTemplates();
   showToast({ title: t("graphics.templateApplied"), body: getGraphicsTemplateLabel(templateState.template, t) }, "success");
 }
 
@@ -1687,14 +1690,6 @@ function importGraphicsTemplate(source) {
     console.warn("Failed to import graphics template.", error);
     showToast({ title: t("graphics.templateImportFailed"), body: String(error.message ?? error) }, "failure");
   }
-}
-
-function recordRecentGraphicsTemplate(templateId) {
-  if (!templateId) {
-    return;
-  }
-  recentGraphicsTemplateIds = recordRecentGraphicsTemplateId(recentGraphicsTemplateIds, templateId);
-  persistRecentGraphicsTemplates();
 }
 
 function graphicsTemplateSerializationOptions() {
