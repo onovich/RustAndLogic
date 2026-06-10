@@ -37,6 +37,7 @@ import {
   addDefaultSelectedVisualLayer,
   applyShapePresetToSelectedLayer,
   buildShapePresetListModel,
+  buildVisualLayerClickActionModel,
   buildVisualLayerToolbarModel,
   duplicateSelectedVisualLayer,
   buildVisualLayerListItems,
@@ -622,29 +623,7 @@ function initializeGraphicsEditor() {
     renderGraphicsEditor();
   });
 
-  elements.graphicsLayerList?.addEventListener("click", (event) => {
-    const actionButton = event.target.closest("[data-layer-action]");
-    if (actionButton) {
-      const layerId = actionButton.dataset.layerId ?? "";
-      const action = actionButton.dataset.layerAction ?? "";
-      if (action === "visible") {
-        toggleLayerVisible(layerId);
-      } else if (action === "locked") {
-        toggleLayerLocked(layerId);
-      }
-      return;
-    }
-    const button = event.target.closest("[data-layer-id]");
-    if (!button) {
-      return;
-    }
-    const selection = selectVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, button.dataset.layerId ?? "");
-    if (!selection.changed) {
-      return;
-    }
-    selectedVisualLayerId = selection.selectedLayerId;
-    renderGraphicsEditor();
-  });
+  elements.graphicsLayerList?.addEventListener("click", handleGraphicsLayerListClick);
 
   elements.graphicsAddShapeButton?.addEventListener("click", () => {
     const addState = addDefaultSelectedVisualLayer(
@@ -869,6 +848,33 @@ function handleGraphicsTemplateCardClick(event) {
     return;
   }
   applyEntityTemplate(clickAction.templateId);
+}
+
+function handleGraphicsLayerListClick(event) {
+  const actionButton = event.target.closest("[data-layer-action][data-layer-id]");
+  const layerButton = actionButton ? null : event.target.closest("[data-layer-id]");
+  const clickAction = buildVisualLayerClickActionModel({
+    layerAction: actionButton?.dataset.layerAction ?? "",
+    layerId: actionButton?.dataset.layerId ?? "",
+    rowLayerId: layerButton?.dataset.layerId ?? "",
+  });
+  if (!clickAction.handled) {
+    return;
+  }
+  if (clickAction.action === "visible") {
+    toggleLayerVisible(clickAction.layerId);
+    return;
+  }
+  if (clickAction.action === "locked") {
+    toggleLayerLocked(clickAction.layerId);
+    return;
+  }
+  const selection = selectVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, clickAction.layerId);
+  if (!selection.changed) {
+    return;
+  }
+  selectedVisualLayerId = selection.selectedLayerId;
+  renderGraphicsEditor();
 }
 
 function setGraphicsStudioOpen(isOpen) {

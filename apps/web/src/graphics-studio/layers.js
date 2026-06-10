@@ -251,6 +251,25 @@ export function selectVisualLayer(visual, selectedLayerId = "", layerId = "") {
   };
 }
 
+export function buildVisualLayerClickActionModel({ layerAction = "", layerId = "", rowLayerId = "" } = {}) {
+  const action = String(layerAction ?? "");
+  const actionLayerId = String(layerId ?? "");
+  if ((action === "visible" || action === "locked") && actionLayerId) {
+    return {
+      handled: true,
+      action,
+      layerId: actionLayerId,
+    };
+  }
+
+  const selectLayerId = String(rowLayerId ?? "");
+  return {
+    handled: Boolean(selectLayerId),
+    action: selectLayerId ? "select" : "",
+    layerId: selectLayerId,
+  };
+}
+
 export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   const entries = Array.isArray(layers) ? layers : [];
   const selectedIndex = selectedLayerId ? entries.findIndex((layer) => layer.id === selectedLayerId) : -1;

@@ -39,6 +39,7 @@ import {
   applyShapePresetToLayer,
   applyShapePresetToSelectedLayer,
   buildShapePresetListModel,
+  buildVisualLayerClickActionModel,
   buildVisualLayerActionState,
   buildVisualLayerListItems,
   buildVisualLayerToolbarModel,
@@ -2069,6 +2070,26 @@ function testGraphicsLayerHelpers() {
   assert.deepEqual(selectVisualLayer({ layers }, "a", "a"), { changed: false, selectedLayerId: "a" });
   assert.deepEqual(selectVisualLayer({ layers }, "a", "missing"), { changed: false, selectedLayerId: "a" });
   assert.deepEqual(selectVisualLayer(null, "a", "b"), { changed: false, selectedLayerId: "a" });
+  assert.deepEqual(buildVisualLayerClickActionModel({ layerAction: "visible", layerId: "body", rowLayerId: "glyph" }), {
+    handled: true,
+    action: "visible",
+    layerId: "body",
+  });
+  assert.deepEqual(buildVisualLayerClickActionModel({ layerAction: "locked", layerId: "glyph" }), {
+    handled: true,
+    action: "locked",
+    layerId: "glyph",
+  });
+  assert.deepEqual(buildVisualLayerClickActionModel({ rowLayerId: "glyph" }), {
+    handled: true,
+    action: "select",
+    layerId: "glyph",
+  });
+  assert.deepEqual(buildVisualLayerClickActionModel({ layerAction: "locked" }), {
+    handled: false,
+    action: "",
+    layerId: "",
+  });
   assert.deepEqual(buildVisualLayerActionState(layers, ""), {
     duplicateDisabled: true,
     moveUpDisabled: true,
