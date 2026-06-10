@@ -115,6 +115,17 @@ export function moveVisualLayer(layers, selectedLayerId, delta) {
   return true;
 }
 
+export function resolveSelectedVisualLayerId(visual, selectedLayerId = "") {
+  if (!visual) {
+    return "";
+  }
+  const layers = Array.isArray(visual.layers) ? visual.layers : [];
+  if (selectedLayerId && layers.some((layer) => layer.id === selectedLayerId)) {
+    return selectedLayerId;
+  }
+  return layers[0]?.id ?? "";
+}
+
 export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   const entries = Array.isArray(layers) ? layers : [];
   const selectedIndex = selectedLayerId ? entries.findIndex((layer) => layer.id === selectedLayerId) : -1;

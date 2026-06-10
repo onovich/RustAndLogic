@@ -37,6 +37,7 @@ import {
   describeVisualLayerTitle,
   moveVisualLayer,
   normalizeShapeLayer,
+  resolveSelectedVisualLayerId,
   upgradeVisualLayerType,
 } from "../apps/web/src/graphics-studio/layers.js";
 import {
@@ -1738,6 +1739,11 @@ function testGraphicsLayerHelpers() {
   assert.equal(moveVisualLayer(layers, "b", -1), true);
   assert.deepEqual(layers.map((item) => item.id), ["b", "a", "c"]);
   assert.equal(moveVisualLayer(layers, "b", -1), false);
+  assert.equal(resolveSelectedVisualLayerId(null, "a"), "");
+  assert.equal(resolveSelectedVisualLayerId({ layers }, "a"), "a");
+  assert.equal(resolveSelectedVisualLayerId({ layers }, "missing"), "b");
+  assert.equal(resolveSelectedVisualLayerId({ layers: [] }, "missing"), "");
+  assert.equal(resolveSelectedVisualLayerId({}, "missing"), "");
   assert.deepEqual(buildVisualLayerActionState(layers, ""), {
     duplicateDisabled: true,
     moveUpDisabled: true,

@@ -38,6 +38,7 @@ import {
   buildVisualLayerListItems,
   moveVisualLayer,
   normalizeShapeLayer,
+  resolveSelectedVisualLayerId,
   upgradeVisualLayerType,
 } from "./graphics-studio/layers.js";
 import {
@@ -1483,15 +1484,7 @@ function appendGraphicsSelectField({ scope, field, label, value, options }) {
 }
 
 function ensureSelectedVisualLayer() {
-  const visual = getSelectedEntityVisual();
-  if (!visual) {
-    selectedVisualLayerId = "";
-    return;
-  }
-  const ids = new Set((visual.layers ?? []).map((layer) => layer.id));
-  if (!selectedVisualLayerId || !ids.has(selectedVisualLayerId)) {
-    selectedVisualLayerId = visual.layers?.[0]?.id ?? "";
-  }
+  selectedVisualLayerId = resolveSelectedVisualLayerId(getSelectedEntityVisual(), selectedVisualLayerId);
 }
 
 function getSelectedEntityVisual() {
