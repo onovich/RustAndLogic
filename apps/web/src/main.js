@@ -40,6 +40,8 @@ import {
   moveVisualLayer,
   normalizeShapeLayer,
   resolveSelectedVisualLayerId,
+  toggleVisualLayerLocked,
+  toggleVisualLayerVisible,
   upgradeVisualLayerType,
 } from "./graphics-studio/layers.js";
 import {
@@ -1518,21 +1520,17 @@ function buildEntityVisualDataUrl(entityKey, visual = getEntityVisual(entityKey)
 
 function toggleLayerVisible(layerId) {
   const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === layerId);
-  if (!layer) {
+  if (!toggleVisualLayerVisible(visual?.layers, layerId)) {
     return;
   }
-  layer.visible = layer.visible === false;
   persistEntityVisualCatalog();
 }
 
 function toggleLayerLocked(layerId) {
   const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === layerId);
-  if (!layer) {
+  if (!toggleVisualLayerLocked(visual?.layers, layerId)) {
     return;
   }
-  layer.locked = !layer.locked;
   persistEntityVisualCatalog();
 }
 

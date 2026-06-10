@@ -131,6 +131,24 @@ export function duplicateVisualLayer(layers, selectedLayerId, options = {}) {
   return duplicate;
 }
 
+export function toggleVisualLayerVisible(layers, layerId) {
+  const layer = findVisualLayer(layers, layerId);
+  if (!layer) {
+    return false;
+  }
+  layer.visible = layer.visible === false;
+  return true;
+}
+
+export function toggleVisualLayerLocked(layers, layerId) {
+  const layer = findVisualLayer(layers, layerId);
+  if (!layer) {
+    return false;
+  }
+  layer.locked = !layer.locked;
+  return true;
+}
+
 export function resolveSelectedVisualLayerId(visual, selectedLayerId = "") {
   if (!visual) {
     return "";
@@ -216,6 +234,13 @@ export function applyShapePresetToLayer(layer, preset, visual, options = {}) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function findVisualLayer(layers, layerId) {
+  if (!Array.isArray(layers) || !layerId) {
+    return null;
+  }
+  return layers.find((layer) => layer.id === layerId) ?? null;
 }
 
 function resolveNow(now) {

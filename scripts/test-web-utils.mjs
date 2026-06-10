@@ -39,6 +39,8 @@ import {
   moveVisualLayer,
   normalizeShapeLayer,
   resolveSelectedVisualLayerId,
+  toggleVisualLayerLocked,
+  toggleVisualLayerVisible,
   upgradeVisualLayerType,
 } from "../apps/web/src/graphics-studio/layers.js";
 import {
@@ -1747,6 +1749,17 @@ function testGraphicsLayerHelpers() {
   duplicateLayer.style.fill = "#00ff88";
   assert.equal(duplicateLayers[0].style.fill, "#f28d35");
   assert.equal(duplicateVisualLayer(duplicateLayers, "missing", { now: () => 1 }), null);
+  const toggleLayers = [{ id: "body" }, { id: "glyph", visible: false, locked: true }];
+  assert.equal(toggleVisualLayerVisible(toggleLayers, "body"), true);
+  assert.equal(toggleLayers[0].visible, false);
+  assert.equal(toggleVisualLayerVisible(toggleLayers, "glyph"), true);
+  assert.equal(toggleLayers[1].visible, true);
+  assert.equal(toggleVisualLayerVisible(toggleLayers, "missing"), false);
+  assert.equal(toggleVisualLayerLocked(toggleLayers, "body"), true);
+  assert.equal(toggleLayers[0].locked, true);
+  assert.equal(toggleVisualLayerLocked(toggleLayers, "glyph"), true);
+  assert.equal(toggleLayers[1].locked, false);
+  assert.equal(toggleVisualLayerLocked(toggleLayers, "missing"), false);
   assert.equal(resolveSelectedVisualLayerId(null, "a"), "");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "a"), "a");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "missing"), "b");
