@@ -16,6 +16,7 @@ import {
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
   buildGraphicsFieldModel,
+  buildGraphicsFormControlState,
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
   resolveGraphicsFieldValue,
@@ -1473,6 +1474,16 @@ function testGraphicsFormSchemaHelpers() {
   assert.equal(shouldDisableGraphicsFieldControl(true, "entity"), false);
   assert.equal(shouldDisableGraphicsFieldControl(false, "layer"), false);
   assert.equal(shouldDisableGraphicsFieldControl(true, undefined), true);
+  assert.deepEqual(buildGraphicsFormControlState(true, ["layer", "entity", undefined]), [
+    { index: 0, disabled: true },
+    { index: 1, disabled: false },
+    { index: 2, disabled: true },
+  ]);
+  assert.deepEqual(buildGraphicsFormControlState(false, ["layer", "entity"]), [
+    { index: 0, disabled: false },
+    { index: 1, disabled: false },
+  ]);
+  assert.deepEqual(buildGraphicsFormControlState(true, null), []);
   assert.equal(
     buildGraphicsFieldModel(
       "layer",

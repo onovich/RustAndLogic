@@ -209,6 +209,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio entity IO export text, placeholder, and action-label model into reusable pure entity-visual helpers with direct tests.
 - [x] Extract Graphics Studio layer toolbar disabled and selected-lock state into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio copy/reset and studio-shell button model into reusable pure shell helpers with direct tests.
+- [x] Extract Graphics Studio form-control disabled-state list into reusable pure form-schema helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

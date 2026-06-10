@@ -26,8 +26,8 @@ import {
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
   buildGraphicsFieldModel,
+  buildGraphicsFormControlState,
   coerceGraphicsFieldValue,
-  shouldDisableGraphicsFieldControl,
 } from "./graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
@@ -1025,8 +1025,13 @@ function renderGraphicsEditor() {
     elements.graphicsImportEntityButton.textContent = entityIoModel.importEntityLabel;
   }
   if (elements.graphicsForm) {
-    for (const input of elements.graphicsForm.querySelectorAll("input, select")) {
-      input.disabled = shouldDisableGraphicsFieldControl(layerToolbar.selectedLocked, input.dataset.scope);
+    const controls = [...elements.graphicsForm.querySelectorAll("input, select")];
+    const controlState = buildGraphicsFormControlState(
+      layerToolbar.selectedLocked,
+      controls.map((input) => input.dataset.scope),
+    );
+    for (const state of controlState) {
+      controls[state.index].disabled = state.disabled;
     }
   }
 }

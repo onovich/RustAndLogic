@@ -69,6 +69,13 @@ export function shouldDisableGraphicsFieldControl(layerLocked, scope = "layer") 
   return Boolean(layerLocked) && scope === "layer";
 }
 
+export function buildGraphicsFormControlState(layerLocked, scopes = []) {
+  return (Array.isArray(scopes) ? scopes : []).map((scope, index) => ({
+    index,
+    disabled: shouldDisableGraphicsFieldControl(layerLocked, scope),
+  }));
+}
+
 export function coerceGraphicsFieldValue(valueType, rawValue) {
   if (valueType === "number") {
     const parsed = Number(rawValue);
