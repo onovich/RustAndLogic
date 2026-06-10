@@ -67,6 +67,7 @@ import {
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
+  buildGraphicsTemplateNameSubmitActionModel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
@@ -780,7 +781,8 @@ function initializeGraphicsEditor() {
     }
   });
   elements.graphicsTemplateName?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") {
+    const keyAction = buildGraphicsTemplateNameSubmitActionModel({ key: event.key });
+    if (!keyAction.handled) {
       return;
     }
     event.preventDefault();

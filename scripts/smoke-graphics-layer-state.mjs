@@ -305,7 +305,7 @@ try {
   });
 
   await page.getByTestId("graphics-template-name").fill("Imported Cache");
-  await page.getByTestId("graphics-save-template-button").click();
+  await page.getByTestId("graphics-template-name").press("Enter");
   await page.waitForFunction(() => {
     const custom = document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]');
     const recent = document.querySelector('[data-testid="graphics-recent-templates"] [data-template]');

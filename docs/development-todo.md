@@ -254,6 +254,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio shape-preset click action dispatch into reusable pure layer helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio template-filter click action dispatch into reusable pure template-library helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio form-field edit action dispatch into reusable pure form-schema helpers with direct tests and smoke coverage.
+- [x] Extract Graphics Studio template-name submit key action into reusable pure template-library helpers with direct tests and smoke coverage.
 
 ## Definition Of Done For A Small Item
 

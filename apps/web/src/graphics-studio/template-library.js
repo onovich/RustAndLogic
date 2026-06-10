@@ -623,6 +623,13 @@ export function buildGraphicsTemplateClickActionModel({ templateAction = "", tem
   };
 }
 
+export function buildGraphicsTemplateNameSubmitActionModel({ key = "" } = {}) {
+  return {
+    handled: key === "Enter",
+    action: key === "Enter" ? "submit" : "",
+  };
+}
+
 export function buildGraphicsTemplateLibraryModel(templateGroups, hasSelectedEntity = true) {
   const groups = Array.isArray(templateGroups) ? templateGroups : [];
   return {

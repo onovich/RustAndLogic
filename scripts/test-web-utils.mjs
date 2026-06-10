@@ -126,6 +126,7 @@ import {
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
+  buildGraphicsTemplateNameSubmitActionModel,
   createGraphicsTemplateFromEntityVisual,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
@@ -2541,6 +2542,14 @@ function testGraphicsTemplateLibraryHelpers() {
     handled: false,
     action: "",
     templateId: "",
+  });
+  assert.deepEqual(buildGraphicsTemplateNameSubmitActionModel({ key: "Enter" }), {
+    handled: true,
+    action: "submit",
+  });
+  assert.deepEqual(buildGraphicsTemplateNameSubmitActionModel({ key: "Escape" }), {
+    handled: false,
+    action: "",
   });
   assert.deepEqual(buildGraphicsTemplateCardModel(defaultTemplates[1], "actor", translate).metaText, "Pickup");
   assert.deepEqual(buildGraphicsTemplateLibraryModel(grouped, true), {
