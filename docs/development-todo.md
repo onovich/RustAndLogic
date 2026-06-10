@@ -246,6 +246,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio custom-template delete state into reusable pure template-library helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio template-application recent-template state into reusable pure template-library helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio template export selection model into reusable pure template-library helpers with direct tests and smoke coverage.
+- [x] Extract Graphics Studio selected-entity export model into reusable pure entity-visual helpers with direct tests and smoke coverage.
 
 ## Definition Of Done For A Small Item
 

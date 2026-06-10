@@ -212,6 +212,19 @@ try {
     throw new Error(`Expected selected entity import to replace robot visual, got ${JSON.stringify(summarizeLayerState(imported))}.`);
   }
 
+  await page.getByTestId("graphics-export-entity-button").click();
+  await page.waitForFunction(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return entityIo.includes('"label": "Imported Robot"') && entityIo.includes('"id": "import-body"');
+  });
+  const exportedEntity = await page.evaluate(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return {
+      hasImportedLabel: entityIo.includes('"label": "Imported Robot"'),
+      hasImportBodyLayer: entityIo.includes('"id": "import-body"'),
+    };
+  });
+
   await page.getByTestId("graphics-template-name").fill("Imported Cache");
   await page.getByTestId("graphics-save-template-button").click();
   await page.waitForFunction(() => {
@@ -336,6 +349,7 @@ try {
         templateApplied: summarizeLayerState(templateApplied),
         templateRecent,
         imported: summarizeLayerState(imported),
+        exportedEntity,
         savedTemplate,
         importedTemplate,
         deletedTemplate,

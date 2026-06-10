@@ -53,6 +53,16 @@ export function buildGraphicsEntityVisualExportModel(visual) {
   };
 }
 
+export function buildSelectedEntityVisualExportModel(catalog, selectedEntityKey = "") {
+  const entityKey = typeof selectedEntityKey === "string" ? selectedEntityKey : "";
+  const visual = catalog?.entities?.[entityKey] ?? null;
+  return {
+    ...buildGraphicsEntityVisualExportModel(visual),
+    entityKey,
+    visual,
+  };
+}
+
 export function applyGraphicsEntitySelection(catalog, currentEntityKey = "", requestedEntityKey = "", selectedLayerId = "") {
   const entities = catalog?.entities ?? {};
   const entityKey = typeof requestedEntityKey === "string" && requestedEntityKey in entities ? requestedEntityKey : currentEntityKey;

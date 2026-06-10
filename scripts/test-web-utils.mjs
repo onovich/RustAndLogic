@@ -11,6 +11,7 @@ import {
   buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
   buildGraphicsEntityVisualExportModel,
+  buildSelectedEntityVisualExportModel,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
   getGraphicsEntityDisplayLabel,
@@ -1358,6 +1359,24 @@ function testGraphicsEntityListHelpers() {
       value: JSON.stringify({ label: "Robot", layers: [{ id: "body" }] }, null, 2),
     },
   );
+  assert.deepEqual(buildSelectedEntityVisualExportModel(catalog, "robot"), {
+    disabled: false,
+    entityKey: "robot",
+    visual: catalog.entities.robot,
+    value: JSON.stringify(catalog.entities.robot, null, 2),
+  });
+  assert.deepEqual(buildSelectedEntityVisualExportModel(catalog, "missing"), {
+    disabled: true,
+    entityKey: "missing",
+    visual: null,
+    value: "",
+  });
+  assert.deepEqual(buildSelectedEntityVisualExportModel(null, "robot"), {
+    disabled: true,
+    entityKey: "robot",
+    visual: null,
+    value: "",
+  });
   assert.deepEqual(buildGraphicsEntityIoModel({ catalog, ioValue: "", translate }), {
     exportValue: JSON.stringify(catalog, null, 2),
     placeholder: "Paste entity JSON",

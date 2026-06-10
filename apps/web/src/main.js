@@ -22,7 +22,7 @@ import {
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
-  buildGraphicsEntityVisualExportModel,
+  buildSelectedEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
   applyImportedEntityVisualToSelection,
   resetGraphicsEntityVisualCatalog,
@@ -695,7 +695,7 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsExportEntityButton?.addEventListener("click", () => {
-    const exportModel = buildGraphicsEntityVisualExportModel(getSelectedEntityVisual());
+    const exportModel = buildSelectedEntityVisualExportModel(entityVisualCatalog, selectedVisualEntityKey);
     if (exportModel.disabled || !elements.graphicsEntityIo) {
       return;
     }
