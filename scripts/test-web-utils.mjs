@@ -26,6 +26,7 @@ import {
   shouldRenderGraphicsField,
 } from "../apps/web/src/graphics-studio/form-schema.js";
 import {
+  addDefaultVisualLayer,
   applyShapePresetToLayer,
   buildShapePresetListModel,
   buildVisualLayerActionState,
@@ -1702,6 +1703,42 @@ function testGraphicsLayerHelpers() {
       fontSize: 9,
     },
   );
+
+  const addVisual = { canvasSize: 30, layers: [] };
+  assert.deepEqual(
+    addDefaultVisualLayer(addVisual, "shape", {
+      entityKey: "robot",
+      defaultShapeLayer,
+      now: () => 46659,
+    }),
+    {
+      id: "robot-shape-1003",
+      type: "shape",
+      x: 15,
+      y: 16,
+      width: 15,
+      fill: "#f28d35",
+    },
+  );
+  assert.deepEqual(
+    addDefaultVisualLayer(addVisual, "glyph", {
+      entityKey: "robot",
+      defaultGlyphLayer,
+      now: () => 46660,
+    }),
+    {
+      id: "robot-glyph-1004",
+      type: "glyph",
+      glyph: "R",
+      x: 15,
+      y: 15,
+      fontSize: 9,
+    },
+  );
+  assert.deepEqual(addVisual.layers.map((item) => item.id), ["robot-shape-1003", "robot-glyph-1004"]);
+  assert.equal(addDefaultVisualLayer(addVisual, "unknown", { now: () => 1 }), null);
+  assert.deepEqual(addVisual.layers.map((item) => item.id), ["robot-shape-1003", "robot-glyph-1004"]);
+  assert.equal(addDefaultVisualLayer(null, "shape", { now: () => 1 }), null);
 
   const layer = { id: "kept", type: "shape", shape: "rectangle", x: 3 };
   upgradeVisualLayerType(layer, "glyph", visual, {

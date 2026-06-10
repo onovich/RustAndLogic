@@ -29,6 +29,23 @@ export function createDefaultGlyphLayer(visual, options = {}) {
   };
 }
 
+export function addDefaultVisualLayer(visual, layerType, options = {}) {
+  if (!visual || !Array.isArray(visual.layers)) {
+    return null;
+  }
+  const layer =
+    layerType === "shape"
+      ? createDefaultShapeLayer(visual, options)
+      : layerType === "glyph"
+        ? createDefaultGlyphLayer(visual, options)
+        : null;
+  if (!layer) {
+    return null;
+  }
+  visual.layers.push(layer);
+  return layer;
+}
+
 export function upgradeVisualLayerType(layer, nextType, visual, options = {}) {
   if (!layer) {
     return null;

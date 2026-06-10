@@ -30,11 +30,10 @@ import {
   coerceGraphicsFieldValue,
 } from "./graphics-studio/form-schema.js";
 import {
+  addDefaultVisualLayer,
   applyShapePresetToLayer,
   buildShapePresetListModel,
   buildVisualLayerToolbarModel,
-  createDefaultGlyphLayer,
-  createDefaultShapeLayer,
   duplicateVisualLayer,
   buildVisualLayerListItems,
   moveVisualLayer,
@@ -641,21 +640,21 @@ function initializeGraphicsEditor() {
 
   elements.graphicsAddShapeButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
-    if (!visual) {
+    const layer = addDefaultVisualLayer(visual, "shape", graphicsLayerOptions());
+    if (!layer) {
       return;
     }
-    visual.layers.push(createDefaultShapeLayer(visual, graphicsLayerOptions()));
-    selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
+    selectedVisualLayerId = layer.id;
     persistEntityVisualCatalog();
   });
 
   elements.graphicsAddGlyphButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
-    if (!visual) {
+    const layer = addDefaultVisualLayer(visual, "glyph", graphicsLayerOptions());
+    if (!layer) {
       return;
     }
-    visual.layers.push(createDefaultGlyphLayer(visual, graphicsLayerOptions()));
-    selectedVisualLayerId = visual.layers.at(-1)?.id ?? "";
+    selectedVisualLayerId = layer.id;
     persistEntityVisualCatalog();
   });
 
