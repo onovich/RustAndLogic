@@ -19,10 +19,7 @@ import {
 import {
   applyGraphicsEntitySelection,
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
-  buildGraphicsEntityListItems,
-  buildGraphicsEntityIoModel,
   buildGraphicsEntityListClickActionModel,
-  buildGraphicsEntityPreviewModel,
   buildSelectedEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
   applyImportedEntityVisualToSelection,
@@ -32,18 +29,13 @@ import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./gr
 import {
   applyGraphicsFormFieldEdit,
   buildGraphicsFormFieldEditActionModel,
-  buildGraphicsFormModel,
-  buildGraphicsFormControlState,
 } from "./graphics-studio/form-schema.js";
 import {
   addDefaultSelectedVisualLayer,
   applyShapePresetToSelectedLayer,
   buildShapePresetClickActionModel,
-  buildShapePresetListModel,
   buildVisualLayerClickActionModel,
-  buildVisualLayerToolbarModel,
   duplicateSelectedVisualLayer,
-  buildVisualLayerListItems,
   moveSelectedVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
@@ -58,27 +50,19 @@ import {
 import {
   applyGraphicsTemplateToSelectedEntity,
   applyGraphicsTemplateFilterSelection,
-  buildGraphicsRecentTemplateStripModel,
-  buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateClickActionModel,
-  buildGraphicsTemplateCardModel,
   buildGraphicsTemplateExportSelectionModel,
   buildGraphicsTemplateFilterClickActionModel,
-  buildGraphicsTemplateFilterRowModel,
-  buildGraphicsTemplateLibraryModel,
-  buildGraphicsTemplateModeOptions,
   buildGraphicsTemplateNameSubmitActionModel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
   getGraphicsTemplateLabel,
-  getGroupedGraphicsTemplates,
-  getRecentGraphicsTemplates,
   importGraphicsTemplatePayload,
-  normalizeGraphicsTemplateFilterForAvailableCategories,
   removeGraphicsTemplateFromLibrary,
   saveGraphicsTemplateFromSelectedEntity,
 } from "./graphics-studio/template-library.js";
+import { renderGraphicsStudio } from "./graphics-studio/render.js";
 import {
   loadCustomGraphicsTemplatesFromStorage,
   loadEntityVisualCatalogState,
@@ -90,10 +74,7 @@ import {
 } from "./graphics-studio/storage.js";
 import {
   applyGraphicsSwatchToSelectedLayer,
-  buildFillSwatches,
   buildGraphicsSwatchClickActionModel,
-  buildGraphicsSwatchStripModel,
-  buildTextureSwatches,
 } from "./graphics-studio/swatches.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
@@ -101,7 +82,6 @@ import { cloneJson } from "./utils/json.js";
 import { nextLanguageMode, normalizeLanguageMode, resolveLanguage } from "./language.js";
 import {
   buildDrawerToggleState,
-  buildGraphicsEditorShellControlModel,
   buildGraphicsStudioOpenState,
   buildSidebarToggleDisplay,
   toggleCollapsedState,
@@ -993,288 +973,21 @@ function renderGraphicsEditor() {
   }
 
   ensureSelectedVisualLayer();
-  renderGraphicsEntityList();
-  renderGraphicsLayerList();
-  renderGraphicsForm();
-  renderGraphicsRecentTemplates();
-  renderGraphicsTemplateFilters();
-  renderGraphicsTemplates();
-  renderGraphicsPresets();
-  renderGraphicsSwatches();
-
-  const visual = getSelectedEntityVisual();
-  const entityIoModel = renderGraphicsEditorEntitySurface(visual);
-  renderGraphicsTemplateActionControls();
-  const layerToolbar = buildVisualLayerToolbarModel(visual?.layers, selectedVisualLayerId);
-  renderGraphicsLayerToolbarControls(layerToolbar);
-  renderGraphicsEditorShellControls(entityIoModel);
-  renderGraphicsFormControlStates(layerToolbar);
-}
-
-function renderGraphicsTemplateActionControls() {
-  const templateActions = buildGraphicsTemplateActionState({
+  const renderState = renderGraphicsStudio({
+    elements,
+    catalog: entityVisualCatalog,
     selectedEntityKey: selectedVisualEntityKey,
-    ioValue: elements.graphicsEntityIo?.value,
+    selectedLayerId: selectedVisualLayerId,
+    editorConfig: graphicsEditorConfig,
+    templates: getGraphicsTemplates(),
+    recentTemplateIds: recentGraphicsTemplateIds,
+    templateFilterState: graphicsTemplateFilterState,
     customTemplates: customGraphicsTemplates,
-  });
-  if (elements.graphicsSaveTemplateButton) {
-    elements.graphicsSaveTemplateButton.disabled = templateActions.saveDisabled;
-  }
-  if (elements.graphicsImportTemplateButton) {
-    elements.graphicsImportTemplateButton.disabled = templateActions.importDisabled;
-  }
-  if (elements.graphicsExportLibraryButton) {
-    elements.graphicsExportLibraryButton.disabled = templateActions.exportLibraryDisabled;
-  }
-}
-
-function renderGraphicsLayerToolbarControls(layerToolbar) {
-  if (elements.graphicsDuplicateLayerButton) {
-    elements.graphicsDuplicateLayerButton.disabled = layerToolbar.duplicateDisabled;
-  }
-  if (elements.graphicsMoveLayerUpButton) {
-    elements.graphicsMoveLayerUpButton.disabled = layerToolbar.moveUpDisabled;
-  }
-  if (elements.graphicsMoveLayerDownButton) {
-    elements.graphicsMoveLayerDownButton.disabled = layerToolbar.moveDownDisabled;
-  }
-  if (elements.graphicsDeleteLayerButton) {
-    elements.graphicsDeleteLayerButton.disabled = layerToolbar.deleteDisabled;
-  }
-}
-
-function renderGraphicsEditorShellControls(entityIoModel) {
-  const shellControls = buildGraphicsEditorShellControlModel({
-    studioOpen: elements.devPanel?.dataset.studio,
+    dataUrlCache: entityVisualDataUrlCache,
+    translate: t,
     copyResetPending: Boolean(graphicsCopyResetTimer),
   });
-  if (elements.graphicsCopyButton && shellControls.copyLabelKey) {
-    elements.graphicsCopyButton.textContent = t(shellControls.copyLabelKey);
-  }
-  if (elements.graphicsStudioButton) {
-    elements.graphicsStudioButton.textContent = t(shellControls.studioButton.labelKey);
-    elements.graphicsStudioButton.dataset.active = shellControls.studioButton.active;
-  }
-  if (elements.graphicsExportEntityButton) {
-    elements.graphicsExportEntityButton.textContent = entityIoModel.exportEntityLabel;
-  }
-  if (elements.graphicsImportEntityButton) {
-    elements.graphicsImportEntityButton.textContent = entityIoModel.importEntityLabel;
-  }
-}
-
-function renderGraphicsFormControlStates(layerToolbar) {
-  if (elements.graphicsForm) {
-    const controls = [...elements.graphicsForm.querySelectorAll("input, select")];
-    const controlState = buildGraphicsFormControlState(
-      layerToolbar.selectedLocked,
-      controls.map((input) => input.dataset.scope),
-    );
-    for (const state of controlState) {
-      controls[state.index].disabled = state.disabled;
-    }
-  }
-}
-
-function renderGraphicsEditorEntitySurface(visual) {
-  const previewModel = buildGraphicsEntityPreviewModel(selectedVisualEntityKey, visual, t, entityVisualDataUrlCache);
-  elements.graphicsPreview.style.backgroundImage = previewModel.backgroundImage;
-  elements.graphicsPreview.setAttribute("aria-label", previewModel.ariaLabel);
-  elements.graphicsEntityName.textContent = previewModel.label;
-  const entityIoModel = buildGraphicsEntityIoModel({
-    catalog: entityVisualCatalog,
-    ioValue: elements.graphicsEntityIo?.value,
-    translate: t,
-  });
-  if (elements.graphicsEntityIo && entityIoModel.placeholder) {
-    elements.graphicsEntityIo.placeholder = entityIoModel.placeholder;
-  }
-  elements.graphicsExport.value = entityIoModel.exportValue;
-  return entityIoModel;
-}
-
-function renderGraphicsEntityList() {
-  if (!elements.graphicsEntityList) {
-    return;
-  }
-  elements.graphicsEntityList.replaceChildren();
-  const entityItems = buildGraphicsEntityListItems(entityVisualCatalog, selectedVisualEntityKey, t);
-  for (const entityItem of entityItems) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.entityKey = entityItem.entityKey;
-    button.dataset.active = String(entityItem.active);
-    button.textContent = entityItem.label;
-    elements.graphicsEntityList.append(button);
-  }
-}
-
-function renderGraphicsTemplates() {
-  if (!elements.graphicsTemplates) {
-    return;
-  }
-  elements.graphicsTemplates.replaceChildren();
-  const group = elements.graphicsTemplates.closest(".visual-preset-group");
-  const hasSelectedEntity = Boolean(selectedVisualEntityKey);
-  const templateGroups = hasSelectedEntity
-    ? getGroupedGraphicsTemplates(
-        getGraphicsTemplates(),
-        graphicsTemplateFilterState,
-        getSelectedGraphicsEntityKind(),
-        t,
-      )
-    : [];
-  const templateLibrary = buildGraphicsTemplateLibraryModel(templateGroups, hasSelectedEntity);
-  elements.graphicsTemplates.hidden = templateLibrary.hidden;
-  if (group) {
-    group.hidden = templateLibrary.hidden;
-  }
-  if (templateLibrary.hidden) {
-    return;
-  }
-  if (templateLibrary.empty) {
-    elements.graphicsTemplates.append(createGraphicsTemplateEmptyState());
-    return;
-  }
-  for (const templateGroup of templateLibrary.groups) {
-    elements.graphicsTemplates.append(createGraphicsTemplateSection(templateGroup));
-  }
-}
-
-function renderGraphicsTemplateFilters() {
-  const templates = getGraphicsTemplates();
-  const entityKind = getSelectedGraphicsEntityKind();
-  graphicsTemplateFilterState = normalizeGraphicsTemplateFilterForAvailableCategories(
-    templates,
-    graphicsTemplateFilterState,
-    entityKind,
-  );
-  renderGraphicsTemplateFilterRow(elements.graphicsTemplateModeFilters, buildGraphicsTemplateModeOptions(graphicsTemplateFilterState, t));
-  renderGraphicsTemplateFilterRow(
-    elements.graphicsTemplateCategoryFilters,
-    buildGraphicsTemplateCategoryOptions(templates, graphicsTemplateFilterState, entityKind, t),
-  );
-}
-
-function renderGraphicsTemplateFilterRow(container, options) {
-  if (!container) {
-    return;
-  }
-  container.replaceChildren();
-  const filterRow = buildGraphicsTemplateFilterRowModel(options, Boolean(selectedVisualEntityKey));
-  container.hidden = filterRow.hidden;
-  if (filterRow.hidden) {
-    return;
-  }
-  for (const option of filterRow.items) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "visual-template-filter-button";
-    button.dataset.filterKind = option.kind;
-    button.dataset.filterValue = option.value;
-    button.dataset.active = String(option.active);
-    button.textContent = option.label;
-    container.append(button);
-  }
-}
-
-function renderGraphicsRecentTemplates() {
-  if (!elements.graphicsRecentTemplates) {
-    return;
-  }
-  elements.graphicsRecentTemplates.replaceChildren();
-  const group = elements.graphicsRecentTemplates.closest(".visual-preset-group");
-  const hasSelectedEntity = Boolean(selectedVisualEntityKey);
-  const recentTemplates = hasSelectedEntity
-    ? getRecentGraphicsTemplates(recentGraphicsTemplateIds, getGraphicsTemplates())
-    : [];
-  const recentStrip = buildGraphicsRecentTemplateStripModel(recentTemplates, hasSelectedEntity);
-  elements.graphicsRecentTemplates.hidden = recentStrip.hidden;
-  if (group) {
-    group.hidden = recentStrip.hidden;
-  }
-  if (recentStrip.hidden) {
-    return;
-  }
-  for (const template of recentStrip.templates) {
-    elements.graphicsRecentTemplates.append(createGraphicsTemplateCard(template));
-  }
-}
-
-function createGraphicsTemplateCard(template) {
-  const cardModel = buildGraphicsTemplateCardModel(template, getSelectedGraphicsEntityKind(), t);
-  const card = document.createElement("div");
-  card.className = "visual-template-card";
-  card.dataset.templateSource = cardModel.source;
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "visual-template-button";
-  button.dataset.template = cardModel.id;
-  button.dataset.templateSource = cardModel.source;
-  button.dataset.recommended = String(cardModel.recommended);
-  if (cardModel.title) {
-    button.title = cardModel.title;
-  }
-  const preview = document.createElement("span");
-  preview.className = "visual-template-preview";
-  preview.style.backgroundImage = buildGraphicsTemplatePreview(template);
-  const label = document.createElement("span");
-  label.className = "visual-template-label";
-  label.textContent = cardModel.label;
-  const meta = document.createElement("span");
-  meta.className = "visual-template-meta";
-  meta.textContent = cardModel.metaText;
-  button.append(preview, label, meta);
-  card.append(button);
-  card.append(createGraphicsTemplateActionRow(cardModel.actions));
-  return card;
-}
-
-function createGraphicsTemplateActionRow(actionsModel) {
-  const actions = document.createElement("div");
-  actions.className = "visual-template-actions";
-  for (const actionModel of actionsModel) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "visual-template-action";
-    button.dataset.templateAction = actionModel.action;
-    button.dataset.templateId = actionModel.templateId;
-    button.textContent = actionModel.label;
-    button.title = actionModel.title;
-    actions.append(button);
-  }
-  return actions;
-}
-
-function createGraphicsTemplateSection(templateGroup) {
-  const section = document.createElement("section");
-  section.className = "visual-template-section";
-  section.dataset.templateGroup = templateGroup.id;
-  const heading = document.createElement("div");
-  heading.className = "visual-template-section-heading";
-  heading.textContent = templateGroup.label;
-  const strip = document.createElement("div");
-  strip.className = "visual-template-section-grid";
-  for (const template of templateGroup.templates) {
-    strip.append(createGraphicsTemplateCard(template));
-  }
-  section.append(heading, strip);
-  return section;
-}
-
-function createGraphicsTemplateEmptyState() {
-  const empty = document.createElement("div");
-  empty.className = "visual-template-empty";
-  empty.textContent = t("graphics.templateEmpty");
-  return empty;
-}
-
-function buildGraphicsTemplatePreview(template) {
-  if (!template?.visual) {
-    return "none";
-  }
-  const previewUrl = buildEntityVisualDataUrl(`template:${template.id}`, template.visual);
-  return previewUrl ? `url("${previewUrl}")` : "none";
+  graphicsTemplateFilterState = renderState.templateFilterState;
 }
 
 function getGraphicsTemplates() {
@@ -1283,239 +996,6 @@ function getGraphicsTemplates() {
 
 function getSelectedGraphicsEntityKind(entityKey = selectedVisualEntityKey) {
   return getGraphicsEntityKind(graphicsEditorConfig.entityKinds, entityKey);
-}
-
-function renderGraphicsLayerList() {
-  if (!elements.graphicsLayerList) {
-    return;
-  }
-  elements.graphicsLayerList.replaceChildren();
-  const visual = getSelectedEntityVisual();
-  if (!visual) {
-    return;
-  }
-
-  for (const layerItem of buildVisualLayerListItems(visual.layers, selectedVisualLayerId, t)) {
-    const row = document.createElement("div");
-    row.className = "visual-layer-item";
-    row.dataset.hidden = layerItem.hidden;
-    row.dataset.locked = layerItem.locked;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "visual-layer-select";
-    button.dataset.layerId = layerItem.id;
-    button.dataset.active = layerItem.active;
-    const title = document.createElement("span");
-    title.className = "visual-layer-title";
-    title.textContent = layerItem.title;
-    const meta = document.createElement("span");
-    meta.className = "visual-layer-meta";
-    meta.textContent = layerItem.meta;
-    button.append(title, meta);
-    const controls = document.createElement("div");
-    controls.className = "visual-layer-controls";
-    const visibleButton = document.createElement("button");
-    visibleButton.type = "button";
-    visibleButton.dataset.layerAction = "visible";
-    visibleButton.dataset.layerId = layerItem.id;
-    visibleButton.dataset.active = layerItem.visibility.active;
-    visibleButton.textContent = layerItem.visibility.label;
-    const lockedButton = document.createElement("button");
-    lockedButton.type = "button";
-    lockedButton.dataset.layerAction = "locked";
-    lockedButton.dataset.layerId = layerItem.id;
-    lockedButton.dataset.active = layerItem.lock.active;
-    lockedButton.textContent = layerItem.lock.label;
-    controls.append(visibleButton, lockedButton);
-    row.append(button, controls);
-    elements.graphicsLayerList.append(row);
-  }
-}
-
-function renderGraphicsPresets() {
-  if (!elements.graphicsPresets) {
-    return;
-  }
-  elements.graphicsPresets.replaceChildren();
-  const group = elements.graphicsPresets.closest(".visual-preset-group");
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  const presetList = buildShapePresetListModel(layer, graphicsEditorConfig.shapePresets, t);
-  elements.graphicsPresets.hidden = presetList.hidden;
-  if (group) {
-    group.hidden = presetList.hidden;
-  }
-  for (const preset of presetList.items) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.preset = preset.id;
-    button.textContent = preset.label;
-    button.disabled = preset.disabled;
-    elements.graphicsPresets.append(button);
-  }
-}
-
-function renderGraphicsSwatches() {
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  renderGraphicsSwatchStrip(elements.graphicsFillSwatches, buildFillSwatches(layer, graphicsEditorConfig.fillSwatches, t));
-  renderGraphicsSwatchStrip(
-    elements.graphicsTextureSwatches,
-    buildTextureSwatches(layer, graphicsEditorConfig.textureSwatches, t),
-  );
-}
-
-function renderGraphicsSwatchStrip(container, swatches) {
-  if (!container) {
-    return;
-  }
-  container.replaceChildren();
-  const group = container.closest(".visual-preset-group");
-  const swatchStrip = buildGraphicsSwatchStripModel(swatches);
-  if (swatchStrip.hidden) {
-    container.hidden = swatchStrip.hidden;
-    if (group) {
-      group.hidden = swatchStrip.hidden;
-    }
-    return;
-  }
-  container.hidden = swatchStrip.hidden;
-  if (group) {
-    group.hidden = swatchStrip.hidden;
-  }
-  for (const swatch of swatchStrip.items) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "visual-swatch";
-    button.dataset.swatchKind = swatch.kind;
-    button.dataset.swatchValue = swatch.value;
-    button.dataset.selected = String(Boolean(swatch.selected));
-    button.disabled = Boolean(swatch.disabled);
-    button.title = swatch.title;
-    button.setAttribute("aria-label", swatch.title);
-    button.style.setProperty("--swatch-color", swatch.value);
-    if (swatch.preview) {
-      button.style.setProperty("--swatch-preview", swatch.preview);
-    } else {
-      button.style.removeProperty("--swatch-preview");
-    }
-    container.append(button);
-  }
-}
-
-function renderGraphicsForm() {
-  if (!elements.graphicsForm) {
-    return;
-  }
-  elements.graphicsForm.replaceChildren();
-  const visual = getSelectedEntityVisual();
-  if (!visual) {
-    return;
-  }
-
-  const formModel = buildGraphicsFormModel(visual, selectedVisualLayerId, graphicsEditorConfig, t);
-  for (const fieldModel of formModel.fieldModels) {
-    appendGraphicsFieldFromModel(fieldModel);
-  }
-  if (formModel.missingLayerLabel) {
-    appendGraphicsFormPlaceholder(formModel.missingLayerLabel);
-  }
-}
-
-function appendGraphicsFieldFromModel(fieldModel) {
-  if (fieldModel.kind === "select") {
-    appendGraphicsSelectField({
-      scope: fieldModel.scope,
-      field: fieldModel.field,
-      label: fieldModel.label,
-      value: fieldModel.value,
-      options: fieldModel.options,
-    });
-    return;
-  }
-  appendGraphicsField({
-    scope: fieldModel.scope,
-    field: fieldModel.field,
-    label: fieldModel.label,
-    type: fieldModel.type,
-    value: fieldModel.value,
-    valueType: fieldModel.valueType,
-    min: fieldModel.min,
-    max: fieldModel.max,
-    step: fieldModel.step,
-  });
-}
-
-function appendGraphicsField({
-  scope,
-  field,
-  label,
-  type,
-  value,
-  valueType = type === "number" ? "number" : "string",
-  min,
-  max,
-  step,
-}) {
-  if (!elements.graphicsForm) {
-    return;
-  }
-  const wrapper = document.createElement("div");
-  wrapper.className = "visual-field";
-  const labelNode = document.createElement("label");
-  labelNode.textContent = label;
-  const input = document.createElement("input");
-  input.type = type;
-  input.value = value ?? "";
-  input.dataset.scope = scope;
-  input.dataset.field = field;
-  input.dataset.valueType = valueType;
-  if (min !== undefined) {
-    input.min = String(min);
-  }
-  if (max !== undefined) {
-    input.max = String(max);
-  }
-  if (step !== undefined) {
-    input.step = String(step);
-  }
-  wrapper.append(labelNode, input);
-  elements.graphicsForm.append(wrapper);
-}
-
-function appendGraphicsFormPlaceholder(label) {
-  if (!elements.graphicsForm) {
-    return;
-  }
-  const placeholder = document.createElement("div");
-  placeholder.className = "visual-field";
-  const labelNode = document.createElement("label");
-  labelNode.textContent = label;
-  placeholder.append(labelNode);
-  elements.graphicsForm.append(placeholder);
-}
-
-function appendGraphicsSelectField({ scope, field, label, value, options }) {
-  if (!elements.graphicsForm) {
-    return;
-  }
-  const wrapper = document.createElement("div");
-  wrapper.className = "visual-field";
-  const labelNode = document.createElement("label");
-  labelNode.textContent = label;
-  const select = document.createElement("select");
-  select.dataset.scope = scope;
-  select.dataset.field = field;
-  select.dataset.valueType = "string";
-  for (const option of options) {
-    const node = document.createElement("option");
-    node.value = option.value;
-    node.textContent = option.label;
-    node.selected = option.value === value;
-    select.append(node);
-  }
-  wrapper.append(labelNode, select);
-  elements.graphicsForm.append(wrapper);
 }
 
 function ensureSelectedVisualLayer() {
