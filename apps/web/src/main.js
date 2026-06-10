@@ -79,6 +79,7 @@ import {
 import {
   applyGraphicsSwatchToLayer,
   buildFillSwatches,
+  buildGraphicsSwatchStripModel,
   buildTextureSwatches,
 } from "./graphics-studio/swatches.js";
 import { loadTextAsset } from "./utils/assets.js";
@@ -1313,18 +1314,19 @@ function renderGraphicsSwatchStrip(container, swatches) {
   }
   container.replaceChildren();
   const group = container.closest(".visual-preset-group");
-  if (!swatches.length) {
-    container.hidden = true;
+  const swatchStrip = buildGraphicsSwatchStripModel(swatches);
+  if (swatchStrip.hidden) {
+    container.hidden = swatchStrip.hidden;
     if (group) {
-      group.hidden = true;
+      group.hidden = swatchStrip.hidden;
     }
     return;
   }
-  container.hidden = false;
+  container.hidden = swatchStrip.hidden;
   if (group) {
-    group.hidden = false;
+    group.hidden = swatchStrip.hidden;
   }
-  for (const swatch of swatches) {
+  for (const swatch of swatchStrip.items) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "visual-swatch";

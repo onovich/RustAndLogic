@@ -38,6 +38,14 @@ export function buildTextureSwatches(layer, swatches, translate = (key) => key) 
   });
 }
 
+export function buildGraphicsSwatchStripModel(swatches = []) {
+  const items = Array.isArray(swatches) ? swatches : [];
+  return {
+    hidden: items.length === 0,
+    items,
+  };
+}
+
 export function applyGraphicsSwatchToLayer(layer, kind, value) {
   if (!layer || layer.locked) {
     return false;

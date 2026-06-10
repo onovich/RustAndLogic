@@ -57,6 +57,7 @@ import {
 import {
   applyGraphicsSwatchToLayer,
   buildFillSwatches,
+  buildGraphicsSwatchStripModel,
   buildTextureSwatches,
 } from "../apps/web/src/graphics-studio/swatches.js";
 import {
@@ -1679,6 +1680,9 @@ function testGraphicsSwatchHelpers() {
   assert.equal(textureSwatches[0].selected, true);
   assert.equal(textureSwatches[0].title, "Texture swatches // dark");
   assert.match(textureSwatches[0].preview, /repeating-linear-gradient/);
+  assert.deepEqual(buildGraphicsSwatchStripModel([]), { hidden: true, items: [] });
+  assert.deepEqual(buildGraphicsSwatchStripModel(null), { hidden: true, items: [] });
+  assert.deepEqual(buildGraphicsSwatchStripModel(textureSwatches), { hidden: false, items: textureSwatches });
 
   const shapeLayer = { type: "shape", fill: "#000000", textureType: "dither", textureColor: "#111111" };
   assert.equal(applyGraphicsSwatchToLayer(shapeLayer, "fill", "#ffffff"), true);
