@@ -17,39 +17,40 @@ import {
   getTapeScriptCheckValues,
 } from "../../../packages/tapescript-runtime/index.js";
 import {
-  applyGraphicsEntitySelection,
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
   buildSelectedEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
-  applyImportedEntityVisualToSelection,
-  resetGraphicsEntityVisualCatalog,
 } from "./graphics-studio/entity-visuals.js";
+import {
+  addGraphicsStudioLayer,
+  applyGraphicsStudioFormEdit,
+  applyGraphicsStudioShapePreset,
+  applyGraphicsStudioSwatch,
+  applyGraphicsStudioTemplate,
+  applyGraphicsStudioTemplateFilter,
+  deleteGraphicsStudioLayer,
+  deleteGraphicsStudioTemplate,
+  duplicateGraphicsStudioLayer,
+  importGraphicsStudioEntityVisual,
+  importGraphicsStudioTemplate,
+  moveGraphicsStudioLayer,
+  resetGraphicsStudioCatalog,
+  saveGraphicsStudioTemplate,
+  selectGraphicsStudioEntity,
+  selectGraphicsStudioLayer,
+  toggleGraphicsStudioLayerLocked,
+  toggleGraphicsStudioLayerVisible,
+} from "./graphics-studio/commands.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import { bindGraphicsStudioEvents } from "./graphics-studio/events.js";
-import { applyGraphicsFormFieldEdit } from "./graphics-studio/form-schema.js";
-import {
-  addDefaultSelectedVisualLayer,
-  applyShapePresetToSelectedLayer,
-  duplicateSelectedVisualLayer,
-  moveSelectedVisualLayer,
-  removeSelectedVisualLayer,
-  resolveSelectedVisualLayerId,
-  selectVisualLayer,
-  toggleSelectedVisualLayerLocked,
-  toggleSelectedVisualLayerVisible,
-} from "./graphics-studio/layers.js";
+import { resolveSelectedVisualLayerId } from "./graphics-studio/layers.js";
 import { buildGraphicsTemplateLibraryExportModel } from "./graphics-studio/templates.js";
 import {
-  applyGraphicsTemplateToSelectedEntity,
-  applyGraphicsTemplateFilterSelection,
   buildGraphicsTemplateExportSelectionModel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
   getGraphicsTemplateLabel,
-  importGraphicsTemplatePayload,
-  removeGraphicsTemplateFromLibrary,
-  saveGraphicsTemplateFromSelectedEntity,
 } from "./graphics-studio/template-library.js";
 import { renderGraphicsStudio } from "./graphics-studio/render.js";
 import {
@@ -61,7 +62,6 @@ import {
   persistJsonValue,
   persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
 } from "./graphics-studio/storage.js";
-import { applyGraphicsSwatchToSelectedLayer } from "./graphics-studio/swatches.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -599,13 +599,20 @@ function initializeGraphicsEditor() {
   });
 }
 
+function graphicsStudioCommandState() {
+  return {
+    catalog: entityVisualCatalog,
+    selectedEntityKey: selectedVisualEntityKey,
+    selectedLayerId: selectedVisualLayerId,
+    templates: getGraphicsTemplates(),
+    customTemplates: customGraphicsTemplates,
+    defaultTemplates: defaultGraphicsTemplates,
+    recentTemplateIds: recentGraphicsTemplateIds,
+  };
+}
+
 function addSelectedVisualLayer(layerType) {
-  const addState = addDefaultSelectedVisualLayer(
-    getSelectedEntityVisual(),
-    layerType,
-    selectedVisualLayerId,
-    graphicsLayerOptions(),
-  );
+  const addState = addGraphicsStudioLayer(graphicsStudioCommandState(), layerType, graphicsLayerOptions());
   if (!addState.changed) {
     return;
   }
@@ -614,7 +621,7 @@ function addSelectedVisualLayer(layerType) {
 }
 
 function duplicateSelectedVisualLayerInCatalog() {
-  const duplicateState = duplicateSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+  const duplicateState = duplicateGraphicsStudioLayer(graphicsStudioCommandState());
   if (!duplicateState.changed) {
     return;
   }
@@ -623,7 +630,7 @@ function duplicateSelectedVisualLayerInCatalog() {
 }
 
 function deleteSelectedVisualLayer() {
-  const result = removeSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+  const result = deleteGraphicsStudioLayer(graphicsStudioCommandState());
   if (!result.changed) {
     return;
   }
@@ -642,11 +649,7 @@ function exportSelectedEntityVisual() {
 }
 
 function resetEntityVisualCatalog() {
-  const resetState = resetGraphicsEntityVisualCatalog(
-    defaultEntityVisualCatalog,
-    selectedVisualEntityKey,
-    selectedVisualLayerId,
-  );
+  const resetState = resetGraphicsStudioCatalog(defaultEntityVisualCatalog, graphicsStudioCommandState());
   entityVisualCatalog = resetState.entityVisualCatalog;
   selectedVisualEntityKey = resetState.selectedEntityKey;
   selectedVisualLayerId = resetState.selectedLayerId;
@@ -685,12 +688,7 @@ function applyGraphicsFormEdit(editAction) {
   if (!editAction.handled) {
     return;
   }
-  const result = applyGraphicsFormFieldEdit(
-    getSelectedEntityVisual(),
-    selectedVisualLayerId,
-    editAction,
-    { layerOptions: graphicsLayerOptions() },
-  );
+  const result = applyGraphicsStudioFormEdit(graphicsStudioCommandState(), editAction, graphicsLayerOptions());
   if (!result.changed) {
     return;
   }
@@ -717,11 +715,7 @@ function handleGraphicsTemplateFilterAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
-  const nextFilter = applyGraphicsTemplateFilterSelection(
-    graphicsTemplateFilterState,
-    clickAction.filterKind,
-    clickAction.filterValue,
-  );
+  const nextFilter = applyGraphicsStudioTemplateFilter(graphicsTemplateFilterState, clickAction);
   if (!nextFilter.handled) {
     return;
   }
@@ -733,12 +727,7 @@ function handleGraphicsEntityAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
-  const selection = applyGraphicsEntitySelection(
-    entityVisualCatalog,
-    selectedVisualEntityKey,
-    clickAction.entityKey,
-    selectedVisualLayerId,
-  );
+  const selection = selectGraphicsStudioEntity(graphicsStudioCommandState(), clickAction.entityKey);
   selectedVisualEntityKey = selection.entityKey;
   selectedVisualLayerId = selection.selectedLayerId;
   renderGraphicsEditor();
@@ -756,7 +745,7 @@ function handleGraphicsLayerAction(clickAction) {
     toggleLayerLocked(clickAction.layerId);
     return;
   }
-  const selection = selectVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, clickAction.layerId);
+  const selection = selectGraphicsStudioLayer(graphicsStudioCommandState(), clickAction.layerId);
   if (!selection.changed) {
     return;
   }
@@ -910,7 +899,7 @@ function getGraphicsEntityLabel(entityKey) {
 }
 
 function moveSelectedVisualLayerInCatalog(delta) {
-  const moveState = moveSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, delta);
+  const moveState = moveGraphicsStudioLayer(graphicsStudioCommandState(), delta);
   if (!moveState.changed) {
     return;
   }
@@ -931,7 +920,7 @@ function buildEntityVisualDataUrl(entityKey, visual = getEntityVisual(entityKey)
 }
 
 function toggleLayerVisible(layerId) {
-  const toggleState = toggleSelectedVisualLayerVisible(getSelectedEntityVisual(), selectedVisualLayerId, layerId);
+  const toggleState = toggleGraphicsStudioLayerVisible(graphicsStudioCommandState(), layerId);
   if (!toggleState.changed) {
     return;
   }
@@ -940,7 +929,7 @@ function toggleLayerVisible(layerId) {
 }
 
 function toggleLayerLocked(layerId) {
-  const toggleState = toggleSelectedVisualLayerLocked(getSelectedEntityVisual(), selectedVisualLayerId, layerId);
+  const toggleState = toggleGraphicsStudioLayerLocked(graphicsStudioCommandState(), layerId);
   if (!toggleState.changed) {
     return;
   }
@@ -954,12 +943,7 @@ function importSelectedEntityVisual(source) {
     return;
   }
   try {
-    const importState = applyImportedEntityVisualToSelection(
-      entityVisualCatalog,
-      selectedVisualEntityKey,
-      selectedVisualLayerId,
-      source,
-    );
+    const importState = importGraphicsStudioEntityVisual(graphicsStudioCommandState(), source);
     if (!importState.changed) {
       return;
     }
@@ -1009,17 +993,9 @@ function exportGraphicsTemplateLibrary() {
 }
 
 function applyEntityTemplate(templateId) {
-  const templateState = applyGraphicsTemplateToSelectedEntity(
-    entityVisualCatalog,
-    selectedVisualEntityKey,
-    selectedVisualLayerId,
-    getGraphicsTemplates(),
-    templateId,
-    {
-      entityLabel: getGraphicsEntityLabel(selectedVisualEntityKey),
-      recentTemplateIds: recentGraphicsTemplateIds,
-    },
-  );
+  const templateState = applyGraphicsStudioTemplate(graphicsStudioCommandState(), templateId, {
+    entityLabel: getGraphicsEntityLabel(selectedVisualEntityKey),
+  });
   if (!templateState.changed) {
     return;
   }
@@ -1038,8 +1014,7 @@ function saveCurrentEntityAsTemplate() {
   if (!entityKey || !visual) {
     return;
   }
-  const saveState = saveGraphicsTemplateFromSelectedEntity(customGraphicsTemplates, recentGraphicsTemplateIds, {
-    entityKey,
+  const saveState = saveGraphicsStudioTemplate(graphicsStudioCommandState(), {
     entityLabel: getGraphicsEntityLabel(entityKey),
     entityKind: getSelectedGraphicsEntityKind(entityKey),
     label: elements.graphicsTemplateName?.value,
@@ -1061,9 +1036,7 @@ function saveCurrentEntityAsTemplate() {
 
 function importGraphicsTemplate(source) {
   try {
-    const importState = importGraphicsTemplatePayload(customGraphicsTemplates, recentGraphicsTemplateIds, source, {
-      defaultTemplates: defaultGraphicsTemplates,
-      selectedEntityKey: selectedVisualEntityKey,
+    const importState = importGraphicsStudioTemplate(graphicsStudioCommandState(), source, {
       now: Date.now,
     });
     if (!importState.changed) {
@@ -1104,7 +1077,7 @@ function removeCustomGraphicsTemplate(templateId) {
   if (!templateId) {
     return;
   }
-  const result = removeGraphicsTemplateFromLibrary(customGraphicsTemplates, recentGraphicsTemplateIds, templateId);
+  const result = deleteGraphicsStudioTemplate(graphicsStudioCommandState(), templateId);
   if (!result.changed) {
     return;
   }
@@ -1116,13 +1089,9 @@ function removeCustomGraphicsTemplate(templateId) {
 }
 
 function applyShapePreset(presetId) {
-  const presetState = applyShapePresetToSelectedLayer(
-    getSelectedEntityVisual(),
-    selectedVisualLayerId,
-    graphicsEditorConfig.shapePresets,
-    presetId,
-    { entityKey: selectedVisualEntityKey },
-  );
+  const presetState = applyGraphicsStudioShapePreset(graphicsStudioCommandState(), presetId, {
+    presets: graphicsEditorConfig.shapePresets,
+  });
   if (!presetState.changed) {
     return;
   }
@@ -1131,7 +1100,7 @@ function applyShapePreset(presetId) {
 }
 
 function applyGraphicsSwatch(kind, value) {
-  const swatchState = applyGraphicsSwatchToSelectedLayer(getSelectedEntityVisual(), selectedVisualLayerId, kind, value);
+  const swatchState = applyGraphicsStudioSwatch(graphicsStudioCommandState(), kind, value);
   if (!swatchState.changed) {
     return;
   }
