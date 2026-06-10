@@ -46,6 +46,15 @@ export function addDefaultVisualLayer(visual, layerType, options = {}) {
   return layer;
 }
 
+export function addDefaultSelectedVisualLayer(visual, layerType, selectedLayerId = "", options = {}) {
+  const layer = addDefaultVisualLayer(visual, layerType, options);
+  return {
+    changed: Boolean(layer),
+    selectedLayerId: layer?.id ?? selectedLayerId,
+    layer,
+  };
+}
+
 export function upgradeVisualLayerType(layer, nextType, visual, options = {}) {
   if (!layer) {
     return null;

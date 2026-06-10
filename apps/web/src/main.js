@@ -34,7 +34,7 @@ import {
   buildGraphicsFormControlState,
 } from "./graphics-studio/form-schema.js";
 import {
-  addDefaultVisualLayer,
+  addDefaultSelectedVisualLayer,
   applyShapePresetToLayer,
   buildShapePresetListModel,
   buildVisualLayerToolbarModel,
@@ -647,22 +647,30 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsAddShapeButton?.addEventListener("click", () => {
-    const visual = getSelectedEntityVisual();
-    const layer = addDefaultVisualLayer(visual, "shape", graphicsLayerOptions());
-    if (!layer) {
+    const addState = addDefaultSelectedVisualLayer(
+      getSelectedEntityVisual(),
+      "shape",
+      selectedVisualLayerId,
+      graphicsLayerOptions(),
+    );
+    if (!addState.changed) {
       return;
     }
-    selectedVisualLayerId = layer.id;
+    selectedVisualLayerId = addState.selectedLayerId;
     persistEntityVisualCatalog();
   });
 
   elements.graphicsAddGlyphButton?.addEventListener("click", () => {
-    const visual = getSelectedEntityVisual();
-    const layer = addDefaultVisualLayer(visual, "glyph", graphicsLayerOptions());
-    if (!layer) {
+    const addState = addDefaultSelectedVisualLayer(
+      getSelectedEntityVisual(),
+      "glyph",
+      selectedVisualLayerId,
+      graphicsLayerOptions(),
+    );
+    if (!addState.changed) {
       return;
     }
-    selectedVisualLayerId = layer.id;
+    selectedVisualLayerId = addState.selectedLayerId;
     persistEntityVisualCatalog();
   });
 
