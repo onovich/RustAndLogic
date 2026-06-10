@@ -21,7 +21,23 @@ For every small item:
    - Generated/cache/runtime files stay ignored unless deliberately promoted.
 5. Update docs/TODO when the slice changes project knowledge.
 6. Review `git diff --cached --name-status` before committing.
-7. Commit and push only after the checks pass.
+7. Commit and push only after the checks pass. Code commits must include architecture self-check evidence.
+
+## Refactor Gate
+
+Every code refactor must pass the short self-check in `docs/refactor-architecture-checklist.md` before commit. If the longer engineering notes are too much for the current slice, use that checklist as the concise standard and cite it in the final status.
+
+The Codex Stop hook also enforces the habit: if a final status mentions code/refactor/commit work without architecture self-check evidence, the hook should continue the turn until the evidence is reported. Treat the hook as a guardrail, not a substitute for actually running the check.
+
+For frontend refactors, keep the pattern learned from Graphics Studio:
+
+- render modules own DOM construction and visual application;
+- event modules own DOM event binding and `dataset` parsing;
+- command modules compose state transitions using pure helpers;
+- IO modules own browser side effects such as textarea selection, clipboard, and text inputs;
+- `main.js` or screen entry files stay as orchestration and cross-system bridges.
+
+Do not commit a refactor that only moves code. Each slice should also preserve behavior through focused tests, smoke checks, or an explicit reason why no narrower check exists.
 
 ## Expected Directory Boundaries
 

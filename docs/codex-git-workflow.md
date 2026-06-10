@@ -64,7 +64,7 @@ git -c safe.directory=D:/LabProjects/RustAndLogic push -u origin HEAD
 
 ## Docs And TODO
 
-None configured.
+Before code commits, run `C:\Users\Administrator\.codex\skills\project-ops-workflow\scripts\ops\Validate.cmd` and report refactor architecture self-check evidence from `docs/refactor-architecture-checklist.md`.
 
 ## Safety And Branch Policy
 

@@ -12,6 +12,6 @@
     "stagingPolicy":  "ask each time",
     "commitCommand":  "",
     "pushCommand":  "git -c safe.directory=D:/LabProjects/RustAndLogic push -u origin HEAD",
-    "docsRequirement":  "",
+    "docsRequirement":  "Before code commits, run Validate.cmd and report refactor architecture self-check evidence from docs/refactor-architecture-checklist.md.",
     "forbiddenCommands":  ""
 }

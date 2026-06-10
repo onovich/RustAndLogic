@@ -260,6 +260,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Split Graphics Studio state command orchestration into a focused command module while keeping persistence, toasts, and world refresh in `main.js`.
 - [x] Split Graphics Studio textarea, clipboard, and template-name input side effects into a focused IO helper module.
 - [x] Audit Graphics Studio ownership so `main.js` retains only Studio initialization, persistence, toast, world-refresh, and cross-system bridge orchestration.
+- [x] Add a concise refactor architecture checklist and hook-backed self-check workflow for future code commits.
 
 ## Definition Of Done For A Small Item
 

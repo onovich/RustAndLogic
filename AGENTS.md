@@ -16,11 +16,11 @@ Use `docs/project-brief.md` and `docs/source-docs/` as local project truth befor
 Every implementation or documentation slice must follow this loop:
 
 1. Run a bug self-check that directly covers the changed behavior.
-2. Run an architecture self-check against `docs/engineering-workflow.md`.
+2. Run a refactor/architecture self-check against `docs/refactor-architecture-checklist.md` and `docs/engineering-workflow.md`.
 3. Update `docs/development-todo.md` when scope or status changes.
 4. Commit only the intended files and push to `origin/main`.
 
-Use `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1` as the current architecture gate.
+Code commits must run `C:\Users\Administrator\.codex\skills\project-ops-workflow\scripts\ops\Validate.cmd` before staging and report architecture self-check evidence. Use `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check-architecture.ps1` as the current architecture gate inside that validation flow.
 
 <!-- codex-init-flow: initialized -->
 
