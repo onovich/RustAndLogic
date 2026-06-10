@@ -161,6 +161,28 @@ try {
     );
   }
 
+  await page.locator('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="fit"]').click();
+  await page.waitForFunction(() => {
+    const fitButton = document.querySelector(
+      '[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="fit"]',
+    );
+    const storedFilter = localStorage.getItem("rust-and-logic.template-filter.v1") ?? "";
+    return fitButton?.getAttribute("data-active") === "true" && storedFilter.includes('"mode":"fit"');
+  });
+  const templateFilterApplied = await page.evaluate(() => ({
+    activeMode: document
+      .querySelector('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-active="true"]')
+      ?.getAttribute("data-filter-value") ?? "",
+    storedFilterHasFit: (localStorage.getItem("rust-and-logic.template-filter.v1") ?? "").includes('"mode":"fit"'),
+  }));
+  await page.locator('[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="all"]').click();
+  await page.waitForFunction(() => {
+    const allButton = document.querySelector(
+      '[data-testid="graphics-template-mode-filters"] [data-filter-kind="mode"][data-filter-value="all"]',
+    );
+    return allButton?.getAttribute("data-active") === "true";
+  });
+
   await page.locator('[data-testid="graphics-templates"] [data-template-action="export"][data-template-id="frameBot"]').click();
   await page.waitForFunction(() => {
     const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
@@ -393,6 +415,7 @@ try {
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
         textureSwatchApplied: summarizeLayerState(textureSwatchApplied),
+        templateFilterApplied,
         exportedTemplate,
         templateApplied: summarizeLayerState(templateApplied),
         templateRecent,

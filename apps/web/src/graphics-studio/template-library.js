@@ -520,6 +520,22 @@ export function buildGraphicsTemplateFilterRowModel(options, hasSelectedEntity =
   };
 }
 
+export function buildGraphicsTemplateFilterClickActionModel({ filterKind = "", filterValue = "" } = {}) {
+  const kind = String(filterKind ?? "");
+  if (kind !== "mode" && kind !== "category") {
+    return {
+      handled: false,
+      filterKind: "",
+      filterValue: "",
+    };
+  }
+  return {
+    handled: true,
+    filterKind: kind,
+    filterValue: String(filterValue ?? "all"),
+  };
+}
+
 export function applyGraphicsTemplateFilterSelection(filterState, filterKind, filterValue) {
   const current = normalizeGraphicsTemplateFilterState(filterState);
   if (filterKind === "mode") {

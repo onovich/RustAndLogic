@@ -120,6 +120,7 @@ import {
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateClickActionModel,
   buildGraphicsTemplateExportSelectionModel,
+  buildGraphicsTemplateFilterClickActionModel,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
@@ -2431,6 +2432,21 @@ function testGraphicsTemplateLibraryHelpers() {
   assert.deepEqual(buildGraphicsTemplateFilterRowModel(templateFilterOptions, true), {
     hidden: false,
     items: templateFilterOptions,
+  });
+  assert.deepEqual(buildGraphicsTemplateFilterClickActionModel({ filterKind: "mode", filterValue: "fit" }), {
+    handled: true,
+    filterKind: "mode",
+    filterValue: "fit",
+  });
+  assert.deepEqual(buildGraphicsTemplateFilterClickActionModel({ filterKind: "category", filterValue: "custom" }), {
+    handled: true,
+    filterKind: "category",
+    filterValue: "custom",
+  });
+  assert.deepEqual(buildGraphicsTemplateFilterClickActionModel({ filterKind: "unknown", filterValue: "custom" }), {
+    handled: false,
+    filterKind: "",
+    filterValue: "",
   });
   assert.deepEqual(applyGraphicsTemplateFilterSelection({ mode: "all", category: "pickup" }, "mode", "fit"), {
     handled: true,

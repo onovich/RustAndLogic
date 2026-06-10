@@ -62,6 +62,7 @@ import {
   buildGraphicsTemplateClickActionModel,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateExportSelectionModel,
+  buildGraphicsTemplateFilterClickActionModel,
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
@@ -761,20 +762,6 @@ function initializeGraphicsEditor() {
   elements.graphicsPresets?.addEventListener("click", handleGraphicsShapePresetClick);
   elements.graphicsTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
   elements.graphicsRecentTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
-  const handleGraphicsTemplateFilterClick = (event) => {
-    const button = event.target.closest("[data-filter-kind][data-filter-value]");
-    if (!button) {
-      return;
-    }
-    const filterKind = button.dataset.filterKind ?? "";
-    const filterValue = button.dataset.filterValue ?? "all";
-    const nextFilter = applyGraphicsTemplateFilterSelection(graphicsTemplateFilterState, filterKind, filterValue);
-    if (!nextFilter.handled) {
-      return;
-    }
-    graphicsTemplateFilterState = nextFilter.filterState;
-    persistGraphicsTemplateFilterState();
-  };
   elements.graphicsTemplateModeFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
   elements.graphicsTemplateCategoryFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
   elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
@@ -835,6 +822,27 @@ function handleGraphicsTemplateCardClick(event) {
     return;
   }
   applyEntityTemplate(clickAction.templateId);
+}
+
+function handleGraphicsTemplateFilterClick(event) {
+  const button = event.target.closest("[data-filter-kind][data-filter-value]");
+  const clickAction = buildGraphicsTemplateFilterClickActionModel({
+    filterKind: button?.dataset.filterKind ?? "",
+    filterValue: button?.dataset.filterValue ?? "all",
+  });
+  if (!clickAction.handled) {
+    return;
+  }
+  const nextFilter = applyGraphicsTemplateFilterSelection(
+    graphicsTemplateFilterState,
+    clickAction.filterKind,
+    clickAction.filterValue,
+  );
+  if (!nextFilter.handled) {
+    return;
+  }
+  graphicsTemplateFilterState = nextFilter.filterState;
+  persistGraphicsTemplateFilterState();
 }
 
 function handleGraphicsEntityListClick(event) {
