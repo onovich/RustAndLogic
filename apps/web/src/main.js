@@ -49,7 +49,6 @@ import {
 } from "./graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
-  buildGraphicsTemplateExportModel,
   buildGraphicsTemplateLibraryExportModel,
 } from "./graphics-studio/templates.js";
 import {
@@ -58,6 +57,7 @@ import {
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateCardModel,
+  buildGraphicsTemplateExportSelectionModel,
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
@@ -1577,8 +1577,11 @@ function importSelectedEntityVisual(source) {
 }
 
 function exportGraphicsTemplate(templateId) {
-  const template = getGraphicsTemplates().find((item) => item.id === templateId);
-  const exportModel = buildGraphicsTemplateExportModel(template, graphicsTemplateSerializationOptions());
+  const exportModel = buildGraphicsTemplateExportSelectionModel(
+    getGraphicsTemplates(),
+    templateId,
+    graphicsTemplateSerializationOptions(),
+  );
   if (exportModel.disabled || !elements.graphicsEntityIo) {
     return;
   }
@@ -1586,7 +1589,7 @@ function exportGraphicsTemplate(templateId) {
   elements.graphicsEntityIo.focus();
   elements.graphicsEntityIo.select();
   renderGraphicsEditor();
-  showToast({ title: t("graphics.templateExported"), body: getGraphicsTemplateLabel(template, t) }, "success");
+  showToast({ title: t("graphics.templateExported"), body: getGraphicsTemplateLabel(exportModel.template, t) }, "success");
 }
 
 function exportGraphicsTemplateLibrary() {

@@ -1,4 +1,5 @@
 import {
+  buildGraphicsTemplateExportModel,
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -85,6 +86,14 @@ export function getRecentGraphicsTemplates(recentTemplateIds, templates) {
   return (Array.isArray(recentTemplateIds) ? recentTemplateIds : [])
     .map((templateId) => templatesById.get(templateId))
     .filter(Boolean);
+}
+
+export function buildGraphicsTemplateExportSelectionModel(templates = [], templateId = "", options = {}) {
+  const template = Array.isArray(templates) ? templates.find((item) => item.id === templateId) ?? null : null;
+  return {
+    ...buildGraphicsTemplateExportModel(template, options),
+    template,
+  };
 }
 
 export function recordRecentGraphicsTemplateId(recentTemplateIds, templateId) {

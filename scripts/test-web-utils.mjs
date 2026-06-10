@@ -113,6 +113,7 @@ import {
   buildGraphicsTemplateCardActions,
   buildGraphicsTemplateCardModel,
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateExportSelectionModel,
   buildGraphicsTemplateDefaultLabel,
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
@@ -2412,6 +2413,20 @@ function testGraphicsTemplateLibraryHelpers() {
   assert.deepEqual(buildGraphicsRecentTemplateStripModel(recentTemplateItems, false), {
     hidden: true,
     templates: recentTemplateItems,
+  });
+  const exportSelectionModel = buildGraphicsTemplateExportSelectionModel(
+    defaultTemplates,
+    "signalToken",
+    { label: "Signal Token" },
+  );
+  assert.equal(exportSelectionModel.disabled, false);
+  assert.equal(exportSelectionModel.template, defaultTemplates[1]);
+  assert.match(exportSelectionModel.value, /"kind": "graphics-template"/);
+  assert.match(exportSelectionModel.value, /"label": "Signal Token"/);
+  assert.deepEqual(buildGraphicsTemplateExportSelectionModel(defaultTemplates, "missing"), {
+    disabled: true,
+    value: "",
+    template: null,
   });
 
   assert.deepEqual(recordRecentGraphicsTemplateId(["a", "b", "a"], "b"), ["b", "a", "a"]);

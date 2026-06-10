@@ -128,6 +128,19 @@ try {
     throw new Error(`Expected fill swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(swatchApplied))}.`);
   }
 
+  await page.locator('[data-testid="graphics-templates"] [data-template-action="export"][data-template-id="frameBot"]').click();
+  await page.waitForFunction(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return entityIo.includes('"kind": "graphics-template"') && entityIo.includes('"id": "frameBot"');
+  });
+  const exportedTemplate = await page.evaluate(() => {
+    const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
+    return {
+      hasTemplateKind: entityIo.includes('"kind": "graphics-template"'),
+      hasFrameBotId: entityIo.includes('"id": "frameBot"'),
+    };
+  });
+
   await page.locator('[data-testid="graphics-templates"] [data-template="frameBot"]').click();
   await page.waitForFunction(() => {
     const active = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
@@ -319,6 +332,7 @@ try {
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
+        exportedTemplate,
         templateApplied: summarizeLayerState(templateApplied),
         templateRecent,
         imported: summarizeLayerState(imported),
