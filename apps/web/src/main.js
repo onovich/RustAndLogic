@@ -43,8 +43,8 @@ import {
   moveSelectedVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
-  toggleVisualLayerLocked,
-  toggleVisualLayerVisible,
+  toggleSelectedVisualLayerLocked,
+  toggleSelectedVisualLayerVisible,
 } from "./graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
@@ -1534,18 +1534,20 @@ function buildEntityVisualDataUrl(entityKey, visual = getEntityVisual(entityKey)
 }
 
 function toggleLayerVisible(layerId) {
-  const visual = getSelectedEntityVisual();
-  if (!toggleVisualLayerVisible(visual?.layers, layerId)) {
+  const toggleState = toggleSelectedVisualLayerVisible(getSelectedEntityVisual(), selectedVisualLayerId, layerId);
+  if (!toggleState.changed) {
     return;
   }
+  selectedVisualLayerId = toggleState.selectedLayerId;
   persistEntityVisualCatalog();
 }
 
 function toggleLayerLocked(layerId) {
-  const visual = getSelectedEntityVisual();
-  if (!toggleVisualLayerLocked(visual?.layers, layerId)) {
+  const toggleState = toggleSelectedVisualLayerLocked(getSelectedEntityVisual(), selectedVisualLayerId, layerId);
+  if (!toggleState.changed) {
     return;
   }
+  selectedVisualLayerId = toggleState.selectedLayerId;
   persistEntityVisualCatalog();
 }
 

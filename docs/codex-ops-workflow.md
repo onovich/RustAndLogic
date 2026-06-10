@@ -45,7 +45,7 @@ Health URL: intentionally blank in `.codex/project-ops-workflow.json`.
 Ready text: intentionally blank.
 Timeout seconds: 30
 
-`Smoke.cmd` relies on `scripts/smoke-web-ui.mjs`, which starts its own temporary HTTP server on an available port and closes it after the browser flow finishes. Keep smoke independent from the fixed manual-testing port `4173`, because that port may already be occupied by another local project.
+`Smoke.cmd` relies on `scripts/smoke-web-ui.mjs` and `scripts/smoke-graphics-layer-state.mjs`, which start their own temporary HTTP servers on available ports and close them after the browser flows finish. Keep smoke independent from the fixed manual-testing port `4173`, because that port may already be occupied by another local project.
 
 For token-light refactor slices, run focused module tests first:
 
@@ -54,6 +54,14 @@ C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\
 ```
 
 This directly covers extracted Web utility and Graphics Studio pure modules before the broader `Validate.cmd` and `Smoke.cmd` gates.
+
+For token-light Graphics Studio layer-state browser checks, run:
+
+```powershell
+C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe scripts/smoke-graphics-layer-state.mjs
+```
+
+It exercises layer visibility, lock, add, duplicate, move, and remove flows and writes a screenshot to `.codex-artifacts/graphics-studio-layer-state-smoke.png`.
 
 ## Safety Policy
 

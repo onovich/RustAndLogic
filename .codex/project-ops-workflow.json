@@ -73,7 +73,8 @@
 
                                               ],
                                      "commands":  [
-                                                     "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/smoke-web-ui.mjs"
+                                                     "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/smoke-web-ui.mjs",
+                                                     "C:\\Users\\Administrator\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\node\\bin\\node.exe scripts/smoke-graphics-layer-state.mjs"
                                                   ]
                                  },
                        "package":  {

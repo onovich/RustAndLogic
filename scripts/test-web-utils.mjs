@@ -51,6 +51,8 @@ import {
   removeVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
+  toggleSelectedVisualLayerLocked,
+  toggleSelectedVisualLayerVisible,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
   upgradeVisualLayerType,
@@ -1980,6 +1982,13 @@ function testGraphicsLayerHelpers() {
   assert.equal(toggleVisualLayerLocked(toggleLayers, "glyph"), true);
   assert.equal(toggleLayers[1].locked, false);
   assert.equal(toggleVisualLayerLocked(toggleLayers, "missing"), false);
+  const toggleVisual = { layers: [{ id: "body" }, { id: "glyph", visible: false, locked: true }] };
+  assert.deepEqual(toggleSelectedVisualLayerVisible(toggleVisual, "body", "glyph"), { changed: true, selectedLayerId: "body" });
+  assert.equal(toggleVisual.layers[1].visible, true);
+  assert.deepEqual(toggleSelectedVisualLayerLocked(toggleVisual, "body", "glyph"), { changed: true, selectedLayerId: "body" });
+  assert.equal(toggleVisual.layers[1].locked, false);
+  assert.deepEqual(toggleSelectedVisualLayerVisible(toggleVisual, "body", "missing"), { changed: false, selectedLayerId: "body" });
+  assert.deepEqual(toggleSelectedVisualLayerLocked(toggleVisual, "body", "missing"), { changed: false, selectedLayerId: "body" });
   assert.equal(resolveSelectedVisualLayerId(null, "a"), "");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "a"), "a");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "missing"), "b");

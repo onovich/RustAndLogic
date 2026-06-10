@@ -203,6 +203,13 @@ export function toggleVisualLayerVisible(layers, layerId) {
   return true;
 }
 
+export function toggleSelectedVisualLayerVisible(visual, selectedLayerId = "", layerId = selectedLayerId) {
+  return {
+    changed: toggleVisualLayerVisible(visual?.layers, layerId),
+    selectedLayerId,
+  };
+}
+
 export function toggleVisualLayerLocked(layers, layerId) {
   const layer = findVisualLayer(layers, layerId);
   if (!layer) {
@@ -210,6 +217,13 @@ export function toggleVisualLayerLocked(layers, layerId) {
   }
   layer.locked = !layer.locked;
   return true;
+}
+
+export function toggleSelectedVisualLayerLocked(visual, selectedLayerId = "", layerId = selectedLayerId) {
+  return {
+    changed: toggleVisualLayerLocked(visual?.layers, layerId),
+    selectedLayerId,
+  };
 }
 
 export function resolveSelectedVisualLayerId(visual, selectedLayerId = "") {
