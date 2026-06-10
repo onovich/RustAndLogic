@@ -35,7 +35,7 @@ import {
 } from "./graphics-studio/form-schema.js";
 import {
   addDefaultSelectedVisualLayer,
-  applyShapePresetToLayer,
+  applyShapePresetToSelectedLayer,
   buildShapePresetListModel,
   buildVisualLayerToolbarModel,
   duplicateSelectedVisualLayer,
@@ -1745,12 +1745,17 @@ function removeCustomGraphicsTemplate(templateId) {
 }
 
 function applyShapePreset(presetId) {
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  const preset = (graphicsEditorConfig.shapePresets ?? []).find((item) => item.id === presetId);
-  if (!applyShapePresetToLayer(layer, preset, visual, { entityKey: selectedVisualEntityKey })) {
+  const presetState = applyShapePresetToSelectedLayer(
+    getSelectedEntityVisual(),
+    selectedVisualLayerId,
+    graphicsEditorConfig.shapePresets,
+    presetId,
+    { entityKey: selectedVisualEntityKey },
+  );
+  if (!presetState.changed) {
     return;
   }
+  selectedVisualLayerId = presetState.selectedLayerId;
   persistEntityVisualCatalog();
 }
 

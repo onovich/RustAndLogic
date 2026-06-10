@@ -35,6 +35,7 @@ import {
   addDefaultSelectedVisualLayer,
   addDefaultVisualLayer,
   applyShapePresetToLayer,
+  applyShapePresetToSelectedLayer,
   buildShapePresetListModel,
   buildVisualLayerActionState,
   buildVisualLayerListItems,
@@ -1934,6 +1935,29 @@ function testGraphicsLayerHelpers() {
   assert.equal(presetLayer.y, 13);
   assert.equal(presetLayer.sides, 6);
   assert.equal(applyShapePresetToLayer({ type: "shape", locked: true }, { patch: { width: 1 } }, visual), false);
+  const presetVisual = { canvasSize: 30, layers: [{ id: "shape", type: "shape", shape: "rectangle" }, { id: "glyph", type: "glyph" }] };
+  const selectedPresetState = applyShapePresetToSelectedLayer(
+    presetVisual,
+    "shape",
+    [{ id: "wide", patch: { shape: "polygon", width: { scale: 0.5 } } }],
+    "wide",
+    { entityKey: "robot" },
+  );
+  assert.equal(selectedPresetState.changed, true);
+  assert.equal(selectedPresetState.selectedLayerId, "shape");
+  assert.equal(presetVisual.layers[0].shape, "polygon");
+  assert.equal(presetVisual.layers[0].width, 15);
+  assert.equal(presetVisual.layers[0].sides, 6);
+  assert.deepEqual(applyShapePresetToSelectedLayer(presetVisual, "glyph", [{ id: "wide", patch: { width: 1 } }], "wide"), {
+    changed: false,
+    selectedLayerId: "glyph",
+    layer: presetVisual.layers[1],
+  });
+  assert.deepEqual(applyShapePresetToSelectedLayer(presetVisual, "shape", [], "missing"), {
+    changed: false,
+    selectedLayerId: "shape",
+    layer: presetVisual.layers[0],
+  });
 
   const layers = [{ id: "a" }, { id: "b" }, { id: "c" }];
   assert.equal(moveVisualLayer(layers, "b", -1), true);

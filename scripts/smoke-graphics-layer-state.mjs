@@ -58,9 +58,6 @@ try {
     layerIds: ["robot-body", "robot-glyph"],
     exportedRobotLayerIds: ["robot-body", "robot-glyph"],
   });
-  await mkdir(dirname(screenshotPath), { recursive: true });
-  await page.screenshot({ path: screenshotPath, fullPage: false });
-
   await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="visible"][data-layer-id="robot-body"]').click();
   await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="locked"][data-layer-id="robot-body"]').click();
   await page.waitForFunction(() => {
@@ -117,6 +114,15 @@ try {
     duplicateLayerId,
   );
 
+  await page.locator('[data-testid="graphics-presets"] [data-preset="beacon"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-export"]')?.value.includes('"shape": "star"'));
+  const presetApplied = await readLayerState(page);
+  if (presetApplied.activeLayerId !== "robot-body" || !presetApplied.exportValue.includes('"shape": "star"')) {
+    throw new Error(`Expected shape preset to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(presetApplied))}.`);
+  }
+  await mkdir(dirname(screenshotPath), { recursive: true });
+  await page.screenshot({ path: screenshotPath, fullPage: false });
+
   console.log(
     JSON.stringify(
       {
@@ -126,6 +132,7 @@ try {
         selectedGlyph: summarizeLayerState(selectedGlyph),
         addedLayerId,
         duplicateLayerId,
+        presetApplied: summarizeLayerState(presetApplied),
       },
       null,
       2,

@@ -323,6 +323,16 @@ export function applyShapePresetToLayer(layer, preset, visual, options = {}) {
   return true;
 }
 
+export function applyShapePresetToSelectedLayer(visual, selectedLayerId = "", presets = [], presetId = "", options = {}) {
+  const layer = findVisualLayer(visual?.layers, selectedLayerId);
+  const preset = Array.isArray(presets) ? presets.find((item) => item?.id === presetId) ?? null : null;
+  return {
+    changed: applyShapePresetToLayer(layer, preset, visual, options),
+    selectedLayerId,
+    layer,
+  };
+}
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
