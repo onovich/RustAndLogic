@@ -17,6 +17,7 @@ import {
 import {
   buildGraphicsFieldModel,
   buildGraphicsFieldSchemaModels,
+  buildGraphicsFormModel,
   buildGraphicsFormControlState,
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
@@ -1531,6 +1532,84 @@ function testGraphicsFormSchemaHelpers() {
         options: [{ value: "rectangle", label: "t:graphics.shape.rectangle" }],
       },
     ],
+  );
+  const formConfig = {
+    entityFields: [{ field: "canvasSize", type: "number", labelKey: "graphics.canvasSize" }],
+    layerBaseFields: [{ field: "type", type: "select", labelKey: "graphics.layerType", optionsKey: "layerTypeOptions" }],
+    glyphFields: [{ field: "glyph", labelKey: "graphics.glyph" }],
+    shapeFields: [{ field: "shape", labelKey: "graphics.shape" }],
+    layerTypeOptions: [
+      { value: "shape", label: "Shape" },
+      { value: "glyph", label: "Glyph" },
+    ],
+  };
+  const formVisual = {
+    canvasSize: 24,
+    layers: [
+      { id: "glyph-layer", type: "glyph", glyph: "R" },
+      { id: "shape-layer", type: "shape", shape: "polygon" },
+    ],
+  };
+  const summarizeFormModel = (model) => ({
+    missingLayerLabel: model.missingLayerLabel,
+    fields: model.fieldModels.map((fieldModel) => ({
+      kind: fieldModel.kind,
+      scope: fieldModel.scope,
+      field: fieldModel.field,
+      value: fieldModel.value,
+      options: fieldModel.options,
+    })),
+  });
+  assert.deepEqual(summarizeFormModel(buildGraphicsFormModel(null, "", formConfig, (key) => `t:${key}`)), {
+    missingLayerLabel: "",
+    fields: [],
+  });
+  assert.deepEqual(summarizeFormModel(buildGraphicsFormModel(formVisual, "missing", formConfig, (key) => `t:${key}`)), {
+    missingLayerLabel: "t:graphics.noLayer",
+    fields: [
+      {
+        kind: "input",
+        scope: "entity",
+        field: "canvasSize",
+        value: 24,
+        options: undefined,
+      },
+    ],
+  });
+  assert.deepEqual(summarizeFormModel(buildGraphicsFormModel(formVisual, "glyph-layer", formConfig, (key) => `t:${key}`)), {
+    missingLayerLabel: "",
+    fields: [
+      {
+        kind: "input",
+        scope: "entity",
+        field: "canvasSize",
+        value: 24,
+        options: undefined,
+      },
+      {
+        kind: "select",
+        scope: "layer",
+        field: "type",
+        value: "glyph",
+        options: [
+          { value: "shape", label: "Shape" },
+          { value: "glyph", label: "Glyph" },
+        ],
+      },
+      {
+        kind: "input",
+        scope: "layer",
+        field: "glyph",
+        value: "R",
+        options: undefined,
+      },
+    ],
+  });
+  assert.deepEqual(
+    summarizeFormModel(buildGraphicsFormModel(formVisual, "shape-layer", formConfig, (key) => `t:${key}`)).fields.map(
+      (fieldModel) => fieldModel.field,
+    ),
+    ["canvasSize", "type", "shape"],
   );
   assert.deepEqual(
     buildGraphicsFieldModel(

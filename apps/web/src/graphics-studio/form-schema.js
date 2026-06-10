@@ -62,6 +62,39 @@ export function buildGraphicsFieldSchemaModels(scope, source, schema, optionCata
     .filter(Boolean);
 }
 
+export function buildGraphicsFormModel(visual, selectedLayerId, editorConfig = {}, translate = (key) => key) {
+  if (!visual) {
+    return {
+      fieldModels: [],
+      missingLayerLabel: "",
+    };
+  }
+  const fieldModels = buildGraphicsFieldSchemaModels("entity", visual, editorConfig.entityFields, editorConfig, translate);
+  const layer = Array.isArray(visual.layers)
+    ? visual.layers.find((item) => item.id === selectedLayerId) ?? null
+    : null;
+  if (!layer) {
+    return {
+      fieldModels,
+      missingLayerLabel: translate("graphics.noLayer"),
+    };
+  }
+  fieldModels.push(...buildGraphicsFieldSchemaModels("layer", layer, editorConfig.layerBaseFields, editorConfig, translate));
+  fieldModels.push(
+    ...buildGraphicsFieldSchemaModels(
+      "layer",
+      layer,
+      layer.type === "glyph" ? editorConfig.glyphFields : editorConfig.shapeFields,
+      editorConfig,
+      translate,
+    ),
+  );
+  return {
+    fieldModels,
+    missingLayerLabel: "",
+  };
+}
+
 export function buildGraphicsSelectOptions(options, translate = (key) => key) {
   return (Array.isArray(options) ? options : [])
     .filter((option) => option && typeof option.value === "string")

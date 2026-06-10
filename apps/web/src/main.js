@@ -25,8 +25,7 @@ import {
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
-  buildGraphicsFieldModel,
-  buildGraphicsFieldSchemaModels,
+  buildGraphicsFormModel,
   buildGraphicsFormControlState,
   coerceGraphicsFieldValue,
 } from "./graphics-studio/form-schema.js";
@@ -1378,33 +1377,12 @@ function renderGraphicsForm() {
     return;
   }
 
-  renderGraphicsFieldSchema("entity", visual, graphicsEditorConfig.entityFields);
-
-  const layer = visual.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!layer) {
-    const placeholder = document.createElement("div");
-    placeholder.className = "visual-field";
-    const label = document.createElement("label");
-    label.textContent = t("graphics.noLayer");
-    placeholder.append(label);
-    elements.graphicsForm.append(placeholder);
-    return;
-  }
-
-  renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.layerBaseFields);
-
-  if (layer.type === "glyph") {
-    renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.glyphFields);
-    return;
-  }
-
-  renderGraphicsFieldSchema("layer", layer, graphicsEditorConfig.shapeFields);
-}
-
-function renderGraphicsFieldSchema(scope, source, schema) {
-  const fieldModels = buildGraphicsFieldSchemaModels(scope, source, schema, graphicsEditorConfig, t);
-  for (const fieldModel of fieldModels) {
+  const formModel = buildGraphicsFormModel(visual, selectedVisualLayerId, graphicsEditorConfig, t);
+  for (const fieldModel of formModel.fieldModels) {
     appendGraphicsFieldFromModel(fieldModel);
+  }
+  if (formModel.missingLayerLabel) {
+    appendGraphicsFormPlaceholder(formModel.missingLayerLabel);
   }
 }
 
@@ -1467,6 +1445,18 @@ function appendGraphicsField({
   }
   wrapper.append(labelNode, input);
   elements.graphicsForm.append(wrapper);
+}
+
+function appendGraphicsFormPlaceholder(label) {
+  if (!elements.graphicsForm) {
+    return;
+  }
+  const placeholder = document.createElement("div");
+  placeholder.className = "visual-field";
+  const labelNode = document.createElement("label");
+  labelNode.textContent = label;
+  placeholder.append(labelNode);
+  elements.graphicsForm.append(placeholder);
 }
 
 function appendGraphicsSelectField({ scope, field, label, value, options }) {
