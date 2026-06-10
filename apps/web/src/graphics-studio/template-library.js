@@ -1,4 +1,4 @@
-import { buildCustomTemplateId, normalizeGraphicsCustomTemplate } from "./templates.js";
+import { buildCustomTemplateId, normalizeGraphicsCustomTemplate, resolveGraphicsTemplateValue } from "./templates.js";
 
 export function getAllGraphicsTemplates(customTemplates = [], defaultTemplates = []) {
   return [
@@ -156,6 +156,24 @@ export function createGraphicsTemplateFromEntityVisual(options = {}) {
     },
     Number(options.templateOffset ?? 0),
   );
+}
+
+export function applyGraphicsTemplateToEntityVisual(template, options = {}) {
+  const entityKey = String(options.entityKey ?? "").trim();
+  if (!entityKey || !template?.visual) {
+    return null;
+  }
+  const currentVisual = options.currentVisual;
+  const nextCanvasSize = Number(template.visual.canvasSize ?? currentVisual?.canvasSize ?? 24);
+  const resolvedVisual = resolveGraphicsTemplateValue(template.visual, {
+    canvasSize: nextCanvasSize,
+    entityKey,
+  });
+  return {
+    label: currentVisual?.label ?? String(options.entityLabel ?? entityKey),
+    canvasSize: Number(resolvedVisual.canvasSize ?? nextCanvasSize),
+    layers: Array.isArray(resolvedVisual.layers) ? resolvedVisual.layers : [],
+  };
 }
 
 export function resolveGraphicsTemplateImportId(template, options = {}) {

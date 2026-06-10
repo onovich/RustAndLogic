@@ -45,11 +45,11 @@ import {
 import {
   buildGraphicsTemplateActionState,
   isGraphicsTemplateLibraryPayload,
-  resolveGraphicsTemplateValue,
   serializeGraphicsTemplate,
   serializeGraphicsTemplateLibrary,
 } from "./graphics-studio/templates.js";
 import {
+  applyGraphicsTemplateToEntityVisual,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateCardModel,
@@ -1582,20 +1582,15 @@ function applyEntityTemplate(templateId) {
     return;
   }
   const template = getGraphicsTemplates().find((item) => item.id === templateId);
-  if (!template?.visual) {
+  const nextVisual = applyGraphicsTemplateToEntityVisual(template, {
+    currentVisual: getSelectedEntityVisual(),
+    entityKey,
+    entityLabel: getGraphicsEntityLabel(entityKey),
+  });
+  if (!nextVisual) {
     return;
   }
-  const currentVisual = getSelectedEntityVisual();
-  const nextCanvasSize = Number(template.visual.canvasSize ?? currentVisual?.canvasSize ?? 24);
-  const resolvedVisual = resolveGraphicsTemplateValue(template.visual, {
-    canvasSize: nextCanvasSize,
-    entityKey,
-  });
-  entityVisualCatalog.entities[entityKey] = {
-    label: currentVisual?.label ?? getGraphicsEntityLabel(entityKey),
-    canvasSize: Number(resolvedVisual.canvasSize ?? nextCanvasSize),
-    layers: Array.isArray(resolvedVisual.layers) ? resolvedVisual.layers : [],
-  };
+  entityVisualCatalog.entities[entityKey] = nextVisual;
   ensureSelectedVisualLayer();
   persistEntityVisualCatalog();
   recordRecentGraphicsTemplate(template.id);

@@ -89,6 +89,7 @@ import {
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
 import {
+  applyGraphicsTemplateToEntityVisual,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCardActions,
   buildGraphicsTemplateCardModel,
@@ -2241,6 +2242,45 @@ function testGraphicsTemplateLibraryHelpers() {
     templates: [{ id: "a" }],
     recentTemplateIds: ["a"],
   });
+  assert.deepEqual(
+    applyGraphicsTemplateToEntityVisual(
+      {
+        visual: {
+          layers: [
+            {
+              id: "mark",
+              glyph: { kind: "entityInitial" },
+              x: { kind: "center", offset: 2 },
+              size: { scale: 0.5, round: "integer" },
+            },
+          ],
+        },
+      },
+      {
+        currentVisual: { label: "Runner", canvasSize: 32, layers: [] },
+        entityKey: "robot",
+        entityLabel: "Robot",
+      },
+    ),
+    {
+      label: "Runner",
+      canvasSize: 32,
+      layers: [{ id: "mark", glyph: "R", x: 18, size: 16 }],
+    },
+  );
+  assert.deepEqual(
+    applyGraphicsTemplateToEntityVisual(
+      { visual: { canvasSize: 18, layers: "bad" } },
+      { entityKey: "scrap", entityLabel: "Scrap Node" },
+    ),
+    {
+      label: "Scrap Node",
+      canvasSize: 18,
+      layers: [],
+    },
+  );
+  assert.equal(applyGraphicsTemplateToEntityVisual(null, { entityKey: "robot" }), null);
+  assert.equal(applyGraphicsTemplateToEntityVisual({ visual: { layers: [] } }, { entityKey: "" }), null);
   const customVisual = { canvasSize: 24, layers: [{ id: "body", glyph: "R" }] };
   const savedTemplate = createGraphicsTemplateFromEntityVisual({
     entityKey: "robot",
