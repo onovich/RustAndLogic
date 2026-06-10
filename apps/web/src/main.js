@@ -86,6 +86,7 @@ import {
 import {
   applyGraphicsSwatchToSelectedLayer,
   buildFillSwatches,
+  buildGraphicsSwatchClickActionModel,
   buildGraphicsSwatchStripModel,
   buildTextureSwatches,
 } from "./graphics-studio/swatches.js";
@@ -819,10 +820,14 @@ function initializeGraphicsEditor() {
   });
   const handleGraphicsSwatchClick = (event) => {
     const button = event.target.closest("[data-swatch-kind]");
-    if (!button) {
+    const clickAction = buildGraphicsSwatchClickActionModel({
+      swatchKind: button?.dataset.swatchKind ?? "",
+      swatchValue: button?.dataset.swatchValue ?? "",
+    });
+    if (!clickAction.handled) {
       return;
     }
-    applyGraphicsSwatch(button.dataset.swatchKind ?? "", button.dataset.swatchValue ?? "");
+    applyGraphicsSwatch(clickAction.kind, clickAction.value);
   };
   elements.graphicsFillSwatches?.addEventListener("click", handleGraphicsSwatchClick);
   elements.graphicsTextureSwatches?.addEventListener("click", handleGraphicsSwatchClick);

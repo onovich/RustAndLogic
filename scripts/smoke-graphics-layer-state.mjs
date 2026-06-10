@@ -128,6 +128,18 @@ try {
     throw new Error(`Expected fill swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(swatchApplied))}.`);
   }
 
+  await page.locator('[data-testid="graphics-texture-swatches"] .visual-swatch[data-swatch-value="#4fa3a5"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-export"]')?.value.includes('"textureColor": "#4fa3a5"'));
+  const textureSwatchApplied = await readLayerState(page);
+  if (
+    textureSwatchApplied.activeLayerId !== "robot-body" ||
+    !textureSwatchApplied.exportValue.includes('"textureColor": "#4fa3a5"')
+  ) {
+    throw new Error(
+      `Expected texture swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(textureSwatchApplied))}.`,
+    );
+  }
+
   await page.locator('[data-testid="graphics-templates"] [data-template-action="export"][data-template-id="frameBot"]').click();
   await page.waitForFunction(() => {
     const entityIo = document.querySelector('[data-testid="graphics-entity-io"]')?.value ?? "";
@@ -358,6 +370,7 @@ try {
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
+        textureSwatchApplied: summarizeLayerState(textureSwatchApplied),
         exportedTemplate,
         templateApplied: summarizeLayerState(templateApplied),
         templateRecent,

@@ -46,6 +46,23 @@ export function buildGraphicsSwatchStripModel(swatches = []) {
   };
 }
 
+export function buildGraphicsSwatchClickActionModel({ swatchKind = "", swatchValue = "" } = {}) {
+  const kind = String(swatchKind ?? "");
+  const value = String(swatchValue ?? "");
+  if ((kind === "fill" || kind === "texture") && value) {
+    return {
+      handled: true,
+      kind,
+      value,
+    };
+  }
+  return {
+    handled: false,
+    kind: "",
+    value: "",
+  };
+}
+
 export function applyGraphicsSwatchToLayer(layer, kind, value) {
   if (!layer || layer.locked) {
     return false;

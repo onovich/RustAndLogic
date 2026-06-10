@@ -91,6 +91,7 @@ import {
   applyGraphicsSwatchToLayer,
   applyGraphicsSwatchToSelectedLayer,
   buildFillSwatches,
+  buildGraphicsSwatchClickActionModel,
   buildGraphicsSwatchStripModel,
   buildTextureSwatches,
 } from "../apps/web/src/graphics-studio/swatches.js";
@@ -2237,6 +2238,26 @@ function testGraphicsSwatchHelpers() {
   assert.deepEqual(buildGraphicsSwatchStripModel([]), { hidden: true, items: [] });
   assert.deepEqual(buildGraphicsSwatchStripModel(null), { hidden: true, items: [] });
   assert.deepEqual(buildGraphicsSwatchStripModel(textureSwatches), { hidden: false, items: textureSwatches });
+  assert.deepEqual(buildGraphicsSwatchClickActionModel({ swatchKind: "fill", swatchValue: "#00ff88" }), {
+    handled: true,
+    kind: "fill",
+    value: "#00ff88",
+  });
+  assert.deepEqual(buildGraphicsSwatchClickActionModel({ swatchKind: "texture", swatchValue: "#4fa3a5" }), {
+    handled: true,
+    kind: "texture",
+    value: "#4fa3a5",
+  });
+  assert.deepEqual(buildGraphicsSwatchClickActionModel({ swatchKind: "texture" }), {
+    handled: false,
+    kind: "",
+    value: "",
+  });
+  assert.deepEqual(buildGraphicsSwatchClickActionModel({ swatchKind: "unknown", swatchValue: "#ffffff" }), {
+    handled: false,
+    kind: "",
+    value: "",
+  });
 
   const shapeLayer = { type: "shape", fill: "#000000", textureType: "dither", textureColor: "#111111" };
   assert.equal(applyGraphicsSwatchToLayer(shapeLayer, "fill", "#ffffff"), true);
