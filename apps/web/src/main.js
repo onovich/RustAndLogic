@@ -19,6 +19,7 @@ import {
 import {
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
   buildGraphicsEntityListItems,
+  buildGraphicsEntityPreviewModel,
   getGraphicsEntityDisplayLabel,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
@@ -965,10 +966,10 @@ function renderGraphicsEditor() {
   renderGraphicsSwatches();
 
   const visual = getSelectedEntityVisual();
-  const previewUrl = visual ? buildEntityVisualDataUrl(selectedVisualEntityKey, visual) : "";
-  elements.graphicsPreview.style.backgroundImage = previewUrl ? `url("${previewUrl}")` : "none";
-  elements.graphicsPreview.setAttribute("aria-label", getGraphicsEntityLabel(selectedVisualEntityKey));
-  elements.graphicsEntityName.textContent = getGraphicsEntityLabel(selectedVisualEntityKey);
+  const previewModel = buildGraphicsEntityPreviewModel(selectedVisualEntityKey, visual, t, entityVisualDataUrlCache);
+  elements.graphicsPreview.style.backgroundImage = previewModel.backgroundImage;
+  elements.graphicsPreview.setAttribute("aria-label", previewModel.ariaLabel);
+  elements.graphicsEntityName.textContent = previewModel.label;
   if (elements.graphicsEntityIo && !elements.graphicsEntityIo.value.trim()) {
     elements.graphicsEntityIo.placeholder = t("graphics.entityIoPlaceholder");
   }

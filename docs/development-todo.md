@@ -205,6 +205,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio template card metadata and action view models into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio template library and recent-template strip visibility models into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio entity selector labels and active-state items into reusable pure entity-visual helpers with direct tests.
+- [x] Extract Graphics Studio entity preview background and label model into reusable pure entity-visual helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

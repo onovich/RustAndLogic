@@ -6,6 +6,7 @@ import {
 import {
   buildEntityVisualDataUrl,
   buildGraphicsEntityListItems,
+  buildGraphicsEntityPreviewModel,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
   getGraphicsEntityDisplayLabel,
@@ -1253,6 +1254,23 @@ function testGraphicsEntityListHelpers() {
     { entityKey: "wall", active: true, label: "Wall" },
   ]);
   assert.deepEqual(buildGraphicsEntityListItems(null, "robot", translate), []);
+  const preview = buildGraphicsEntityPreviewModel(
+    "wall",
+    {
+      label: "Wall",
+      canvasSize: 12,
+      layers: [{ id: "dot", type: "shape", shape: "circle", x: 6, y: 6, width: 8, height: 8 }],
+    },
+    translate,
+  );
+  assert.match(preview.backgroundImage, /^url\("data:image\/svg\+xml/);
+  assert.equal(preview.label, "Wall");
+  assert.equal(preview.ariaLabel, "Wall");
+  assert.deepEqual(buildGraphicsEntityPreviewModel("missing", null, translate), {
+    backgroundImage: "none",
+    label: "missing",
+    ariaLabel: "missing",
+  });
 }
 
 function testGraphicsPreviews() {

@@ -62,6 +62,16 @@ export function buildGraphicsEntityListItems(catalog, selectedEntityKey = "", tr
   }));
 }
 
+export function buildGraphicsEntityPreviewModel(entityKey, visual, translate = (key) => key, cache = null) {
+  const dataUrl = visual ? buildEntityVisualDataUrl(entityKey, visual, cache) : "";
+  const label = getGraphicsEntityDisplayLabel(entityKey, visual, translate);
+  return {
+    backgroundImage: dataUrl ? `url("${dataUrl}")` : "none",
+    label,
+    ariaLabel: label,
+  };
+}
+
 function renderEntityVisualLayer(layer, index, defs) {
   if (layer.visible === false) {
     return "";
