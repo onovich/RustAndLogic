@@ -967,19 +967,7 @@ function renderGraphicsEditor() {
   renderGraphicsSwatches();
 
   const visual = getSelectedEntityVisual();
-  const previewModel = buildGraphicsEntityPreviewModel(selectedVisualEntityKey, visual, t, entityVisualDataUrlCache);
-  elements.graphicsPreview.style.backgroundImage = previewModel.backgroundImage;
-  elements.graphicsPreview.setAttribute("aria-label", previewModel.ariaLabel);
-  elements.graphicsEntityName.textContent = previewModel.label;
-  const entityIoModel = buildGraphicsEntityIoModel({
-    catalog: entityVisualCatalog,
-    ioValue: elements.graphicsEntityIo?.value,
-    translate: t,
-  });
-  if (elements.graphicsEntityIo && entityIoModel.placeholder) {
-    elements.graphicsEntityIo.placeholder = entityIoModel.placeholder;
-  }
-  elements.graphicsExport.value = entityIoModel.exportValue;
+  const entityIoModel = renderGraphicsEditorEntitySurface(visual);
   const templateActions = buildGraphicsTemplateActionState({
     selectedEntityKey: selectedVisualEntityKey,
     ioValue: elements.graphicsEntityIo?.value,
@@ -1034,6 +1022,23 @@ function renderGraphicsEditor() {
       controls[state.index].disabled = state.disabled;
     }
   }
+}
+
+function renderGraphicsEditorEntitySurface(visual) {
+  const previewModel = buildGraphicsEntityPreviewModel(selectedVisualEntityKey, visual, t, entityVisualDataUrlCache);
+  elements.graphicsPreview.style.backgroundImage = previewModel.backgroundImage;
+  elements.graphicsPreview.setAttribute("aria-label", previewModel.ariaLabel);
+  elements.graphicsEntityName.textContent = previewModel.label;
+  const entityIoModel = buildGraphicsEntityIoModel({
+    catalog: entityVisualCatalog,
+    ioValue: elements.graphicsEntityIo?.value,
+    translate: t,
+  });
+  if (elements.graphicsEntityIo && entityIoModel.placeholder) {
+    elements.graphicsEntityIo.placeholder = entityIoModel.placeholder;
+  }
+  elements.graphicsExport.value = entityIoModel.exportValue;
+  return entityIoModel;
 }
 
 function renderGraphicsEntityList() {
