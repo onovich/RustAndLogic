@@ -27,6 +27,7 @@ import {
   buildShapePresetListModel,
   buildVisualLayerActionState,
   buildVisualLayerListItems,
+  buildVisualLayerToolbarModel,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
   describeVisualLayerMeta,
@@ -1632,6 +1633,20 @@ function testGraphicsLayerHelpers() {
     moveUpDisabled: false,
     moveDownDisabled: true,
     deleteDisabled: false,
+  });
+  assert.deepEqual(buildVisualLayerToolbarModel([{ id: "a" }, { id: "b", locked: true }], "b"), {
+    duplicateDisabled: false,
+    moveUpDisabled: false,
+    moveDownDisabled: true,
+    deleteDisabled: false,
+    selectedLocked: true,
+  });
+  assert.deepEqual(buildVisualLayerToolbarModel([{ id: "a" }], ""), {
+    duplicateDisabled: true,
+    moveUpDisabled: true,
+    moveDownDisabled: true,
+    deleteDisabled: true,
+    selectedLocked: false,
   });
 
   const translate = (key) =>

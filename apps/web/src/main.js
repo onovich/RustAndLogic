@@ -32,7 +32,7 @@ import {
 import {
   applyShapePresetToLayer,
   buildShapePresetListModel,
-  buildVisualLayerActionState,
+  buildVisualLayerToolbarModel,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
   buildVisualLayerListItems,
@@ -994,20 +994,18 @@ function renderGraphicsEditor() {
   if (elements.graphicsExportLibraryButton) {
     elements.graphicsExportLibraryButton.disabled = templateActions.exportLibraryDisabled;
   }
-  const layerActions = buildVisualLayerActionState(visual?.layers, selectedVisualLayerId);
-  const selectedLayer = visual?.layers.find((item) => item.id === selectedVisualLayerId) ?? null;
-  const selectedLocked = Boolean(selectedLayer?.locked);
+  const layerToolbar = buildVisualLayerToolbarModel(visual?.layers, selectedVisualLayerId);
   if (elements.graphicsDuplicateLayerButton) {
-    elements.graphicsDuplicateLayerButton.disabled = layerActions.duplicateDisabled;
+    elements.graphicsDuplicateLayerButton.disabled = layerToolbar.duplicateDisabled;
   }
   if (elements.graphicsMoveLayerUpButton) {
-    elements.graphicsMoveLayerUpButton.disabled = layerActions.moveUpDisabled;
+    elements.graphicsMoveLayerUpButton.disabled = layerToolbar.moveUpDisabled;
   }
   if (elements.graphicsMoveLayerDownButton) {
-    elements.graphicsMoveLayerDownButton.disabled = layerActions.moveDownDisabled;
+    elements.graphicsMoveLayerDownButton.disabled = layerToolbar.moveDownDisabled;
   }
   if (elements.graphicsDeleteLayerButton) {
-    elements.graphicsDeleteLayerButton.disabled = layerActions.deleteDisabled;
+    elements.graphicsDeleteLayerButton.disabled = layerToolbar.deleteDisabled;
   }
   if (elements.graphicsCopyButton && !graphicsCopyResetTimer) {
     elements.graphicsCopyButton.textContent = t("graphics.copy");
@@ -1025,7 +1023,7 @@ function renderGraphicsEditor() {
   }
   if (elements.graphicsForm) {
     for (const input of elements.graphicsForm.querySelectorAll("input, select")) {
-      input.disabled = shouldDisableGraphicsFieldControl(selectedLocked, input.dataset.scope);
+      input.disabled = shouldDisableGraphicsFieldControl(layerToolbar.selectedLocked, input.dataset.scope);
     }
   }
 }

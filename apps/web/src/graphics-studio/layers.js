@@ -126,6 +126,15 @@ export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   };
 }
 
+export function buildVisualLayerToolbarModel(layers = [], selectedLayerId = "") {
+  const entries = Array.isArray(layers) ? layers : [];
+  const selectedLayer = selectedLayerId ? entries.find((layer) => layer.id === selectedLayerId) ?? null : null;
+  return {
+    ...buildVisualLayerActionState(entries, selectedLayerId),
+    selectedLocked: Boolean(selectedLayer?.locked),
+  };
+}
+
 export function buildVisualLayerListItems(layers = [], selectedLayerId = "", translate = (key) => key) {
   return (Array.isArray(layers) ? layers : []).map((layer) => ({
     id: layer.id,
