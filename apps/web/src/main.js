@@ -62,6 +62,7 @@ import {
   persistJsonValue,
   persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
 } from "./graphics-studio/storage.js";
+import { clearTextInputValue, copyTextareaValue, setTextInputValueIfEmpty, writeTextareaValueAndSelect } from "./graphics-studio/io.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -643,9 +644,7 @@ function exportSelectedEntityVisual() {
   if (exportModel.disabled || !elements.graphicsEntityIo) {
     return;
   }
-  elements.graphicsEntityIo.value = exportModel.value;
-  elements.graphicsEntityIo.focus();
-  elements.graphicsEntityIo.select();
+  writeTextareaValueAndSelect(elements.graphicsEntityIo, exportModel.value);
 }
 
 function resetEntityVisualCatalog() {
@@ -667,20 +666,11 @@ async function copyGraphicsExport() {
     return;
   }
   try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(elements.graphicsExport.value);
-    } else {
-      copyGraphicsExportWithExecCommand();
-    }
+    await copyTextareaValue(elements.graphicsExport);
     setGraphicsCopyButtonState("graphics.copied");
   } catch (error) {
-    try {
-      copyGraphicsExportWithExecCommand();
-      setGraphicsCopyButtonState("graphics.copied");
-    } catch (fallbackError) {
-      console.warn("Failed to copy graphics JSON.", error, fallbackError);
-      setGraphicsCopyButtonState("graphics.copy");
-    }
+    console.warn("Failed to copy graphics JSON.", error.clipboardError ?? error, error.fallbackError);
+    setGraphicsCopyButtonState("graphics.copy");
   }
 }
 
@@ -783,19 +773,6 @@ function clearGraphicsCopyResetTimer() {
   if (graphicsCopyResetTimer) {
     window.clearTimeout(graphicsCopyResetTimer);
     graphicsCopyResetTimer = 0;
-  }
-}
-
-function copyGraphicsExportWithExecCommand() {
-  if (!elements.graphicsExport) {
-    throw new Error("Missing graphics export textarea.");
-  }
-  elements.graphicsExport.focus();
-  elements.graphicsExport.select();
-  const copied = document.execCommand("copy");
-  elements.graphicsExport.setSelectionRange(0, 0);
-  if (!copied) {
-    throw new Error("document.execCommand('copy') returned false.");
   }
 }
 
@@ -967,9 +944,7 @@ function exportGraphicsTemplate(templateId) {
   if (exportModel.disabled || !elements.graphicsEntityIo) {
     return;
   }
-  elements.graphicsEntityIo.value = exportModel.value;
-  elements.graphicsEntityIo.focus();
-  elements.graphicsEntityIo.select();
+  writeTextareaValueAndSelect(elements.graphicsEntityIo, exportModel.value);
   renderGraphicsEditor();
   showToast({ title: t("graphics.templateExported"), body: getGraphicsTemplateLabel(exportModel.template, t) }, "success");
 }
@@ -979,9 +954,7 @@ function exportGraphicsTemplateLibrary() {
     return;
   }
   const exportModel = buildGraphicsTemplateLibraryExportModel(customGraphicsTemplates, graphicsTemplateSerializationOptions());
-  elements.graphicsEntityIo.value = exportModel.value;
-  elements.graphicsEntityIo.focus();
-  elements.graphicsEntityIo.select();
+  writeTextareaValueAndSelect(elements.graphicsEntityIo, exportModel.value);
   renderGraphicsEditor();
   showToast(
     {
@@ -1028,9 +1001,7 @@ function saveCurrentEntityAsTemplate() {
   recentGraphicsTemplateIds = saveState.recentTemplateIds;
   persistCustomGraphicsTemplates();
   persistRecentGraphicsTemplates();
-  if (elements.graphicsTemplateName) {
-    elements.graphicsTemplateName.value = "";
-  }
+  clearTextInputValue(elements.graphicsTemplateName);
   showToast({ title: t("graphics.templateSaved"), body: saveState.template.label }, "success");
 }
 
@@ -1056,9 +1027,7 @@ function importGraphicsTemplate(source) {
       );
       return;
     }
-    if (elements.graphicsTemplateName && !elements.graphicsTemplateName.value.trim()) {
-      elements.graphicsTemplateName.value = importState.template.label;
-    }
+    setTextInputValueIfEmpty(elements.graphicsTemplateName, importState.template.label);
     showToast({ title: t("graphics.templateImported"), body: importState.template.label }, "success");
   } catch (error) {
     console.warn("Failed to import graphics template.", error);

@@ -258,6 +258,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Split Graphics Studio DOM rendering into a focused render module so `main.js` keeps only state and event orchestration for the Studio path.
 - [x] Split Graphics Studio DOM event binding into a focused events module so `main.js` maps event actions to state commands.
 - [x] Split Graphics Studio state command orchestration into a focused command module while keeping persistence, toasts, and world refresh in `main.js`.
+- [x] Split Graphics Studio textarea, clipboard, and template-name input side effects into a focused IO helper module.
 
 ## Definition Of Done For A Small Item
 
