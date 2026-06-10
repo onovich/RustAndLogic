@@ -190,6 +190,34 @@ try {
     throw new Error(`Expected selected entity import to replace robot visual, got ${JSON.stringify(summarizeLayerState(imported))}.`);
   }
 
+  await page.getByTestId("graphics-template-name").fill("Imported Cache");
+  await page.getByTestId("graphics-save-template-button").click();
+  await page.waitForFunction(() => {
+    const custom = document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]');
+    const recent = document.querySelector('[data-testid="graphics-recent-templates"] [data-template]');
+    const customId = custom?.getAttribute("data-template") ?? "";
+    const storedTemplates = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+    const storedRecent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+    return (
+      customId.startsWith("custom-robot-imported-cache-") &&
+      custom?.textContent.includes("Imported Cache") &&
+      recent?.getAttribute("data-template") === customId &&
+      storedTemplates.includes("Imported Cache") &&
+      storedRecent.includes(customId)
+    );
+  });
+  const savedTemplate = await page.evaluate(() => {
+    const custom = document.querySelector('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]');
+    const customId = custom?.getAttribute("data-template") ?? "";
+    return {
+      customId,
+      customLabel: custom?.textContent ?? "",
+      recentId: document.querySelector('[data-testid="graphics-recent-templates"] [data-template]')?.getAttribute("data-template") ?? "",
+      storedTemplatesHasCustom: (localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "").includes("Imported Cache"),
+      storedRecentHasCustom: (localStorage.getItem("rust-and-logic.template-history.v1") ?? "").includes(customId),
+    };
+  });
+
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
 
@@ -206,6 +234,7 @@ try {
         swatchApplied: summarizeLayerState(swatchApplied),
         templateApplied: summarizeLayerState(templateApplied),
         imported: summarizeLayerState(imported),
+        savedTemplate,
       },
       null,
       2,

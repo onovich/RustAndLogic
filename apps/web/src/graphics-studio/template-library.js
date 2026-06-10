@@ -165,6 +165,30 @@ export function createGraphicsTemplateFromEntityVisual(options = {}) {
   );
 }
 
+export function saveGraphicsTemplateFromSelectedEntity(templates = [], recentTemplateIds = [], options = {}) {
+  const currentTemplates = Array.isArray(templates) ? templates : [];
+  const currentRecentIds = Array.isArray(recentTemplateIds) ? recentTemplateIds : [];
+  const template = createGraphicsTemplateFromEntityVisual({
+    ...options,
+    templates: currentTemplates,
+    templateOffset: currentTemplates.length,
+  });
+  if (!template) {
+    return {
+      changed: false,
+      template: null,
+      templates: [...currentTemplates],
+      recentTemplateIds: [...currentRecentIds],
+    };
+  }
+  return {
+    changed: true,
+    template,
+    templates: upsertGraphicsTemplate(currentTemplates, template),
+    recentTemplateIds: recordRecentGraphicsTemplateId(currentRecentIds, template.id),
+  };
+}
+
 export function applyGraphicsTemplateToEntityVisual(template, options = {}) {
   const entityKey = String(options.entityKey ?? "").trim();
   if (!entityKey || !template?.visual) {

@@ -138,6 +138,7 @@ import {
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
   resolveGraphicsTemplateImportId,
+  saveGraphicsTemplateFromSelectedEntity,
   upsertGraphicsTemplate,
   upsertGraphicsTemplates,
 } from "../apps/web/src/graphics-studio/template-library.js";
@@ -2574,6 +2575,31 @@ function testGraphicsTemplateLibraryHelpers() {
   );
   assert.equal(createGraphicsTemplateFromEntityVisual({ entityKey: "", visual: { layers: [] } }), null);
   assert.equal(createGraphicsTemplateFromEntityVisual({ entityKey: "robot", visual: { layers: "bad" } }), null);
+  const existingTemplates = [{ id: "old-template", originEntityKey: "robot" }];
+  const existingRecentTemplates = ["old-template"];
+  const savedTemplateState = saveGraphicsTemplateFromSelectedEntity(existingTemplates, existingRecentTemplates, {
+    entityKey: "robot",
+    entityLabel: "Runner Bot",
+    entityKind: "actor",
+    label: "Saved Frame",
+    visual: { layers: [{ id: "saved-body" }] },
+    now: () => 46656,
+  });
+  assert.equal(savedTemplateState.changed, true);
+  assert.equal(savedTemplateState.template.id, "custom-robot-saved-frame-1000");
+  assert.deepEqual(savedTemplateState.templates.map((template) => template.id), [
+    "custom-robot-saved-frame-1000",
+    "old-template",
+  ]);
+  assert.deepEqual(savedTemplateState.recentTemplateIds, ["custom-robot-saved-frame-1000", "old-template"]);
+  assert.deepEqual(existingTemplates, [{ id: "old-template", originEntityKey: "robot" }]);
+  assert.deepEqual(existingRecentTemplates, ["old-template"]);
+  assert.deepEqual(saveGraphicsTemplateFromSelectedEntity(existingTemplates, existingRecentTemplates, { entityKey: "", visual: { layers: [] } }), {
+    changed: false,
+    template: null,
+    templates: existingTemplates,
+    recentTemplateIds: existingRecentTemplates,
+  });
   assert.equal(
     resolveGraphicsTemplateImportId({ id: "frameBot", label: "Frame Bot" }, { defaultTemplates, selectedEntityKey: "robot", now: () => 46656 }),
     "custom-import-1000",

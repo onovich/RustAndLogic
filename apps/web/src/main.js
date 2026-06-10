@@ -62,7 +62,6 @@ import {
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
-  createGraphicsTemplateFromEntityVisual,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
@@ -75,6 +74,7 @@ import {
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
+  saveGraphicsTemplateFromSelectedEntity,
   upsertGraphicsTemplate,
   upsertGraphicsTemplates,
 } from "./graphics-studio/template-library.js";
@@ -1639,24 +1639,25 @@ function saveCurrentEntityAsTemplate() {
   if (!entityKey || !visual) {
     return;
   }
-  const normalizedTemplate = createGraphicsTemplateFromEntityVisual({
+  const saveState = saveGraphicsTemplateFromSelectedEntity(customGraphicsTemplates, recentGraphicsTemplateIds, {
     entityKey,
     entityLabel: getGraphicsEntityLabel(entityKey),
     entityKind: getSelectedGraphicsEntityKind(entityKey),
     label: elements.graphicsTemplateName?.value,
-    templates: customGraphicsTemplates,
-    templateOffset: customGraphicsTemplates.length,
     now: Date.now,
     visual,
   });
-  if (!normalizedTemplate) {
+  if (!saveState.changed) {
     return;
   }
-  upsertCustomGraphicsTemplate(normalizedTemplate);
+  customGraphicsTemplates = saveState.templates;
+  recentGraphicsTemplateIds = saveState.recentTemplateIds;
+  persistCustomGraphicsTemplates();
+  persistRecentGraphicsTemplates();
   if (elements.graphicsTemplateName) {
     elements.graphicsTemplateName.value = "";
   }
-  showToast({ title: t("graphics.templateSaved"), body: normalizedTemplate.label }, "success");
+  showToast({ title: t("graphics.templateSaved"), body: saveState.template.label }, "success");
 }
 
 function importGraphicsTemplate(source) {
