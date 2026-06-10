@@ -131,6 +131,33 @@ export function removeGraphicsTemplateById(templates, recentTemplateIds, templat
   };
 }
 
+export function createGraphicsTemplateFromEntityVisual(options = {}) {
+  const entityKey = String(options.entityKey ?? "").trim();
+  if (!entityKey || !options.visual) {
+    return null;
+  }
+  const entityLabel = String(options.entityLabel ?? entityKey).trim() || entityKey;
+  const label =
+    typeof options.label === "string" && options.label.trim()
+      ? options.label.trim()
+      : buildGraphicsTemplateDefaultLabel(entityLabel, options.templates, entityKey);
+  const entityKind = typeof options.entityKind === "string" && options.entityKind.trim() ? options.entityKind.trim() : "";
+  const createdAt = resolveNow(options.now);
+  return normalizeGraphicsCustomTemplate(
+    {
+      id: buildCustomTemplateId(entityKey, label, createdAt),
+      label,
+      description: entityLabel,
+      categoryKey: "graphics.templateCategory.custom",
+      entityKinds: entityKind ? [entityKind] : [],
+      originEntityKey: entityKey,
+      updatedAt: createdAt,
+      visual: options.visual,
+    },
+    Number(options.templateOffset ?? 0),
+  );
+}
+
 export function resolveGraphicsTemplateImportId(template, options = {}) {
   const selectedEntityKey = options.selectedEntityKey ?? "template";
   const desiredId =

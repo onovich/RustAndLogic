@@ -97,6 +97,7 @@ import {
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
+  createGraphicsTemplateFromEntityVisual,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateCategory,
@@ -2240,6 +2241,63 @@ function testGraphicsTemplateLibraryHelpers() {
     templates: [{ id: "a" }],
     recentTemplateIds: ["a"],
   });
+  const customVisual = { canvasSize: 24, layers: [{ id: "body", glyph: "R" }] };
+  const savedTemplate = createGraphicsTemplateFromEntityVisual({
+    entityKey: "robot",
+    entityLabel: "Runner Bot",
+    entityKind: "actor",
+    label: " Custom Frame ",
+    visual: customVisual,
+    templateOffset: 4,
+    now: () => 123456,
+  });
+  customVisual.layers[0].glyph = "X";
+  assert.deepEqual(
+    {
+      id: savedTemplate.id,
+      label: savedTemplate.label,
+      description: savedTemplate.description,
+      categoryKey: savedTemplate.categoryKey,
+      entityKinds: savedTemplate.entityKinds,
+      originEntityKey: savedTemplate.originEntityKey,
+      updatedAt: savedTemplate.updatedAt,
+      visual: savedTemplate.visual,
+    },
+    {
+      id: "custom-robot-custom-frame-2n9c",
+      label: "Custom Frame",
+      description: "Runner Bot",
+      categoryKey: "graphics.templateCategory.custom",
+      entityKinds: ["actor"],
+      originEntityKey: "robot",
+      updatedAt: 123456,
+      visual: { canvasSize: 24, layers: [{ id: "body", glyph: "R" }] },
+    },
+  );
+  assert.deepEqual(
+    ((template) => ({
+      id: template.id,
+      label: template.label,
+      entityKinds: template.entityKinds,
+      updatedAt: template.updatedAt,
+    }))(
+      createGraphicsTemplateFromEntityVisual({
+        entityKey: "robot",
+        entityLabel: "Runner Bot",
+        templates: [{ originEntityKey: "robot" }],
+        visual: { layers: [{ id: "fallback" }] },
+        now: () => 46656,
+      }),
+    ),
+    {
+      id: "custom-robot-runner-bot-02-1000",
+      label: "Runner Bot // 02",
+      entityKinds: [],
+      updatedAt: 46656,
+    },
+  );
+  assert.equal(createGraphicsTemplateFromEntityVisual({ entityKey: "", visual: { layers: [] } }), null);
+  assert.equal(createGraphicsTemplateFromEntityVisual({ entityKey: "robot", visual: { layers: "bad" } }), null);
   assert.equal(
     resolveGraphicsTemplateImportId({ id: "frameBot", label: "Frame Bot" }, { defaultTemplates, selectedEntityKey: "robot", now: () => 46656 }),
     "custom-import-1000",

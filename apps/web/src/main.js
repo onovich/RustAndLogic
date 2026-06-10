@@ -44,9 +44,7 @@ import {
 } from "./graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
-  buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
-  normalizeGraphicsCustomTemplate,
   resolveGraphicsTemplateValue,
   serializeGraphicsTemplate,
   serializeGraphicsTemplateLibrary,
@@ -58,7 +56,7 @@ import {
   buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateLibraryModel,
   buildGraphicsTemplateModeOptions,
-  buildGraphicsTemplateDefaultLabel,
+  createGraphicsTemplateFromEntityVisual,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
@@ -1610,20 +1608,16 @@ function saveCurrentEntityAsTemplate() {
   if (!entityKey || !visual) {
     return;
   }
-  const nextLabel = elements.graphicsTemplateName?.value.trim() || buildDefaultCustomTemplateLabel(entityKey);
-  const normalizedTemplate = normalizeGraphicsCustomTemplate(
-    {
-      id: buildCustomTemplateId(entityKey, nextLabel),
-      label: nextLabel,
-      description: getGraphicsEntityLabel(entityKey),
-      categoryKey: "graphics.templateCategory.custom",
-      entityKinds: getSelectedGraphicsEntityKind(entityKey) ? [getSelectedGraphicsEntityKind(entityKey)] : [],
-      originEntityKey: entityKey,
-      updatedAt: Date.now(),
-      visual: cloneJson(visual),
-    },
-    customGraphicsTemplates.length,
-  );
+  const normalizedTemplate = createGraphicsTemplateFromEntityVisual({
+    entityKey,
+    entityLabel: getGraphicsEntityLabel(entityKey),
+    entityKind: getSelectedGraphicsEntityKind(entityKey),
+    label: elements.graphicsTemplateName?.value,
+    templates: customGraphicsTemplates,
+    templateOffset: customGraphicsTemplates.length,
+    now: Date.now,
+    visual,
+  });
   if (!normalizedTemplate) {
     return;
   }
@@ -1711,10 +1705,6 @@ function upsertCustomGraphicsTemplates(templates) {
   customGraphicsTemplates = upsertGraphicsTemplates(customGraphicsTemplates, templates);
   persistCustomGraphicsTemplates();
   recordRecentGraphicsTemplates(templates.map((template) => template.id));
-}
-
-function buildDefaultCustomTemplateLabel(entityKey) {
-  return buildGraphicsTemplateDefaultLabel(getGraphicsEntityLabel(entityKey), customGraphicsTemplates, entityKey);
 }
 
 function removeCustomGraphicsTemplate(templateId) {

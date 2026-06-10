@@ -222,6 +222,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio form field mutation into reusable pure form-schema helpers with direct tests.
 - [x] Extract Graphics Studio template-library import normalization into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio single-template import normalization into reusable pure template-library helpers with direct tests.
+- [x] Extract Graphics Studio save-current-entity template creation into reusable pure template-library helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 
