@@ -120,6 +120,14 @@ try {
   if (presetApplied.activeLayerId !== "robot-body" || !presetApplied.exportValue.includes('"shape": "star"')) {
     throw new Error(`Expected shape preset to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(presetApplied))}.`);
   }
+
+  await page.locator('[data-testid="graphics-fill-swatches"] .visual-swatch[data-swatch-value="#00ff88"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-export"]')?.value.includes('"fill": "#00ff88"'));
+  const swatchApplied = await readLayerState(page);
+  if (swatchApplied.activeLayerId !== "robot-body" || !swatchApplied.exportValue.includes('"fill": "#00ff88"')) {
+    throw new Error(`Expected fill swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(swatchApplied))}.`);
+  }
+
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
 
@@ -133,6 +141,7 @@ try {
         addedLayerId,
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
+        swatchApplied: summarizeLayerState(swatchApplied),
       },
       null,
       2,
@@ -181,5 +190,6 @@ function summarizeLayerState(state) {
     exportedRobotLayerIds: state.exportedRobotLayerIds,
     bodyHidden: state.exportValue.includes('"visible": false'),
     bodyLocked: state.exportValue.includes('"locked": true'),
+    bodyFillSignal: state.exportValue.includes('"fill": "#00ff88"'),
   };
 }

@@ -86,6 +86,7 @@ import {
 } from "../apps/web/src/graphics-studio/storage.js";
 import {
   applyGraphicsSwatchToLayer,
+  applyGraphicsSwatchToSelectedLayer,
   buildFillSwatches,
   buildGraphicsSwatchStripModel,
   buildTextureSwatches,
@@ -2182,6 +2183,23 @@ function testGraphicsSwatchHelpers() {
   assert.equal(glyphLayer.glyphColor, "#eeeeee");
   assert.equal(applyGraphicsSwatchToLayer({ type: "shape", locked: true }, "fill", "#ffffff"), false);
   assert.equal(applyGraphicsSwatchToLayer({ type: "shape", textureType: "none" }, "texture", "#ffffff"), false);
+
+  const selectedSwatchVisual = {
+    layers: [
+      { id: "body", type: "shape", fill: "#000000" },
+      { id: "glyph", type: "glyph", glyphColor: "#111111" },
+    ],
+  };
+  const selectedSwatchState = applyGraphicsSwatchToSelectedLayer(selectedSwatchVisual, "glyph", "fill", "#eeeeee");
+  assert.equal(selectedSwatchState.changed, true);
+  assert.equal(selectedSwatchState.selectedLayerId, "glyph");
+  assert.equal(selectedSwatchState.layer, selectedSwatchVisual.layers[1]);
+  assert.equal(selectedSwatchVisual.layers[1].glyphColor, "#eeeeee");
+  assert.deepEqual(applyGraphicsSwatchToSelectedLayer(selectedSwatchVisual, "missing", "fill", "#ffffff"), {
+    changed: false,
+    selectedLayerId: "missing",
+    layer: null,
+  });
 }
 
 function testGraphicsTemplateLibraryHelpers() {

@@ -238,6 +238,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Add a focused Graphics Studio layer-state smoke script for token-light refactor validation.
 - [x] Extract Graphics Studio layer row selection state into reusable pure layer helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio selected-layer shape preset application into reusable pure layer helpers with direct tests and smoke coverage.
+- [x] Extract Graphics Studio selected-layer swatch application into reusable pure swatch helpers with direct tests and smoke coverage.
 
 ## Definition Of Done For A Small Item
 

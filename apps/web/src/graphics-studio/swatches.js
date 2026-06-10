@@ -64,3 +64,14 @@ export function applyGraphicsSwatchToLayer(layer, kind, value) {
   }
   return false;
 }
+
+export function applyGraphicsSwatchToSelectedLayer(visual, selectedLayerId = "", kind = "", value = "") {
+  const layer = Array.isArray(visual?.layers)
+    ? visual.layers.find((item) => item.id === selectedLayerId) ?? null
+    : null;
+  return {
+    changed: applyGraphicsSwatchToLayer(layer, kind, value),
+    selectedLayerId,
+    layer,
+  };
+}

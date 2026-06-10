@@ -88,7 +88,7 @@ import {
   persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
 } from "./graphics-studio/storage.js";
 import {
-  applyGraphicsSwatchToLayer,
+  applyGraphicsSwatchToSelectedLayer,
   buildFillSwatches,
   buildGraphicsSwatchStripModel,
   buildTextureSwatches,
@@ -1760,11 +1760,12 @@ function applyShapePreset(presetId) {
 }
 
 function applyGraphicsSwatch(kind, value) {
-  const visual = getSelectedEntityVisual();
-  const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (visual && applyGraphicsSwatchToLayer(layer, kind, value)) {
-    persistEntityVisualCatalog();
+  const swatchState = applyGraphicsSwatchToSelectedLayer(getSelectedEntityVisual(), selectedVisualLayerId, kind, value);
+  if (!swatchState.changed) {
+    return;
   }
+  selectedVisualLayerId = swatchState.selectedLayerId;
+  persistEntityVisualCatalog();
 }
 
 function applyEntityVisual(node, entityKey) {
