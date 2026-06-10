@@ -4,6 +4,7 @@ import {
   normalizeGraphicsEditorConfig,
 } from "../apps/web/src/graphics-studio/config.js";
 import {
+  applyImportedEntityVisualToSelection,
   applyGraphicsEntitySelection,
   buildEntityVisualDataUrl,
   buildGraphicsEntityListItems,
@@ -1364,6 +1365,25 @@ function testGraphicsEntityListHelpers() {
   normalizedImport.layers[0].glyph = "X";
   assert.equal(importedSource.layers[0].glyph, "R");
   assert.deepEqual(parseImportedEntityVisual(JSON.stringify(importedSource)), importedSource);
+  const importedCatalogState = applyImportedEntityVisualToSelection(
+    catalog,
+    "robot",
+    "missing",
+    JSON.stringify({ label: "Imported Robot", layers: [{ id: "import-body" }, { id: "import-glyph" }] }),
+  );
+  assert.equal(importedCatalogState.changed, true);
+  assert.equal(importedCatalogState.selectedEntityKey, "robot");
+  assert.equal(importedCatalogState.selectedLayerId, "import-body");
+  assert.deepEqual(importedCatalogState.visual, {
+    label: "Imported Robot",
+    layers: [{ id: "import-body" }, { id: "import-glyph" }],
+  });
+  assert.equal(importedCatalogState.entityVisualCatalog.entities.robot.label, "Imported Robot");
+  assert.equal(catalog.entities.robot.label, "Fallback Robot");
+  const skippedImportState = applyImportedEntityVisualToSelection(catalog, "", "body", JSON.stringify(importedSource));
+  assert.equal(skippedImportState.changed, false);
+  assert.equal(skippedImportState.entityVisualCatalog, catalog);
+  assert.throws(() => applyImportedEntityVisualToSelection(catalog, "robot", "body", "{bad json"), SyntaxError);
   assert.throws(() => normalizeImportedEntityVisual({ label: "Missing Layers" }), /Missing layers array/);
   assert.throws(() => parseImportedEntityVisual("{bad json"), SyntaxError);
 }

@@ -19,6 +19,33 @@ export function parseImportedEntityVisual(source) {
   return normalizeImportedEntityVisual(JSON.parse(source));
 }
 
+export function applyImportedEntityVisualToSelection(catalog, selectedEntityKey = "", selectedLayerId = "", source = "") {
+  const entityKey = typeof selectedEntityKey === "string" ? selectedEntityKey : "";
+  if (!entityKey || !catalog || typeof catalog !== "object") {
+    return {
+      changed: false,
+      entityVisualCatalog: catalog,
+      selectedEntityKey: entityKey,
+      selectedLayerId,
+      visual: null,
+    };
+  }
+
+  const visual = parseImportedEntityVisual(source);
+  const entityVisualCatalog = cloneJson(catalog);
+  if (!entityVisualCatalog.entities || typeof entityVisualCatalog.entities !== "object") {
+    entityVisualCatalog.entities = {};
+  }
+  entityVisualCatalog.entities[entityKey] = visual;
+  return {
+    changed: true,
+    entityVisualCatalog,
+    selectedEntityKey: entityKey,
+    selectedLayerId: resolveSelectedVisualLayerId(visual, selectedLayerId),
+    visual,
+  };
+}
+
 export function buildGraphicsEntityVisualExportModel(visual) {
   return {
     disabled: !visual,

@@ -128,6 +128,55 @@ try {
     throw new Error(`Expected fill swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(swatchApplied))}.`);
   }
 
+  await page.getByTestId("graphics-entity-io").fill(
+    JSON.stringify(
+      {
+        label: "Imported Robot",
+        canvasSize: 24,
+        layers: [
+          {
+            id: "import-body",
+            type: "shape",
+            shape: "circle",
+            x: 12,
+            y: 12,
+            width: 16,
+            height: 16,
+            fill: "#00ff88",
+            stroke: "#120b06",
+            strokeWidth: 1,
+          },
+          {
+            id: "import-glyph",
+            type: "glyph",
+            glyph: "RI",
+            x: 12,
+            y: 12,
+            fontSize: 7,
+            glyphColor: "#120b06",
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  await page.getByTestId("graphics-import-entity-button").click();
+  await page.waitForFunction(() => {
+    const active = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
+    return active?.dataset.layerId === "import-body" && exportValue.includes('"glyph": "RI"');
+  });
+  const imported = await readLayerState(page);
+  expectLayerState(imported, {
+    activeLayerId: "import-body",
+    layerIds: ["import-body", "import-glyph"],
+    exportedRobotLayerIds: ["import-body", "import-glyph"],
+  });
+  if (!imported.exportValue.includes('"label": "Imported Robot"') || !imported.exportValue.includes('"glyph": "RI"')) {
+    throw new Error(`Expected selected entity import to replace robot visual, got ${JSON.stringify(summarizeLayerState(imported))}.`);
+  }
+
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
 
@@ -142,6 +191,7 @@ try {
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
+        imported: summarizeLayerState(imported),
       },
       null,
       2,

@@ -24,7 +24,7 @@ import {
   buildGraphicsEntityPreviewModel,
   buildGraphicsEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
-  parseImportedEntityVisual,
+  applyImportedEntityVisualToSelection,
   resetGraphicsEntityVisualCatalog,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
@@ -1562,10 +1562,20 @@ function importSelectedEntityVisual(source) {
     return;
   }
   try {
-    entityVisualCatalog.entities[entityKey] = parseImportedEntityVisual(source);
-    ensureSelectedVisualLayer();
+    const importState = applyImportedEntityVisualToSelection(
+      entityVisualCatalog,
+      selectedVisualEntityKey,
+      selectedVisualLayerId,
+      source,
+    );
+    if (!importState.changed) {
+      return;
+    }
+    entityVisualCatalog = importState.entityVisualCatalog;
+    selectedVisualEntityKey = importState.selectedEntityKey;
+    selectedVisualLayerId = importState.selectedLayerId;
     persistEntityVisualCatalog();
-    showToast({ title: t("graphics.importSuccess"), body: getGraphicsEntityLabel(entityKey) }, "success");
+    showToast({ title: t("graphics.importSuccess"), body: getGraphicsEntityLabel(importState.selectedEntityKey) }, "success");
   } catch (error) {
     console.warn("Failed to import selected entity visual.", error);
     showToast({ title: t("graphics.importFailed"), body: String(error.message ?? error) }, "failure");
