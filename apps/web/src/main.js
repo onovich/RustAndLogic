@@ -19,22 +19,17 @@ import {
 import {
   applyGraphicsEntitySelection,
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
-  buildGraphicsEntityListClickActionModel,
   buildSelectedEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
   applyImportedEntityVisualToSelection,
   resetGraphicsEntityVisualCatalog,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
-import {
-  applyGraphicsFormFieldEdit,
-  buildGraphicsFormFieldEditActionModel,
-} from "./graphics-studio/form-schema.js";
+import { bindGraphicsStudioEvents } from "./graphics-studio/events.js";
+import { applyGraphicsFormFieldEdit } from "./graphics-studio/form-schema.js";
 import {
   addDefaultSelectedVisualLayer,
   applyShapePresetToSelectedLayer,
-  buildShapePresetClickActionModel,
-  buildVisualLayerClickActionModel,
   duplicateSelectedVisualLayer,
   moveSelectedVisualLayer,
   removeSelectedVisualLayer,
@@ -43,17 +38,11 @@ import {
   toggleSelectedVisualLayerLocked,
   toggleSelectedVisualLayerVisible,
 } from "./graphics-studio/layers.js";
-import {
-  buildGraphicsTemplateActionState,
-  buildGraphicsTemplateLibraryExportModel,
-} from "./graphics-studio/templates.js";
+import { buildGraphicsTemplateLibraryExportModel } from "./graphics-studio/templates.js";
 import {
   applyGraphicsTemplateToSelectedEntity,
   applyGraphicsTemplateFilterSelection,
-  buildGraphicsTemplateClickActionModel,
   buildGraphicsTemplateExportSelectionModel,
-  buildGraphicsTemplateFilterClickActionModel,
-  buildGraphicsTemplateNameSubmitActionModel,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
   getGraphicsTemplateDescription,
@@ -72,10 +61,7 @@ import {
   persistJsonValue,
   persistRecentGraphicsTemplateIds as persistRecentGraphicsTemplateIdsToStorage,
 } from "./graphics-studio/storage.js";
-import {
-  applyGraphicsSwatchToSelectedLayer,
-  buildGraphicsSwatchClickActionModel,
-} from "./graphics-studio/swatches.js";
+import { applyGraphicsSwatchToSelectedLayer } from "./graphics-studio/swatches.js";
 import { loadTextAsset } from "./utils/assets.js";
 import { parseI18nCsv } from "./utils/csv.js";
 import { cloneJson } from "./utils/json.js";
@@ -589,208 +575,130 @@ function initializeAppData() {
 }
 
 function initializeGraphicsEditor() {
-  if (!elements.graphicsEntityList) {
-    return;
-  }
-
-  elements.graphicsEntityList.addEventListener("click", handleGraphicsEntityListClick);
-
-  elements.graphicsLayerList?.addEventListener("click", handleGraphicsLayerListClick);
-
-  elements.graphicsAddShapeButton?.addEventListener("click", () => {
-    const addState = addDefaultSelectedVisualLayer(
-      getSelectedEntityVisual(),
-      "shape",
-      selectedVisualLayerId,
-      graphicsLayerOptions(),
-    );
-    if (!addState.changed) {
-      return;
-    }
-    selectedVisualLayerId = addState.selectedLayerId;
-    persistEntityVisualCatalog();
+  bindGraphicsStudioEvents(elements, {
+    onEntityAction: handleGraphicsEntityAction,
+    onLayerAction: handleGraphicsLayerAction,
+    onAddLayer: addSelectedVisualLayer,
+    onDuplicateLayer: duplicateSelectedVisualLayerInCatalog,
+    onMoveLayer: moveSelectedVisualLayerInCatalog,
+    onToggleStudio: () => setGraphicsStudioOpen(elements.devPanel?.dataset.studio !== "true"),
+    onExportEntity: exportSelectedEntityVisual,
+    onImportEntity: importSelectedEntityVisual,
+    onDeleteLayer: deleteSelectedVisualLayer,
+    onReset: resetEntityVisualCatalog,
+    onCopy: copyGraphicsExport,
+    onFormFieldEdit: applyGraphicsFormEdit,
+    onShapePresetAction: handleGraphicsShapePresetAction,
+    onTemplateAction: handleGraphicsTemplateAction,
+    onTemplateFilterAction: handleGraphicsTemplateFilterAction,
+    onSaveTemplate: saveCurrentEntityAsTemplate,
+    onImportTemplate: importGraphicsTemplate,
+    onExportTemplateLibrary: exportGraphicsTemplateLibrary,
+    onTemplateNameSubmit: saveCurrentEntityAsTemplate,
+    onSwatchAction: handleGraphicsSwatchAction,
   });
-
-  elements.graphicsAddGlyphButton?.addEventListener("click", () => {
-    const addState = addDefaultSelectedVisualLayer(
-      getSelectedEntityVisual(),
-      "glyph",
-      selectedVisualLayerId,
-      graphicsLayerOptions(),
-    );
-    if (!addState.changed) {
-      return;
-    }
-    selectedVisualLayerId = addState.selectedLayerId;
-    persistEntityVisualCatalog();
-  });
-
-  elements.graphicsDuplicateLayerButton?.addEventListener("click", () => {
-    const duplicateState = duplicateSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
-    if (!duplicateState.changed) {
-      return;
-    }
-    selectedVisualLayerId = duplicateState.selectedLayerId;
-    persistEntityVisualCatalog();
-  });
-
-  elements.graphicsMoveLayerUpButton?.addEventListener("click", () => {
-    moveSelectedVisualLayerInCatalog(-1);
-  });
-
-  elements.graphicsMoveLayerDownButton?.addEventListener("click", () => {
-    moveSelectedVisualLayerInCatalog(1);
-  });
-
-  elements.graphicsStudioButton?.addEventListener("click", () => {
-    setGraphicsStudioOpen(elements.devPanel?.dataset.studio !== "true");
-  });
-
-  elements.graphicsExportEntityButton?.addEventListener("click", () => {
-    const exportModel = buildSelectedEntityVisualExportModel(entityVisualCatalog, selectedVisualEntityKey);
-    if (exportModel.disabled || !elements.graphicsEntityIo) {
-      return;
-    }
-    elements.graphicsEntityIo.value = exportModel.value;
-    elements.graphicsEntityIo.focus();
-    elements.graphicsEntityIo.select();
-  });
-
-  elements.graphicsImportEntityButton?.addEventListener("click", () => {
-    if (!elements.graphicsEntityIo) {
-      return;
-    }
-    importSelectedEntityVisual(elements.graphicsEntityIo.value);
-  });
-
-  elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
-    const result = removeSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
-    if (!result.changed) {
-      return;
-    }
-    selectedVisualLayerId = result.selectedLayerId;
-    persistEntityVisualCatalog();
-  });
-
-  elements.graphicsResetButton?.addEventListener("click", () => {
-    const resetState = resetGraphicsEntityVisualCatalog(
-      defaultEntityVisualCatalog,
-      selectedVisualEntityKey,
-      selectedVisualLayerId,
-    );
-    entityVisualCatalog = resetState.entityVisualCatalog;
-    selectedVisualEntityKey = resetState.selectedEntityKey;
-    selectedVisualLayerId = resetState.selectedLayerId;
-    localStorage.removeItem(entityVisualsKey);
-    clearGraphicsCopyResetTimer();
-    if (elements.graphicsCopyButton) {
-      elements.graphicsCopyButton.textContent = t("graphics.copy");
-    }
-    renderGraphicsEditor();
-    refreshWorldVisuals();
-  });
-
-  elements.graphicsCopyButton?.addEventListener("click", async () => {
-    if (!elements.graphicsExport) {
-      return;
-    }
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(elements.graphicsExport.value);
-      } else {
-        copyGraphicsExportWithExecCommand();
-      }
-      setGraphicsCopyButtonState("graphics.copied");
-    } catch (error) {
-      try {
-        copyGraphicsExportWithExecCommand();
-        setGraphicsCopyButtonState("graphics.copied");
-      } catch (fallbackError) {
-        console.warn("Failed to copy graphics JSON.", error, fallbackError);
-        setGraphicsCopyButtonState("graphics.copy");
-      }
-    }
-  });
-
-  const handleGraphicsFormInput = (event) => {
-    const input = event.target.closest("[data-field]");
-    const editAction = buildGraphicsFormFieldEditActionModel({
-      scope: input?.dataset.scope ?? "layer",
-      field: input?.dataset.field ?? "",
-      valueType: input?.dataset.valueType ?? "string",
-      rawValue: input?.value ?? "",
-    });
-    if (!editAction.handled) {
-      return;
-    }
-    const targetVisual = getSelectedEntityVisual();
-    const result = applyGraphicsFormFieldEdit(
-      targetVisual,
-      selectedVisualLayerId,
-      editAction,
-      { layerOptions: graphicsLayerOptions() },
-    );
-    if (!result.changed) {
-      return;
-    }
-    selectedVisualLayerId = result.selectedLayerId;
-    persistEntityVisualCatalog();
-  };
-
-  elements.graphicsForm?.addEventListener("input", handleGraphicsFormInput);
-  elements.graphicsForm?.addEventListener("change", handleGraphicsFormInput);
-  elements.graphicsPresets?.addEventListener("click", handleGraphicsShapePresetClick);
-  elements.graphicsTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
-  elements.graphicsRecentTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
-  elements.graphicsTemplateModeFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
-  elements.graphicsTemplateCategoryFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
-  elements.graphicsSaveTemplateButton?.addEventListener("click", () => {
-    saveCurrentEntityAsTemplate();
-  });
-  elements.graphicsImportTemplateButton?.addEventListener("click", () => {
-    importGraphicsTemplate(elements.graphicsEntityIo?.value ?? "");
-  });
-  elements.graphicsExportLibraryButton?.addEventListener("click", () => {
-    exportGraphicsTemplateLibrary();
-  });
-  elements.graphicsEntityIo?.addEventListener("input", () => {
-    if (elements.graphicsImportTemplateButton) {
-      elements.graphicsImportTemplateButton.disabled = buildGraphicsTemplateActionState({
-        ioValue: elements.graphicsEntityIo?.value,
-      }).importDisabled;
-    }
-  });
-  elements.graphicsTemplateName?.addEventListener("keydown", (event) => {
-    const keyAction = buildGraphicsTemplateNameSubmitActionModel({ key: event.key });
-    if (!keyAction.handled) {
-      return;
-    }
-    event.preventDefault();
-    saveCurrentEntityAsTemplate();
-  });
-  const handleGraphicsSwatchClick = (event) => {
-    const button = event.target.closest("[data-swatch-kind]");
-    const clickAction = buildGraphicsSwatchClickActionModel({
-      swatchKind: button?.dataset.swatchKind ?? "",
-      swatchValue: button?.dataset.swatchValue ?? "",
-    });
-    if (!clickAction.handled) {
-      return;
-    }
-    applyGraphicsSwatch(clickAction.kind, clickAction.value);
-  };
-  elements.graphicsFillSwatches?.addEventListener("click", handleGraphicsSwatchClick);
-  elements.graphicsTextureSwatches?.addEventListener("click", handleGraphicsSwatchClick);
 }
 
-function handleGraphicsTemplateCardClick(event) {
-  const actionButton = event.target.closest("[data-template-action][data-template-id]");
-  const templateButton = actionButton ? null : event.target.closest("[data-template]");
-  const clickAction = buildGraphicsTemplateClickActionModel({
-    templateAction: actionButton?.dataset.templateAction ?? "",
-    templateId: actionButton?.dataset.templateId ?? "",
-    cardTemplateId: templateButton?.dataset.template ?? "",
-  });
+function addSelectedVisualLayer(layerType) {
+  const addState = addDefaultSelectedVisualLayer(
+    getSelectedEntityVisual(),
+    layerType,
+    selectedVisualLayerId,
+    graphicsLayerOptions(),
+  );
+  if (!addState.changed) {
+    return;
+  }
+  selectedVisualLayerId = addState.selectedLayerId;
+  persistEntityVisualCatalog();
+}
+
+function duplicateSelectedVisualLayerInCatalog() {
+  const duplicateState = duplicateSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+  if (!duplicateState.changed) {
+    return;
+  }
+  selectedVisualLayerId = duplicateState.selectedLayerId;
+  persistEntityVisualCatalog();
+}
+
+function deleteSelectedVisualLayer() {
+  const result = removeSelectedVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId);
+  if (!result.changed) {
+    return;
+  }
+  selectedVisualLayerId = result.selectedLayerId;
+  persistEntityVisualCatalog();
+}
+
+function exportSelectedEntityVisual() {
+  const exportModel = buildSelectedEntityVisualExportModel(entityVisualCatalog, selectedVisualEntityKey);
+  if (exportModel.disabled || !elements.graphicsEntityIo) {
+    return;
+  }
+  elements.graphicsEntityIo.value = exportModel.value;
+  elements.graphicsEntityIo.focus();
+  elements.graphicsEntityIo.select();
+}
+
+function resetEntityVisualCatalog() {
+  const resetState = resetGraphicsEntityVisualCatalog(
+    defaultEntityVisualCatalog,
+    selectedVisualEntityKey,
+    selectedVisualLayerId,
+  );
+  entityVisualCatalog = resetState.entityVisualCatalog;
+  selectedVisualEntityKey = resetState.selectedEntityKey;
+  selectedVisualLayerId = resetState.selectedLayerId;
+  localStorage.removeItem(entityVisualsKey);
+  clearGraphicsCopyResetTimer();
+  if (elements.graphicsCopyButton) {
+    elements.graphicsCopyButton.textContent = t("graphics.copy");
+  }
+  renderGraphicsEditor();
+  refreshWorldVisuals();
+}
+
+async function copyGraphicsExport() {
+  if (!elements.graphicsExport) {
+    return;
+  }
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(elements.graphicsExport.value);
+    } else {
+      copyGraphicsExportWithExecCommand();
+    }
+    setGraphicsCopyButtonState("graphics.copied");
+  } catch (error) {
+    try {
+      copyGraphicsExportWithExecCommand();
+      setGraphicsCopyButtonState("graphics.copied");
+    } catch (fallbackError) {
+      console.warn("Failed to copy graphics JSON.", error, fallbackError);
+      setGraphicsCopyButtonState("graphics.copy");
+    }
+  }
+}
+
+function applyGraphicsFormEdit(editAction) {
+  if (!editAction.handled) {
+    return;
+  }
+  const result = applyGraphicsFormFieldEdit(
+    getSelectedEntityVisual(),
+    selectedVisualLayerId,
+    editAction,
+    { layerOptions: graphicsLayerOptions() },
+  );
+  if (!result.changed) {
+    return;
+  }
+  selectedVisualLayerId = result.selectedLayerId;
+  persistEntityVisualCatalog();
+}
+
+function handleGraphicsTemplateAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
@@ -805,12 +713,7 @@ function handleGraphicsTemplateCardClick(event) {
   applyEntityTemplate(clickAction.templateId);
 }
 
-function handleGraphicsTemplateFilterClick(event) {
-  const button = event.target.closest("[data-filter-kind][data-filter-value]");
-  const clickAction = buildGraphicsTemplateFilterClickActionModel({
-    filterKind: button?.dataset.filterKind ?? "",
-    filterValue: button?.dataset.filterValue ?? "all",
-  });
+function handleGraphicsTemplateFilterAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
@@ -826,11 +729,7 @@ function handleGraphicsTemplateFilterClick(event) {
   persistGraphicsTemplateFilterState();
 }
 
-function handleGraphicsEntityListClick(event) {
-  const button = event.target.closest("[data-entity-key]");
-  const clickAction = buildGraphicsEntityListClickActionModel({
-    entityKey: button?.dataset.entityKey ?? "",
-  });
+function handleGraphicsEntityAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
@@ -845,14 +744,7 @@ function handleGraphicsEntityListClick(event) {
   renderGraphicsEditor();
 }
 
-function handleGraphicsLayerListClick(event) {
-  const actionButton = event.target.closest("[data-layer-action][data-layer-id]");
-  const layerButton = actionButton ? null : event.target.closest("[data-layer-id]");
-  const clickAction = buildVisualLayerClickActionModel({
-    layerAction: actionButton?.dataset.layerAction ?? "",
-    layerId: actionButton?.dataset.layerId ?? "",
-    rowLayerId: layerButton?.dataset.layerId ?? "",
-  });
+function handleGraphicsLayerAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
@@ -872,15 +764,18 @@ function handleGraphicsLayerListClick(event) {
   renderGraphicsEditor();
 }
 
-function handleGraphicsShapePresetClick(event) {
-  const button = event.target.closest("[data-preset]");
-  const clickAction = buildShapePresetClickActionModel({
-    presetId: button?.dataset.preset ?? "",
-  });
+function handleGraphicsShapePresetAction(clickAction) {
   if (!clickAction.handled) {
     return;
   }
   applyShapePreset(clickAction.presetId);
+}
+
+function handleGraphicsSwatchAction(clickAction) {
+  if (!clickAction.handled) {
+    return;
+  }
+  applyGraphicsSwatch(clickAction.kind, clickAction.value);
 }
 
 function setGraphicsStudioOpen(isOpen) {

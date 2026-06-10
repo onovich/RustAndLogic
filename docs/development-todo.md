@@ -256,6 +256,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio form-field edit action dispatch into reusable pure form-schema helpers with direct tests and smoke coverage.
 - [x] Extract Graphics Studio template-name submit key action into reusable pure template-library helpers with direct tests and smoke coverage.
 - [x] Split Graphics Studio DOM rendering into a focused render module so `main.js` keeps only state and event orchestration for the Studio path.
+- [x] Split Graphics Studio DOM event binding into a focused events module so `main.js` maps event actions to state commands.
 
 ## Definition Of Done For A Small Item
 
