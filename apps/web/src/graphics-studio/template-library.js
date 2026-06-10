@@ -1,4 +1,9 @@
-import { buildCustomTemplateId, normalizeGraphicsCustomTemplate, resolveGraphicsTemplateValue } from "./templates.js";
+import {
+  buildCustomTemplateId,
+  normalizeGraphicsCustomTemplate,
+  normalizeGraphicsTemplateFilterState,
+  resolveGraphicsTemplateValue,
+} from "./templates.js";
 
 export function getAllGraphicsTemplates(customTemplates = [], defaultTemplates = []) {
   return [
@@ -386,6 +391,37 @@ export function buildGraphicsTemplateFilterRowModel(options, hasSelectedEntity =
   return {
     hidden: !hasSelectedEntity || items.length === 0,
     items,
+  };
+}
+
+export function applyGraphicsTemplateFilterSelection(filterState, filterKind, filterValue) {
+  const current = normalizeGraphicsTemplateFilterState(filterState);
+  if (filterKind === "mode") {
+    const next = {
+      ...current,
+      mode: filterValue === "fit" ? "fit" : "all",
+    };
+    return {
+      handled: true,
+      changed: next.mode !== current.mode || next.category !== current.category,
+      filterState: next,
+    };
+  }
+  if (filterKind === "category") {
+    const next = {
+      ...current,
+      category: filterValue || "all",
+    };
+    return {
+      handled: true,
+      changed: next.mode !== current.mode || next.category !== current.category,
+      filterState: next,
+    };
+  }
+  return {
+    handled: false,
+    changed: false,
+    filterState: current,
   };
 }
 

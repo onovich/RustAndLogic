@@ -94,6 +94,7 @@ import {
   toggleCollapsedState,
 } from "../apps/web/src/ui-shell.js";
 import {
+  applyGraphicsTemplateFilterSelection,
   applyGraphicsTemplateToEntityVisual,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCardActions,
@@ -2195,6 +2196,26 @@ function testGraphicsTemplateLibraryHelpers() {
   assert.deepEqual(buildGraphicsTemplateFilterRowModel(templateFilterOptions, true), {
     hidden: false,
     items: templateFilterOptions,
+  });
+  assert.deepEqual(applyGraphicsTemplateFilterSelection({ mode: "all", category: "pickup" }, "mode", "fit"), {
+    handled: true,
+    changed: true,
+    filterState: { mode: "fit", category: "pickup" },
+  });
+  assert.deepEqual(applyGraphicsTemplateFilterSelection({ mode: "fit", category: "pickup" }, "mode", "fit"), {
+    handled: true,
+    changed: false,
+    filterState: { mode: "fit", category: "pickup" },
+  });
+  assert.deepEqual(applyGraphicsTemplateFilterSelection({ mode: "fit", category: "pickup" }, "category", ""), {
+    handled: true,
+    changed: true,
+    filterState: { mode: "fit", category: "all" },
+  });
+  assert.deepEqual(applyGraphicsTemplateFilterSelection({ mode: "bad", category: "" }, "unknown", "custom"), {
+    handled: false,
+    changed: false,
+    filterState: { mode: "all", category: "all" },
   });
   assert.deepEqual(buildGraphicsTemplateFilterRowModel(templateFilterOptions, false), {
     hidden: true,

@@ -52,6 +52,7 @@ import {
 } from "./graphics-studio/templates.js";
 import {
   applyGraphicsTemplateToEntityVisual,
+  applyGraphicsTemplateFilterSelection,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateCardModel,
@@ -816,13 +817,11 @@ function initializeGraphicsEditor() {
     }
     const filterKind = button.dataset.filterKind ?? "";
     const filterValue = button.dataset.filterValue ?? "all";
-    if (filterKind === "mode") {
-      graphicsTemplateFilterState.mode = filterValue === "fit" ? "fit" : "all";
-    } else if (filterKind === "category") {
-      graphicsTemplateFilterState.category = filterValue || "all";
-    } else {
+    const nextFilter = applyGraphicsTemplateFilterSelection(graphicsTemplateFilterState, filterKind, filterValue);
+    if (!nextFilter.handled) {
       return;
     }
+    graphicsTemplateFilterState = nextFilter.filterState;
     persistGraphicsTemplateFilterState();
   };
   elements.graphicsTemplateModeFilters?.addEventListener("click", handleGraphicsTemplateFilterClick);
