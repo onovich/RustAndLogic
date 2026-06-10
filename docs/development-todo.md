@@ -217,6 +217,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio selected-layer fallback resolution into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio layer duplication into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio layer visibility and lock toggles into reusable pure layer helpers with direct tests.
+- [x] Extract Graphics Studio layer removal into reusable pure layer helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

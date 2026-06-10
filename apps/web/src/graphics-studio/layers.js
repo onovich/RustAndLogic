@@ -131,6 +131,18 @@ export function duplicateVisualLayer(layers, selectedLayerId, options = {}) {
   return duplicate;
 }
 
+export function removeVisualLayer(layers, layerId) {
+  if (!Array.isArray(layers) || !layerId) {
+    return false;
+  }
+  const index = layers.findIndex((layer) => layer.id === layerId);
+  if (index < 0) {
+    return false;
+  }
+  layers.splice(index, 1);
+  return true;
+}
+
 export function toggleVisualLayerVisible(layers, layerId) {
   const layer = findVisualLayer(layers, layerId);
   if (!layer) {

@@ -38,6 +38,7 @@ import {
   duplicateVisualLayer,
   moveVisualLayer,
   normalizeShapeLayer,
+  removeVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
@@ -1749,6 +1750,12 @@ function testGraphicsLayerHelpers() {
   duplicateLayer.style.fill = "#00ff88";
   assert.equal(duplicateLayers[0].style.fill, "#f28d35");
   assert.equal(duplicateVisualLayer(duplicateLayers, "missing", { now: () => 1 }), null);
+  const removableLayers = [{ id: "body" }, { id: "accent" }, { id: "glyph" }];
+  assert.equal(removeVisualLayer(removableLayers, "accent"), true);
+  assert.deepEqual(removableLayers.map((item) => item.id), ["body", "glyph"]);
+  assert.equal(removeVisualLayer(removableLayers, "missing"), false);
+  assert.deepEqual(removableLayers.map((item) => item.id), ["body", "glyph"]);
+  assert.equal(removeVisualLayer(null, "body"), false);
   const toggleLayers = [{ id: "body" }, { id: "glyph", visible: false, locked: true }];
   assert.equal(toggleVisualLayerVisible(toggleLayers, "body"), true);
   assert.equal(toggleLayers[0].visible, false);

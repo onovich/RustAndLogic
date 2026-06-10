@@ -39,6 +39,7 @@ import {
   buildVisualLayerListItems,
   moveVisualLayer,
   normalizeShapeLayer,
+  removeVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
@@ -699,10 +700,9 @@ function initializeGraphicsEditor() {
 
   elements.graphicsDeleteLayerButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
-    if (!visual || !selectedVisualLayerId) {
+    if (!removeVisualLayer(visual?.layers, selectedVisualLayerId)) {
       return;
     }
-    visual.layers = visual.layers.filter((layer) => layer.id !== selectedVisualLayerId);
     ensureSelectedVisualLayer();
     persistEntityVisualCatalog();
   });
