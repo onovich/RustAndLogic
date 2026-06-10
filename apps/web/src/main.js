@@ -51,7 +51,6 @@ import {
   buildGraphicsTemplateActionState,
   buildGraphicsTemplateExportModel,
   buildGraphicsTemplateLibraryExportModel,
-  isGraphicsTemplateLibraryPayload,
 } from "./graphics-studio/templates.js";
 import {
   applyGraphicsTemplateToSelectedEntity,
@@ -68,15 +67,11 @@ import {
   getGraphicsTemplateLabel,
   getGroupedGraphicsTemplates,
   getRecentGraphicsTemplates,
+  importGraphicsTemplatePayload,
   normalizeGraphicsTemplateFilterForAvailableCategories,
-  normalizeGraphicsTemplateImport,
-  normalizeGraphicsTemplateLibraryImport,
   recordRecentGraphicsTemplateId,
-  recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
   saveGraphicsTemplateFromSelectedEntity,
-  upsertGraphicsTemplate,
-  upsertGraphicsTemplates,
 } from "./graphics-studio/template-library.js";
 import {
   loadCustomGraphicsTemplatesFromStorage,
@@ -1662,43 +1657,36 @@ function saveCurrentEntityAsTemplate() {
 
 function importGraphicsTemplate(source) {
   try {
-    const parsed = JSON.parse(source);
-    if (isGraphicsTemplateLibraryPayload(parsed)) {
-      importGraphicsTemplateLibrary(parsed);
-      return;
-    }
-    const normalizedTemplate = normalizeGraphicsTemplateImport(parsed, {
+    const importState = importGraphicsTemplatePayload(customGraphicsTemplates, recentGraphicsTemplateIds, source, {
       defaultTemplates: defaultGraphicsTemplates,
       selectedEntityKey: selectedVisualEntityKey,
-      templateOffset: customGraphicsTemplates.length,
       now: Date.now,
     });
-    upsertCustomGraphicsTemplate(normalizedTemplate);
-    if (elements.graphicsTemplateName && !elements.graphicsTemplateName.value.trim()) {
-      elements.graphicsTemplateName.value = normalizedTemplate.label;
+    if (!importState.changed) {
+      return;
     }
-    showToast({ title: t("graphics.templateImported"), body: normalizedTemplate.label }, "success");
+    customGraphicsTemplates = importState.templates;
+    recentGraphicsTemplateIds = importState.recentTemplateIds;
+    persistCustomGraphicsTemplates();
+    persistRecentGraphicsTemplates();
+    if (importState.kind === "library") {
+      showToast(
+        {
+          title: t("graphics.templateLibraryImported"),
+          body: t("graphics.templateLibraryCount", { count: importState.count }),
+        },
+        "success",
+      );
+      return;
+    }
+    if (elements.graphicsTemplateName && !elements.graphicsTemplateName.value.trim()) {
+      elements.graphicsTemplateName.value = importState.template.label;
+    }
+    showToast({ title: t("graphics.templateImported"), body: importState.template.label }, "success");
   } catch (error) {
     console.warn("Failed to import graphics template.", error);
     showToast({ title: t("graphics.templateImportFailed"), body: String(error.message ?? error) }, "failure");
   }
-}
-
-function importGraphicsTemplateLibrary(payload) {
-  const normalizedTemplates = normalizeGraphicsTemplateLibraryImport(payload, {
-    defaultTemplates: defaultGraphicsTemplates,
-    selectedEntityKey: selectedVisualEntityKey,
-    templateOffset: customGraphicsTemplates.length,
-    now: Date.now,
-  });
-  upsertCustomGraphicsTemplates(normalizedTemplates);
-  showToast(
-    {
-      title: t("graphics.templateLibraryImported"),
-      body: t("graphics.templateLibraryCount", { count: normalizedTemplates.length }),
-    },
-    "success",
-  );
 }
 
 function recordRecentGraphicsTemplate(templateId) {
@@ -1709,34 +1697,11 @@ function recordRecentGraphicsTemplate(templateId) {
   persistRecentGraphicsTemplates();
 }
 
-function recordRecentGraphicsTemplates(templateIds) {
-  if (!Array.isArray(templateIds) || templateIds.length === 0) {
-    return;
-  }
-  recentGraphicsTemplateIds = recordRecentGraphicsTemplateIds(recentGraphicsTemplateIds, templateIds);
-  persistRecentGraphicsTemplates();
-}
-
 function graphicsTemplateSerializationOptions() {
   return {
     getLabel: (template) => getGraphicsTemplateLabel(template, t),
     getDescription: (template) => getGraphicsTemplateDescription(template, t),
   };
-}
-
-function upsertCustomGraphicsTemplate(template) {
-  customGraphicsTemplates = upsertGraphicsTemplate(customGraphicsTemplates, template);
-  persistCustomGraphicsTemplates();
-  recordRecentGraphicsTemplate(template.id);
-}
-
-function upsertCustomGraphicsTemplates(templates) {
-  if (!Array.isArray(templates) || templates.length === 0) {
-    return;
-  }
-  customGraphicsTemplates = upsertGraphicsTemplates(customGraphicsTemplates, templates);
-  persistCustomGraphicsTemplates();
-  recordRecentGraphicsTemplates(templates.map((template) => template.id));
 }
 
 function removeCustomGraphicsTemplate(templateId) {

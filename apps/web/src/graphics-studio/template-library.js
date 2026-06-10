@@ -1,5 +1,6 @@
 import {
   buildCustomTemplateId,
+  isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
   normalizeGraphicsTemplateFilterState,
   resolveGraphicsTemplateValue,
@@ -310,6 +311,43 @@ export function normalizeGraphicsTemplateLibraryImport(payload, options = {}) {
     throw new Error("Template library payload could not be normalized.");
   }
   return normalizedTemplates;
+}
+
+export function importGraphicsTemplatePayload(templates = [], recentTemplateIds = [], source = "", options = {}) {
+  const currentTemplates = Array.isArray(templates) ? templates : [];
+  const currentRecentIds = Array.isArray(recentTemplateIds) ? recentTemplateIds : [];
+  const payload = typeof source === "string" ? JSON.parse(source) : source;
+  const importOptions = {
+    ...options,
+    templateOffset: currentTemplates.length,
+  };
+
+  if (isGraphicsTemplateLibraryPayload(payload)) {
+    const importedTemplates = normalizeGraphicsTemplateLibraryImport(payload, importOptions);
+    return {
+      changed: importedTemplates.length > 0,
+      kind: "library",
+      template: null,
+      importedTemplates,
+      templates: upsertGraphicsTemplates(currentTemplates, importedTemplates),
+      recentTemplateIds: recordRecentGraphicsTemplateIds(
+        currentRecentIds,
+        importedTemplates.map((template) => template.id),
+      ),
+      count: importedTemplates.length,
+    };
+  }
+
+  const template = normalizeGraphicsTemplateImport(payload, importOptions);
+  return {
+    changed: true,
+    kind: "single",
+    template,
+    importedTemplates: [template],
+    templates: upsertGraphicsTemplate(currentTemplates, template),
+    recentTemplateIds: recordRecentGraphicsTemplateId(currentRecentIds, template.id),
+    count: 1,
+  };
 }
 
 export function buildGraphicsTemplateDefaultLabel(entityLabel, templates, entityKey) {

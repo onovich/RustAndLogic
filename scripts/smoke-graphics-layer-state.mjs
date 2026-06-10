@@ -218,6 +218,57 @@ try {
     };
   });
 
+  await page.getByTestId("graphics-entity-io").fill(
+    JSON.stringify(
+      {
+        kind: "graphics-template",
+        version: 1,
+        label: "Imported Mini",
+        visual: {
+          canvasSize: 24,
+          layers: [
+            {
+              id: "mini-body",
+              type: "shape",
+              shape: "rectangle",
+              x: 12,
+              y: 12,
+              width: 14,
+              height: 14,
+              fill: "#ffdd66",
+            },
+          ],
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  await page.getByTestId("graphics-import-template-button").click();
+  await page.waitForFunction(() => {
+    const customTemplates = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]')];
+    const imported = customTemplates.find(
+      (node) => (node.getAttribute("data-template") ?? "").startsWith("custom-robot-imported-mini-") && node.textContent.includes("Imported Mini"),
+    );
+    const importedId = imported?.getAttribute("data-template") ?? "";
+    const recent = document.querySelector('[data-testid="graphics-recent-templates"] [data-template]');
+    const storedTemplates = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+    const storedRecent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+    return importedId && recent?.getAttribute("data-template") === importedId && storedTemplates.includes("Imported Mini") && storedRecent.includes(importedId);
+  });
+  const importedTemplate = await page.evaluate(() => {
+    const customTemplates = [...document.querySelectorAll('[data-testid="graphics-templates"] [data-template-source="custom"][data-template]')];
+    const imported = customTemplates.find((node) => (node.getAttribute("data-template") ?? "").startsWith("custom-robot-imported-mini-"));
+    const importedId = imported?.getAttribute("data-template") ?? "";
+    return {
+      importedId,
+      importedLabel: imported?.textContent ?? "",
+      recentId: document.querySelector('[data-testid="graphics-recent-templates"] [data-template]')?.getAttribute("data-template") ?? "",
+      storedTemplatesHasImported: (localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "").includes("Imported Mini"),
+      storedRecentHasImported: (localStorage.getItem("rust-and-logic.template-history.v1") ?? "").includes(importedId),
+    };
+  });
+
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
 
@@ -235,6 +286,7 @@ try {
         templateApplied: summarizeLayerState(templateApplied),
         imported: summarizeLayerState(imported),
         savedTemplate,
+        importedTemplate,
       },
       null,
       2,

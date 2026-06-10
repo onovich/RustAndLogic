@@ -129,6 +129,7 @@ import {
   getGroupedGraphicsTemplates,
   getRecentGraphicsTemplates,
   getSortedGraphicsTemplates,
+  importGraphicsTemplatePayload,
   isCustomGraphicsTemplate,
   isGraphicsTemplateRecommended,
   normalizeGraphicsTemplateFilterForAvailableCategories,
@@ -2600,6 +2601,50 @@ function testGraphicsTemplateLibraryHelpers() {
     templates: existingTemplates,
     recentTemplateIds: existingRecentTemplates,
   });
+  const importedSingleState = importGraphicsTemplatePayload(
+    existingTemplates,
+    existingRecentTemplates,
+    JSON.stringify({ label: "Imported Solo", visual: { layers: [{ id: "solo" }] } }),
+    { selectedEntityKey: "robot", now: () => 3 },
+  );
+  assert.equal(importedSingleState.changed, true);
+  assert.equal(importedSingleState.kind, "single");
+  assert.equal(importedSingleState.template.id, "custom-robot-imported-solo-3");
+  assert.deepEqual(importedSingleState.importedTemplates.map((template) => template.id), ["custom-robot-imported-solo-3"]);
+  assert.deepEqual(importedSingleState.templates.map((template) => template.id), ["custom-robot-imported-solo-3", "old-template"]);
+  assert.deepEqual(importedSingleState.recentTemplateIds, ["custom-robot-imported-solo-3", "old-template"]);
+  assert.deepEqual(existingTemplates, [{ id: "old-template", originEntityKey: "robot" }]);
+  assert.deepEqual(existingRecentTemplates, ["old-template"]);
+  const importedLibraryState = importGraphicsTemplatePayload(
+    existingTemplates,
+    existingRecentTemplates,
+    {
+      kind: "graphics-template-library",
+      templates: [
+        { id: "frameBot", label: "Imported Frame", visual: { layers: [{ id: "frame" }] } },
+        { label: "Imported Bundle", visual: { layers: [{ id: "bundle" }] } },
+      ],
+    },
+    { defaultTemplates, selectedEntityKey: "robot", now: () => 46656 },
+  );
+  assert.equal(importedLibraryState.changed, true);
+  assert.equal(importedLibraryState.kind, "library");
+  assert.equal(importedLibraryState.count, 2);
+  assert.deepEqual(importedLibraryState.importedTemplates.map((template) => template.id), [
+    "custom-import-1000",
+    "custom-robot-imported-bundle-1000",
+  ]);
+  assert.deepEqual(importedLibraryState.templates.map((template) => template.id), [
+    "custom-import-1000",
+    "custom-robot-imported-bundle-1000",
+    "old-template",
+  ]);
+  assert.deepEqual(importedLibraryState.recentTemplateIds, [
+    "custom-import-1000",
+    "custom-robot-imported-bundle-1000",
+    "old-template",
+  ]);
+  assert.throws(() => importGraphicsTemplatePayload([], [], "{bad json"), SyntaxError);
   assert.equal(
     resolveGraphicsTemplateImportId({ id: "frameBot", label: "Frame Bot" }, { defaultTemplates, selectedEntityKey: "robot", now: () => 46656 }),
     "custom-import-1000",
