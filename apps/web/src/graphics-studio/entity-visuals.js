@@ -18,6 +18,13 @@ export function parseImportedEntityVisual(source) {
   return normalizeImportedEntityVisual(JSON.parse(source));
 }
 
+export function buildGraphicsEntityVisualExportModel(visual) {
+  return {
+    disabled: !visual,
+    value: visual ? JSON.stringify(visual, null, 2) : "",
+  };
+}
+
 export function buildEntityVisualDataUrl(entityKey, visual, cache = null) {
   if (!visual) {
     return "";

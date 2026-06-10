@@ -21,6 +21,7 @@ import {
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
+  buildGraphicsEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
   parseImportedEntityVisual,
 } from "./graphics-studio/entity-visuals.js";
@@ -679,11 +680,11 @@ function initializeGraphicsEditor() {
   });
 
   elements.graphicsExportEntityButton?.addEventListener("click", () => {
-    const visual = getSelectedEntityVisual();
-    if (!visual || !elements.graphicsEntityIo) {
+    const exportModel = buildGraphicsEntityVisualExportModel(getSelectedEntityVisual());
+    if (exportModel.disabled || !elements.graphicsEntityIo) {
       return;
     }
-    elements.graphicsEntityIo.value = JSON.stringify(visual, null, 2);
+    elements.graphicsEntityIo.value = exportModel.value;
     elements.graphicsEntityIo.focus();
     elements.graphicsEntityIo.select();
   });

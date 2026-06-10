@@ -8,6 +8,7 @@ import {
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
+  buildGraphicsEntityVisualExportModel,
   buildGraphicsColorPreview,
   buildGraphicsTexturePreview,
   getGraphicsEntityDisplayLabel,
@@ -1311,6 +1312,14 @@ function testGraphicsEntityListHelpers() {
     label: "missing",
     ariaLabel: "missing",
   });
+  assert.deepEqual(buildGraphicsEntityVisualExportModel(null), { disabled: true, value: "" });
+  assert.deepEqual(
+    buildGraphicsEntityVisualExportModel({ label: "Robot", layers: [{ id: "body" }] }),
+    {
+      disabled: false,
+      value: JSON.stringify({ label: "Robot", layers: [{ id: "body" }] }, null, 2),
+    },
+  );
   assert.deepEqual(buildGraphicsEntityIoModel({ catalog, ioValue: "", translate }), {
     exportValue: JSON.stringify(catalog, null, 2),
     placeholder: "Paste entity JSON",
