@@ -25,9 +25,9 @@ import {
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
+  applyGraphicsFormFieldEdit,
   buildGraphicsFormModel,
   buildGraphicsFormControlState,
-  coerceGraphicsFieldValue,
 } from "./graphics-studio/form-schema.js";
 import {
   addDefaultVisualLayer,
@@ -37,12 +37,10 @@ import {
   duplicateVisualLayer,
   buildVisualLayerListItems,
   moveVisualLayer,
-  normalizeShapeLayer,
   removeVisualLayer,
   resolveSelectedVisualLayerId,
   toggleVisualLayerLocked,
   toggleVisualLayerVisible,
-  upgradeVisualLayerType,
 } from "./graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
@@ -749,25 +747,21 @@ function initializeGraphicsEditor() {
     const field = input.dataset.field;
     const valueType = input.dataset.valueType ?? "string";
     const targetVisual = getSelectedEntityVisual();
-    const target =
-      scope === "entity"
-        ? targetVisual
-        : targetVisual?.layers.find((layer) => layer.id === selectedVisualLayerId);
-    if (!target || !field) {
+    const result = applyGraphicsFormFieldEdit(
+      targetVisual,
+      selectedVisualLayerId,
+      {
+        scope,
+        field,
+        valueType,
+        rawValue: input.value,
+      },
+      { layerOptions: graphicsLayerOptions() },
+    );
+    if (!result.changed) {
       return;
     }
-    const nextValue = coerceGraphicsFieldValue(valueType, input.value);
-    if (field === "type" && scope === "layer") {
-      upgradeVisualLayerType(target, nextValue, targetVisual, graphicsLayerOptions());
-    } else {
-      target[field] = nextValue;
-    }
-    if (field === "id" && scope === "layer") {
-      selectedVisualLayerId = String(nextValue);
-    }
-    if ((field === "shape" || field === "type") && scope === "layer") {
-      normalizeShapeLayer(target, targetVisual);
-    }
+    selectedVisualLayerId = result.selectedLayerId;
     persistEntityVisualCatalog();
   };
 

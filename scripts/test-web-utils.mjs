@@ -15,6 +15,7 @@ import {
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
+  applyGraphicsFormFieldEdit,
   buildGraphicsFieldModel,
   buildGraphicsFieldSchemaModels,
   buildGraphicsFormModel,
@@ -1617,6 +1618,72 @@ function testGraphicsFormSchemaHelpers() {
     ),
     ["canvasSize", "type", "shape"],
   );
+  const editVisual = {
+    canvasSize: 24,
+    label: "Robot",
+    layers: [{ id: "body", type: "shape", shape: "rectangle", x: 3, y: 4 }],
+  };
+  assert.deepEqual(
+    applyGraphicsFormFieldEdit(editVisual, "body", {
+      scope: "entity",
+      field: "canvasSize",
+      valueType: "integer",
+      rawValue: "32.8",
+    }),
+    { changed: true, selectedLayerId: "body", value: 32 },
+  );
+  assert.equal(editVisual.canvasSize, 32);
+  assert.deepEqual(
+    applyGraphicsFormFieldEdit(editVisual, "missing", {
+      scope: "layer",
+      field: "fill",
+      rawValue: "#00ff88",
+    }),
+    { changed: false, selectedLayerId: "missing" },
+  );
+  assert.deepEqual(
+    applyGraphicsFormFieldEdit(editVisual, "body", {
+      scope: "layer",
+      field: "id",
+      rawValue: "body-renamed",
+    }),
+    { changed: true, selectedLayerId: "body-renamed", value: "body-renamed" },
+  );
+  assert.equal(editVisual.layers[0].id, "body-renamed");
+  assert.deepEqual(
+    applyGraphicsFormFieldEdit(
+      editVisual,
+      "body-renamed",
+      {
+        scope: "layer",
+        field: "type",
+        rawValue: "glyph",
+      },
+      {
+        layerOptions: {
+          entityKey: "robot",
+          defaultGlyphLayer: { glyph: { kind: "entityInitial" }, fontSize: { scale: 0.25, min: 6 } },
+          now: () => 1,
+        },
+      },
+    ),
+    { changed: true, selectedLayerId: "body-renamed", value: "glyph" },
+  );
+  assert.equal(editVisual.layers[0].type, "glyph");
+  assert.equal(editVisual.layers[0].glyph, "R");
+  assert.equal(editVisual.layers[0].id, "body-renamed");
+  assert.equal(editVisual.layers[0].x, 3);
+  assert.equal(editVisual.layers[0].y, 4);
+  editVisual.layers[0].type = "shape";
+  assert.deepEqual(
+    applyGraphicsFormFieldEdit(editVisual, "body-renamed", {
+      scope: "layer",
+      field: "shape",
+      rawValue: "polygon",
+    }),
+    { changed: true, selectedLayerId: "body-renamed", value: "polygon" },
+  );
+  assert.equal(editVisual.layers[0].sides, 6);
   assert.deepEqual(
     buildGraphicsFieldModel(
       "layer",

@@ -1,4 +1,5 @@
 import { normalizeColorValue } from "./entity-visuals.js";
+import { normalizeShapeLayer, upgradeVisualLayerType } from "./layers.js";
 
 export function shouldRenderGraphicsField(fieldConfig, source) {
   const condition = fieldConfig.showWhen;
@@ -113,6 +114,47 @@ export function buildGraphicsFormControlState(layerLocked, scopes = []) {
     index,
     disabled: shouldDisableGraphicsFieldControl(layerLocked, scope),
   }));
+}
+
+export function applyGraphicsFormFieldEdit(visual, selectedLayerId, edit = {}, options = {}) {
+  const scope = edit.scope ?? "layer";
+  const field = edit.field;
+  if (!visual || !field) {
+    return {
+      changed: false,
+      selectedLayerId,
+    };
+  }
+  const target =
+    scope === "entity"
+      ? visual
+      : Array.isArray(visual.layers)
+        ? visual.layers.find((layer) => layer.id === selectedLayerId) ?? null
+        : null;
+  if (!target) {
+    return {
+      changed: false,
+      selectedLayerId,
+    };
+  }
+  const nextValue = coerceGraphicsFieldValue(edit.valueType ?? "string", edit.rawValue);
+  if (field === "type" && scope === "layer") {
+    upgradeVisualLayerType(target, nextValue, visual, options.layerOptions);
+  } else {
+    target[field] = nextValue;
+  }
+  let nextSelectedLayerId = selectedLayerId;
+  if (field === "id" && scope === "layer") {
+    nextSelectedLayerId = String(nextValue);
+  }
+  if ((field === "shape" || field === "type") && scope === "layer") {
+    normalizeShapeLayer(target, visual);
+  }
+  return {
+    changed: true,
+    selectedLayerId: nextSelectedLayerId,
+    value: nextValue,
+  };
 }
 
 export function coerceGraphicsFieldValue(valueType, rawValue) {
