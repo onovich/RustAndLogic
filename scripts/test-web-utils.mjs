@@ -75,6 +75,7 @@ import {
 import {
   buildGraphicsTemplateCategoryOptions,
   buildGraphicsTemplateDefaultLabel,
+  buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateModeOptions,
   getAllGraphicsTemplates,
   getGraphicsEntityKind,
@@ -1806,6 +1807,19 @@ function testGraphicsTemplateLibraryHelpers() {
       { kind: "category", value: "custom", label: "Custom", active: true },
     ],
   );
+  const templateFilterOptions = buildGraphicsTemplateModeOptions({ mode: "all" }, translate);
+  assert.deepEqual(buildGraphicsTemplateFilterRowModel(templateFilterOptions, true), {
+    hidden: false,
+    items: templateFilterOptions,
+  });
+  assert.deepEqual(buildGraphicsTemplateFilterRowModel(templateFilterOptions, false), {
+    hidden: true,
+    items: templateFilterOptions,
+  });
+  assert.deepEqual(buildGraphicsTemplateFilterRowModel(null, true), {
+    hidden: true,
+    items: [],
+  });
 
   assert.deepEqual(recordRecentGraphicsTemplateId(["a", "b", "a"], "b"), ["b", "a", "a"]);
   assert.deepEqual(recordRecentGraphicsTemplateId(["a"], ""), ["a"]);

@@ -201,6 +201,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio template library source tagging, filtering, sorting, grouping, recommendation, and filter-option helpers into a reusable pure module with direct tests.
 - [x] Extract Graphics Studio default editor configuration and config normalization into a reusable pure module with direct tests.
 - [x] Extract Graphics Studio custom-template recent, upsert, removal, import-id, and default-label helpers into reusable pure functions with direct tests.
+- [x] Extract Graphics Studio template filter row visibility state into reusable pure template-library helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

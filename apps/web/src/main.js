@@ -47,6 +47,7 @@ import {
 } from "./graphics-studio/templates.js";
 import {
   buildGraphicsTemplateCategoryOptions,
+  buildGraphicsTemplateFilterRowModel,
   buildGraphicsTemplateModeOptions,
   buildGraphicsTemplateDefaultLabel,
   getAllGraphicsTemplates,
@@ -1088,12 +1089,12 @@ function renderGraphicsTemplateFilterRow(container, options) {
     return;
   }
   container.replaceChildren();
-  if (!selectedVisualEntityKey || options.length === 0) {
-    container.hidden = true;
+  const filterRow = buildGraphicsTemplateFilterRowModel(options, Boolean(selectedVisualEntityKey));
+  container.hidden = filterRow.hidden;
+  if (filterRow.hidden) {
     return;
   }
-  container.hidden = false;
-  for (const option of options) {
+  for (const option of filterRow.items) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "visual-template-filter-button";

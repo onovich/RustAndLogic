@@ -290,6 +290,14 @@ export function buildGraphicsTemplateCategoryOptions(templates, filterState, ent
   ];
 }
 
+export function buildGraphicsTemplateFilterRowModel(options, hasSelectedEntity = true) {
+  const items = Array.isArray(options) ? options : [];
+  return {
+    hidden: !hasSelectedEntity || items.length === 0,
+    items,
+  };
+}
+
 export function normalizeGraphicsTemplateFilterForAvailableCategories(templates, filterState, entityKind) {
   const mode = filterState?.mode === "fit" ? "fit" : "all";
   const category = typeof filterState?.category === "string" && filterState.category.trim() ? filterState.category.trim() : "all";
