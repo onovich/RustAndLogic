@@ -51,6 +51,7 @@ import {
   removeVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
+  selectVisualLayer,
   toggleSelectedVisualLayerLocked,
   toggleSelectedVisualLayerVisible,
   toggleVisualLayerLocked,
@@ -1994,6 +1995,10 @@ function testGraphicsLayerHelpers() {
   assert.equal(resolveSelectedVisualLayerId({ layers }, "missing"), "b");
   assert.equal(resolveSelectedVisualLayerId({ layers: [] }, "missing"), "");
   assert.equal(resolveSelectedVisualLayerId({}, "missing"), "");
+  assert.deepEqual(selectVisualLayer({ layers }, "b", "a"), { changed: true, selectedLayerId: "a" });
+  assert.deepEqual(selectVisualLayer({ layers }, "a", "a"), { changed: false, selectedLayerId: "a" });
+  assert.deepEqual(selectVisualLayer({ layers }, "a", "missing"), { changed: false, selectedLayerId: "a" });
+  assert.deepEqual(selectVisualLayer(null, "a", "b"), { changed: false, selectedLayerId: "a" });
   assert.deepEqual(buildVisualLayerActionState(layers, ""), {
     duplicateDisabled: true,
     moveUpDisabled: true,

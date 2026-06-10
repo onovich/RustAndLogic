@@ -43,6 +43,7 @@ import {
   moveSelectedVisualLayer,
   removeSelectedVisualLayer,
   resolveSelectedVisualLayerId,
+  selectVisualLayer,
   toggleSelectedVisualLayerLocked,
   toggleSelectedVisualLayerVisible,
 } from "./graphics-studio/layers.js";
@@ -642,7 +643,11 @@ function initializeGraphicsEditor() {
     if (!button) {
       return;
     }
-    selectedVisualLayerId = button.dataset.layerId ?? selectedVisualLayerId;
+    const selection = selectVisualLayer(getSelectedEntityVisual(), selectedVisualLayerId, button.dataset.layerId ?? "");
+    if (!selection.changed) {
+      return;
+    }
+    selectedVisualLayerId = selection.selectedLayerId;
     renderGraphicsEditor();
   });
 

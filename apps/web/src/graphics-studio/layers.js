@@ -237,6 +237,20 @@ export function resolveSelectedVisualLayerId(visual, selectedLayerId = "") {
   return layers[0]?.id ?? "";
 }
 
+export function selectVisualLayer(visual, selectedLayerId = "", layerId = "") {
+  const layers = Array.isArray(visual?.layers) ? visual.layers : [];
+  if (!layerId || !layers.some((layer) => layer.id === layerId)) {
+    return {
+      changed: false,
+      selectedLayerId,
+    };
+  }
+  return {
+    changed: layerId !== selectedLayerId,
+    selectedLayerId: layerId,
+  };
+}
+
 export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   const entries = Array.isArray(layers) ? layers : [];
   const selectedIndex = selectedLayerId ? entries.findIndex((layer) => layer.id === selectedLayerId) : -1;

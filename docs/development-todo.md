@@ -236,6 +236,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio layer movement selection state into reusable pure layer helpers with direct tests.
 - [x] Extract Graphics Studio layer visibility/lock selection state into reusable pure layer helpers with direct tests.
 - [x] Add a focused Graphics Studio layer-state smoke script for token-light refactor validation.
+- [x] Extract Graphics Studio layer row selection state into reusable pure layer helpers with direct tests and smoke coverage.
 
 ## Definition Of Done For A Small Item
 

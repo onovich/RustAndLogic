@@ -47,12 +47,26 @@ try {
   if (!toggled.exportValue.includes('"visible": false') || !toggled.exportValue.includes('"locked": true')) {
     throw new Error(`Expected toggled body layer export state, got ${JSON.stringify(summarizeLayerState(toggled))}.`);
   }
+  await page.locator('[data-testid="graphics-layer-list"] button[data-layer-id="robot-glyph"]:not([data-layer-action])').click();
+  await page.waitForFunction(() => {
+    const active = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    return active?.dataset.layerId === "robot-glyph";
+  });
+  const selectedGlyph = await readLayerState(page);
+  expectLayerState(selectedGlyph, {
+    activeLayerId: "robot-glyph",
+    layerIds: ["robot-body", "robot-glyph"],
+    exportedRobotLayerIds: ["robot-body", "robot-glyph"],
+  });
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
 
   await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="visible"][data-layer-id="robot-body"]').click();
   await page.locator('[data-testid="graphics-layer-list"] [data-layer-action="locked"][data-layer-id="robot-body"]').click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="graphics-form"] [data-field="fill"]')?.disabled === false);
+  await page.waitForFunction(() => {
+    const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
+    return !exportValue.includes('"visible": false') && !exportValue.includes('"locked": true');
+  });
 
   await page.getByTestId("graphics-add-shape-button").click();
   await page.waitForFunction(() => {
@@ -109,6 +123,7 @@ try {
         screenshotPath,
         initial: summarizeLayerState(initial),
         toggled: summarizeLayerState(toggled),
+        selectedGlyph: summarizeLayerState(selectedGlyph),
         addedLayerId,
         duplicateLayerId,
       },
