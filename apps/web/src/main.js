@@ -54,7 +54,7 @@ import {
   isGraphicsTemplateLibraryPayload,
 } from "./graphics-studio/templates.js";
 import {
-  applyGraphicsTemplateToEntityVisual,
+  applyGraphicsTemplateToSelectedEntity,
   applyGraphicsTemplateFilterSelection,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCategoryOptions,
@@ -1614,24 +1614,23 @@ function exportGraphicsTemplateLibrary() {
 }
 
 function applyEntityTemplate(templateId) {
-  const entityKey = selectedVisualEntityKey;
-  if (!entityKey) {
+  const templateState = applyGraphicsTemplateToSelectedEntity(
+    entityVisualCatalog,
+    selectedVisualEntityKey,
+    selectedVisualLayerId,
+    getGraphicsTemplates(),
+    templateId,
+    { entityLabel: getGraphicsEntityLabel(selectedVisualEntityKey) },
+  );
+  if (!templateState.changed) {
     return;
   }
-  const template = getGraphicsTemplates().find((item) => item.id === templateId);
-  const nextVisual = applyGraphicsTemplateToEntityVisual(template, {
-    currentVisual: getSelectedEntityVisual(),
-    entityKey,
-    entityLabel: getGraphicsEntityLabel(entityKey),
-  });
-  if (!nextVisual) {
-    return;
-  }
-  entityVisualCatalog.entities[entityKey] = nextVisual;
-  ensureSelectedVisualLayer();
+  entityVisualCatalog = templateState.entityVisualCatalog;
+  selectedVisualEntityKey = templateState.selectedEntityKey;
+  selectedVisualLayerId = templateState.selectedLayerId;
   persistEntityVisualCatalog();
-  recordRecentGraphicsTemplate(template.id);
-  showToast({ title: t("graphics.templateApplied"), body: getGraphicsTemplateLabel(template, t) }, "success");
+  recordRecentGraphicsTemplate(templateState.template.id);
+  showToast({ title: t("graphics.templateApplied"), body: getGraphicsTemplateLabel(templateState.template, t) }, "success");
 }
 
 function saveCurrentEntityAsTemplate() {

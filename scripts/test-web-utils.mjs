@@ -108,6 +108,7 @@ import {
 import {
   applyGraphicsTemplateFilterSelection,
   applyGraphicsTemplateToEntityVisual,
+  applyGraphicsTemplateToSelectedEntity,
   buildGraphicsRecentTemplateStripModel,
   buildGraphicsTemplateCardActions,
   buildGraphicsTemplateCardModel,
@@ -2482,6 +2483,40 @@ function testGraphicsTemplateLibraryHelpers() {
   );
   assert.equal(applyGraphicsTemplateToEntityVisual(null, { entityKey: "robot" }), null);
   assert.equal(applyGraphicsTemplateToEntityVisual({ visual: { layers: [] } }, { entityKey: "" }), null);
+  const sourceTemplateCatalog = {
+    entities: {
+      robot: { label: "Runner", canvasSize: 32, layers: [{ id: "old-body" }] },
+    },
+  };
+  const appliedTemplateState = applyGraphicsTemplateToSelectedEntity(
+    sourceTemplateCatalog,
+    "robot",
+    "old-body",
+    [
+      {
+        id: "frameBot",
+        visual: { canvasSize: 18, layers: [{ id: "template-body" }, { id: "template-glyph" }] },
+      },
+    ],
+    "frameBot",
+    { entityLabel: "Robot" },
+  );
+  assert.equal(appliedTemplateState.changed, true);
+  assert.equal(appliedTemplateState.selectedEntityKey, "robot");
+  assert.equal(appliedTemplateState.selectedLayerId, "template-body");
+  assert.equal(appliedTemplateState.template.id, "frameBot");
+  assert.deepEqual(appliedTemplateState.visual, {
+    label: "Runner",
+    canvasSize: 18,
+    layers: [{ id: "template-body" }, { id: "template-glyph" }],
+  });
+  assert.equal(appliedTemplateState.entityVisualCatalog.entities.robot.layers[0].id, "template-body");
+  assert.equal(sourceTemplateCatalog.entities.robot.layers[0].id, "old-body");
+  const templateCatalog = { entities: { robot: { label: "Runner", layers: [{ id: "old-body" }] } } };
+  const missingTemplateState = applyGraphicsTemplateToSelectedEntity(templateCatalog, "robot", "old-body", [], "missing");
+  assert.equal(missingTemplateState.changed, false);
+  assert.equal(missingTemplateState.entityVisualCatalog, templateCatalog);
+  assert.equal(templateCatalog.entities.robot.layers[0].id, "old-body");
   const customVisual = { canvasSize: 24, layers: [{ id: "body", glyph: "R" }] };
   const savedTemplate = createGraphicsTemplateFromEntityVisual({
     entityKey: "robot",

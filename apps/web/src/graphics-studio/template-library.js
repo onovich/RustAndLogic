@@ -4,6 +4,8 @@ import {
   normalizeGraphicsTemplateFilterState,
   resolveGraphicsTemplateValue,
 } from "./templates.js";
+import { resolveSelectedVisualLayerId } from "./layers.js";
+import { cloneJson } from "../utils/json.js";
 
 export function getAllGraphicsTemplates(customTemplates = [], defaultTemplates = []) {
   return [
@@ -178,6 +180,48 @@ export function applyGraphicsTemplateToEntityVisual(template, options = {}) {
     label: currentVisual?.label ?? String(options.entityLabel ?? entityKey),
     canvasSize: Number(resolvedVisual.canvasSize ?? nextCanvasSize),
     layers: Array.isArray(resolvedVisual.layers) ? resolvedVisual.layers : [],
+  };
+}
+
+export function applyGraphicsTemplateToSelectedEntity(
+  catalog,
+  selectedEntityKey = "",
+  selectedLayerId = "",
+  templates = [],
+  templateId = "",
+  options = {},
+) {
+  const entityKey = String(selectedEntityKey ?? "").trim();
+  const template = Array.isArray(templates) ? templates.find((item) => item.id === templateId) ?? null : null;
+  const currentVisual = catalog?.entities?.[entityKey] ?? null;
+  const visual = applyGraphicsTemplateToEntityVisual(template, {
+    currentVisual,
+    entityKey,
+    entityLabel: options.entityLabel ?? currentVisual?.label ?? entityKey,
+  });
+  if (!visual) {
+    return {
+      changed: false,
+      entityVisualCatalog: catalog,
+      selectedEntityKey: entityKey,
+      selectedLayerId,
+      template,
+      visual: null,
+    };
+  }
+
+  const entityVisualCatalog = cloneJson(catalog ?? {});
+  if (!entityVisualCatalog.entities || typeof entityVisualCatalog.entities !== "object") {
+    entityVisualCatalog.entities = {};
+  }
+  entityVisualCatalog.entities[entityKey] = visual;
+  return {
+    changed: true,
+    entityVisualCatalog,
+    selectedEntityKey: entityKey,
+    selectedLayerId: resolveSelectedVisualLayerId(visual, selectedLayerId),
+    template,
+    visual,
   };
 }
 

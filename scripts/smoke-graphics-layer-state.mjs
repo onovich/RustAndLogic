@@ -128,6 +128,19 @@ try {
     throw new Error(`Expected fill swatch to apply to selected body layer, got ${JSON.stringify(summarizeLayerState(swatchApplied))}.`);
   }
 
+  await page.locator('[data-testid="graphics-templates"] [data-template="frameBot"]').click();
+  await page.waitForFunction(() => {
+    const active = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    const exportValue = document.querySelector('[data-testid="graphics-export"]')?.value ?? "";
+    return active?.dataset.layerId === "template-body" && exportValue.includes('"id": "template-glyph"');
+  });
+  const templateApplied = await readLayerState(page);
+  expectLayerState(templateApplied, {
+    activeLayerId: "template-body",
+    layerIds: ["template-body", "template-glyph"],
+    exportedRobotLayerIds: ["template-body", "template-glyph"],
+  });
+
   await page.getByTestId("graphics-entity-io").fill(
     JSON.stringify(
       {
@@ -191,6 +204,7 @@ try {
         duplicateLayerId,
         presetApplied: summarizeLayerState(presetApplied),
         swatchApplied: summarizeLayerState(swatchApplied),
+        templateApplied: summarizeLayerState(templateApplied),
         imported: summarizeLayerState(imported),
       },
       null,
