@@ -39,6 +39,7 @@ import {
   addDefaultVisualLayer,
   applyShapePresetToLayer,
   applyShapePresetToSelectedLayer,
+  buildShapePresetClickActionModel,
   buildShapePresetListModel,
   buildVisualLayerClickActionModel,
   buildVisualLayerActionState,
@@ -2206,6 +2207,18 @@ function testGraphicsLayerHelpers() {
       items: [{ id: "square", label: "Square", disabled: true }],
     },
   );
+  assert.deepEqual(buildShapePresetClickActionModel({ presetId: "beacon" }), {
+    handled: true,
+    presetId: "beacon",
+  });
+  assert.deepEqual(buildShapePresetClickActionModel({ presetId: "" }), {
+    handled: false,
+    presetId: "",
+  });
+  assert.deepEqual(buildShapePresetClickActionModel(), {
+    handled: false,
+    presetId: "",
+  });
 }
 
 function testGraphicsSwatchHelpers() {

@@ -270,6 +270,14 @@ export function buildVisualLayerClickActionModel({ layerAction = "", layerId = "
   };
 }
 
+export function buildShapePresetClickActionModel({ presetId = "" } = {}) {
+  const id = String(presetId ?? "");
+  return {
+    handled: Boolean(id),
+    presetId: id,
+  };
+}
+
 export function buildVisualLayerActionState(layers = [], selectedLayerId = "") {
   const entries = Array.isArray(layers) ? layers : [];
   const selectedIndex = selectedLayerId ? entries.findIndex((layer) => layer.id === selectedLayerId) : -1;

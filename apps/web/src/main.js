@@ -37,6 +37,7 @@ import {
 import {
   addDefaultSelectedVisualLayer,
   applyShapePresetToSelectedLayer,
+  buildShapePresetClickActionModel,
   buildShapePresetListModel,
   buildVisualLayerClickActionModel,
   buildVisualLayerToolbarModel,
@@ -757,13 +758,7 @@ function initializeGraphicsEditor() {
 
   elements.graphicsForm?.addEventListener("input", handleGraphicsFormInput);
   elements.graphicsForm?.addEventListener("change", handleGraphicsFormInput);
-  elements.graphicsPresets?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-preset]");
-    if (!button) {
-      return;
-    }
-    applyShapePreset(button.dataset.preset ?? "");
-  });
+  elements.graphicsPresets?.addEventListener("click", handleGraphicsShapePresetClick);
   elements.graphicsTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
   elements.graphicsRecentTemplates?.addEventListener("click", handleGraphicsTemplateCardClick);
   const handleGraphicsTemplateFilterClick = (event) => {
@@ -886,6 +881,17 @@ function handleGraphicsLayerListClick(event) {
   }
   selectedVisualLayerId = selection.selectedLayerId;
   renderGraphicsEditor();
+}
+
+function handleGraphicsShapePresetClick(event) {
+  const button = event.target.closest("[data-preset]");
+  const clickAction = buildShapePresetClickActionModel({
+    presetId: button?.dataset.preset ?? "",
+  });
+  if (!clickAction.handled) {
+    return;
+  }
+  applyShapePreset(clickAction.presetId);
 }
 
 function setGraphicsStudioOpen(isOpen) {
