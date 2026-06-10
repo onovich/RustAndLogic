@@ -21,6 +21,7 @@ import {
   buildEntityVisualDataUrl as buildEntityVisualDataUrlFromVisual,
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
+  buildGraphicsEntityListClickActionModel,
   buildGraphicsEntityPreviewModel,
   buildSelectedEntityVisualExportModel,
   getGraphicsEntityDisplayLabel,
@@ -608,21 +609,7 @@ function initializeGraphicsEditor() {
     return;
   }
 
-  elements.graphicsEntityList.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-entity-key]");
-    if (!button) {
-      return;
-    }
-    const selection = applyGraphicsEntitySelection(
-      entityVisualCatalog,
-      selectedVisualEntityKey,
-      button.dataset.entityKey ?? "",
-      selectedVisualLayerId,
-    );
-    selectedVisualEntityKey = selection.entityKey;
-    selectedVisualLayerId = selection.selectedLayerId;
-    renderGraphicsEditor();
-  });
+  elements.graphicsEntityList.addEventListener("click", handleGraphicsEntityListClick);
 
   elements.graphicsLayerList?.addEventListener("click", handleGraphicsLayerListClick);
 
@@ -853,6 +840,25 @@ function handleGraphicsTemplateCardClick(event) {
     return;
   }
   applyEntityTemplate(clickAction.templateId);
+}
+
+function handleGraphicsEntityListClick(event) {
+  const button = event.target.closest("[data-entity-key]");
+  const clickAction = buildGraphicsEntityListClickActionModel({
+    entityKey: button?.dataset.entityKey ?? "",
+  });
+  if (!clickAction.handled) {
+    return;
+  }
+  const selection = applyGraphicsEntitySelection(
+    entityVisualCatalog,
+    selectedVisualEntityKey,
+    clickAction.entityKey,
+    selectedVisualLayerId,
+  );
+  selectedVisualEntityKey = selection.entityKey;
+  selectedVisualLayerId = selection.selectedLayerId;
+  renderGraphicsEditor();
 }
 
 function handleGraphicsLayerListClick(event) {

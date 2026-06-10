@@ -63,6 +63,14 @@ export function buildSelectedEntityVisualExportModel(catalog, selectedEntityKey 
   };
 }
 
+export function buildGraphicsEntityListClickActionModel({ entityKey = "" } = {}) {
+  const requestedEntityKey = String(entityKey ?? "");
+  return {
+    handled: Boolean(requestedEntityKey),
+    entityKey: requestedEntityKey,
+  };
+}
+
 export function applyGraphicsEntitySelection(catalog, currentEntityKey = "", requestedEntityKey = "", selectedLayerId = "") {
   const entities = catalog?.entities ?? {};
   const entityKey = typeof requestedEntityKey === "string" && requestedEntityKey in entities ? requestedEntityKey : currentEntityKey;

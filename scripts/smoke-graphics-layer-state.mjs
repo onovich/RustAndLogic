@@ -26,6 +26,27 @@ try {
   await page.getByTestId("graphics-reset-button").click();
   await page.waitForTimeout(150);
 
+  await page.locator('[data-testid="graphics-entity-list"] [data-entity-key="enemy"]').click();
+  await page.waitForFunction(() => {
+    const activeEntity = document.querySelector('[data-testid="graphics-entity-list"] [data-active="true"]');
+    const activeLayer = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    return activeEntity?.getAttribute("data-entity-key") === "enemy" && activeLayer?.getAttribute("data-layer-id") === "enemy-core";
+  });
+  const entitySelection = await page.evaluate(() => ({
+    activeEntityKey: document
+      .querySelector('[data-testid="graphics-entity-list"] [data-active="true"]')
+      ?.getAttribute("data-entity-key") ?? "",
+    activeLayerId: document
+      .querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]')
+      ?.getAttribute("data-layer-id") ?? "",
+  }));
+  await page.locator('[data-testid="graphics-entity-list"] [data-entity-key="robot"]').click();
+  await page.waitForFunction(() => {
+    const activeEntity = document.querySelector('[data-testid="graphics-entity-list"] [data-active="true"]');
+    const activeLayer = document.querySelector('[data-testid="graphics-layer-list"] .visual-layer-select[data-active="true"]');
+    return activeEntity?.getAttribute("data-entity-key") === "robot" && activeLayer?.getAttribute("data-layer-id") === "robot-body";
+  });
+
   const initial = await readLayerState(page);
   expectLayerState(initial, {
     activeLayerId: "robot-body",
@@ -363,6 +384,7 @@ try {
     JSON.stringify(
       {
         screenshotPath,
+        entitySelection,
         initial: summarizeLayerState(initial),
         toggled: summarizeLayerState(toggled),
         selectedGlyph: summarizeLayerState(selectedGlyph),

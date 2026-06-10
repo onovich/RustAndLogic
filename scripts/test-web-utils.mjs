@@ -9,6 +9,7 @@ import {
   buildEntityVisualDataUrl,
   buildGraphicsEntityListItems,
   buildGraphicsEntityIoModel,
+  buildGraphicsEntityListClickActionModel,
   buildGraphicsEntityPreviewModel,
   buildGraphicsEntityVisualExportModel,
   buildSelectedEntityVisualExportModel,
@@ -1353,6 +1354,18 @@ function testGraphicsEntityListHelpers() {
     backgroundImage: "none",
     label: "missing",
     ariaLabel: "missing",
+  });
+  assert.deepEqual(buildGraphicsEntityListClickActionModel({ entityKey: "enemy" }), {
+    handled: true,
+    entityKey: "enemy",
+  });
+  assert.deepEqual(buildGraphicsEntityListClickActionModel({ entityKey: "" }), {
+    handled: false,
+    entityKey: "",
+  });
+  assert.deepEqual(buildGraphicsEntityListClickActionModel(), {
+    handled: false,
+    entityKey: "",
   });
   assert.deepEqual(buildGraphicsEntityVisualExportModel(null), { disabled: true, value: "" });
   assert.deepEqual(
