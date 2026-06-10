@@ -1,8 +1,21 @@
+import { cloneJson } from "../utils/json.js";
+
 export function normalizeColorValue(value, fallback) {
   if (typeof value === "string" && /^#[0-9A-Fa-f]{6}$/.test(value)) {
     return value;
   }
   return fallback;
+}
+
+export function normalizeImportedEntityVisual(value) {
+  if (!value || typeof value !== "object" || !Array.isArray(value.layers)) {
+    throw new Error("Missing layers array.");
+  }
+  return cloneJson(value);
+}
+
+export function parseImportedEntityVisual(source) {
+  return normalizeImportedEntityVisual(JSON.parse(source));
 }
 
 export function buildEntityVisualDataUrl(entityKey, visual, cache = null) {

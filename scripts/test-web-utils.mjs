@@ -12,6 +12,8 @@ import {
   buildGraphicsTexturePreview,
   getGraphicsEntityDisplayLabel,
   normalizeColorValue,
+  normalizeImportedEntityVisual,
+  parseImportedEntityVisual,
   renderEntityVisualSvg,
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
@@ -1316,6 +1318,13 @@ function testGraphicsEntityListHelpers() {
     importEntityLabel: "Import entity",
   });
   assert.equal(buildGraphicsEntityIoModel({ catalog, ioValue: "{}", translate }).placeholder, "");
+  const importedSource = { label: "Imported Bot", layers: [{ id: "body", glyph: "R" }] };
+  const normalizedImport = normalizeImportedEntityVisual(importedSource);
+  normalizedImport.layers[0].glyph = "X";
+  assert.equal(importedSource.layers[0].glyph, "R");
+  assert.deepEqual(parseImportedEntityVisual(JSON.stringify(importedSource)), importedSource);
+  assert.throws(() => normalizeImportedEntityVisual({ label: "Missing Layers" }), /Missing layers array/);
+  assert.throws(() => parseImportedEntityVisual("{bad json"), SyntaxError);
 }
 
 function testGraphicsPreviews() {

@@ -224,6 +224,7 @@ This TODO is the working backlog for reaching the first goal: a Web UI where the
 - [x] Extract Graphics Studio single-template import normalization into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio save-current-entity template creation into reusable pure template-library helpers with direct tests.
 - [x] Extract Graphics Studio template application visual model into reusable pure template-library helpers with direct tests.
+- [x] Extract Graphics Studio entity visual import normalization into reusable pure entity-visual helpers with direct tests.
 
 ## Definition Of Done For A Small Item
 

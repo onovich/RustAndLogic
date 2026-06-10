@@ -22,6 +22,7 @@ import {
   buildGraphicsEntityIoModel,
   buildGraphicsEntityPreviewModel,
   getGraphicsEntityDisplayLabel,
+  parseImportedEntityVisual,
 } from "./graphics-studio/entity-visuals.js";
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
@@ -1532,11 +1533,7 @@ function importSelectedEntityVisual(source) {
     return;
   }
   try {
-    const parsed = JSON.parse(source);
-    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.layers)) {
-      throw new Error("Missing layers array.");
-    }
-    entityVisualCatalog.entities[entityKey] = cloneJson(parsed);
+    entityVisualCatalog.entities[entityKey] = parseImportedEntityVisual(source);
     ensureSelectedVisualLayer();
     persistEntityVisualCatalog();
     showToast({ title: t("graphics.importSuccess"), body: getGraphicsEntityLabel(entityKey) }, "success");
