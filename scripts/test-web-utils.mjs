@@ -35,6 +35,7 @@ import {
   createDefaultShapeLayer,
   describeVisualLayerMeta,
   describeVisualLayerTitle,
+  duplicateVisualLayer,
   moveVisualLayer,
   normalizeShapeLayer,
   resolveSelectedVisualLayerId,
@@ -1739,6 +1740,13 @@ function testGraphicsLayerHelpers() {
   assert.equal(moveVisualLayer(layers, "b", -1), true);
   assert.deepEqual(layers.map((item) => item.id), ["b", "a", "c"]);
   assert.equal(moveVisualLayer(layers, "b", -1), false);
+  const duplicateLayers = [{ id: "body", style: { fill: "#f28d35" } }, { id: "glyph" }];
+  const duplicateLayer = duplicateVisualLayer(duplicateLayers, "body", { now: () => 46658 });
+  assert.deepEqual(duplicateLayers.map((item) => item.id), ["body", "body-copy-1002", "glyph"]);
+  assert.deepEqual(duplicateLayer, { id: "body-copy-1002", style: { fill: "#f28d35" } });
+  duplicateLayer.style.fill = "#00ff88";
+  assert.equal(duplicateLayers[0].style.fill, "#f28d35");
+  assert.equal(duplicateVisualLayer(duplicateLayers, "missing", { now: () => 1 }), null);
   assert.equal(resolveSelectedVisualLayerId(null, "a"), "");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "a"), "a");
   assert.equal(resolveSelectedVisualLayerId({ layers }, "missing"), "b");

@@ -35,6 +35,7 @@ import {
   buildVisualLayerToolbarModel,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
+  duplicateVisualLayer,
   buildVisualLayerListItems,
   moveVisualLayer,
   normalizeShapeLayer,
@@ -657,14 +658,10 @@ function initializeGraphicsEditor() {
 
   elements.graphicsDuplicateLayerButton?.addEventListener("click", () => {
     const visual = getSelectedEntityVisual();
-    const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-    if (!visual || !layer) {
+    const duplicate = duplicateVisualLayer(visual?.layers, selectedVisualLayerId);
+    if (!duplicate) {
       return;
     }
-    const duplicate = cloneJson(layer);
-    duplicate.id = `${layer.id}-copy-${Date.now().toString(36)}`;
-    const index = visual.layers.findIndex((item) => item.id === selectedVisualLayerId);
-    visual.layers.splice(index + 1, 0, duplicate);
     selectedVisualLayerId = duplicate.id;
     persistEntityVisualCatalog();
   });

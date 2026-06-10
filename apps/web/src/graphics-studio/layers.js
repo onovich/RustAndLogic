@@ -1,4 +1,5 @@
 import { resolveGraphicsTemplateObject } from "./templates.js";
+import { cloneJson } from "../utils/json.js";
 
 export function createDefaultShapeLayer(visual, options = {}) {
   const { entityKey = "", defaultShapeLayer = {}, now = Date.now } = options;
@@ -113,6 +114,21 @@ export function moveVisualLayer(layers, selectedLayerId, delta) {
   const [layer] = layers.splice(index, 1);
   layers.splice(nextIndex, 0, layer);
   return true;
+}
+
+export function duplicateVisualLayer(layers, selectedLayerId, options = {}) {
+  if (!Array.isArray(layers) || !selectedLayerId) {
+    return null;
+  }
+  const index = layers.findIndex((layer) => layer.id === selectedLayerId);
+  if (index < 0) {
+    return null;
+  }
+  const source = layers[index];
+  const duplicate = cloneJson(source);
+  duplicate.id = `${source.id ?? selectedLayerId}-copy-${resolveNow(options.now).toString(36)}`;
+  layers.splice(index + 1, 0, duplicate);
+  return duplicate;
 }
 
 export function resolveSelectedVisualLayerId(visual, selectedLayerId = "") {
