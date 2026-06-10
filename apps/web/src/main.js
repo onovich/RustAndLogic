@@ -26,6 +26,7 @@ import {
 import { defaultGraphicsEditorConfig, normalizeGraphicsEditorConfig } from "./graphics-studio/config.js";
 import {
   buildGraphicsFieldModel,
+  buildGraphicsFieldSchemaModels,
   buildGraphicsFormControlState,
   coerceGraphicsFieldValue,
 } from "./graphics-studio/form-schema.js";
@@ -1401,11 +1402,8 @@ function renderGraphicsForm() {
 }
 
 function renderGraphicsFieldSchema(scope, source, schema) {
-  for (const fieldConfig of Array.isArray(schema) ? schema : []) {
-    const fieldModel = buildGraphicsFieldModel(scope, source, fieldConfig, graphicsEditorConfig, t);
-    if (!fieldModel) {
-      continue;
-    }
+  const fieldModels = buildGraphicsFieldSchemaModels(scope, source, schema, graphicsEditorConfig, t);
+  for (const fieldModel of fieldModels) {
     appendGraphicsFieldFromModel(fieldModel);
   }
 }

@@ -16,6 +16,7 @@ import {
 } from "../apps/web/src/graphics-studio/entity-visuals.js";
 import {
   buildGraphicsFieldModel,
+  buildGraphicsFieldSchemaModels,
   buildGraphicsFormControlState,
   buildGraphicsSelectOptions,
   coerceGraphicsFieldValue,
@@ -1508,6 +1509,28 @@ function testGraphicsFormSchemaHelpers() {
       value: "rectangle",
       options: [{ value: "rectangle", label: "t:graphics.shape.rectangle" }],
     },
+  );
+  assert.deepEqual(
+    buildGraphicsFieldSchemaModels(
+      "layer",
+      { textureType: "dither", shape: "rectangle" },
+      [
+        { field: "stripeWidth", showWhen: { field: "textureType", equals: "stripes" } },
+        { field: "shape", type: "select", labelKey: "graphics.shape", optionsKey: "shapeOptions" },
+      ],
+      { shapeOptions: [{ value: "rectangle", labelKey: "graphics.shape.rectangle" }] },
+      (key) => `t:${key}`,
+    ),
+    [
+      {
+        kind: "select",
+        scope: "layer",
+        field: "shape",
+        label: "t:graphics.shape",
+        value: "rectangle",
+        options: [{ value: "rectangle", label: "t:graphics.shape.rectangle" }],
+      },
+    ],
   );
   assert.deepEqual(
     buildGraphicsFieldModel(

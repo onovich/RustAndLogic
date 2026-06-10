@@ -56,6 +56,12 @@ export function buildGraphicsFieldModel(scope, source, fieldConfig, optionCatalo
   };
 }
 
+export function buildGraphicsFieldSchemaModels(scope, source, schema, optionCatalog = {}, translate = (key) => key) {
+  return (Array.isArray(schema) ? schema : [])
+    .map((fieldConfig) => buildGraphicsFieldModel(scope, source, fieldConfig, optionCatalog, translate))
+    .filter(Boolean);
+}
+
 export function buildGraphicsSelectOptions(options, translate = (key) => key) {
   return (Array.isArray(options) ? options : [])
     .filter((option) => option && typeof option.value === "string")
