@@ -51,6 +51,8 @@ import {
 } from "../apps/web/src/graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
+  buildGraphicsTemplateExportModel,
+  buildGraphicsTemplateLibraryExportModel,
   buildCustomTemplateId,
   isGraphicsTemplateLibraryPayload,
   normalizeGraphicsCustomTemplate,
@@ -1419,6 +1421,24 @@ function testGraphicsTemplateHelpers() {
   assert.equal(library.kind, "graphics-template-library");
   assert.equal(library.exportedAt, 2000);
   assert.equal(library.templates.length, 1);
+  assert.deepEqual(buildGraphicsTemplateExportModel(null), { disabled: true, value: "" });
+  const exportModel = buildGraphicsTemplateExportModel(rawTemplate, {
+    getLabel: () => "Localized Relay",
+    getDescription: () => "Localized description",
+    now: 3000,
+  });
+  assert.equal(exportModel.disabled, false);
+  assert.equal(JSON.parse(exportModel.value).label, "Localized Relay");
+  assert.equal(exportModel.value.includes('\n  "kind"'), true);
+  assert.deepEqual(buildGraphicsTemplateLibraryExportModel([], { now: 3000 }), {
+    disabled: true,
+    count: 0,
+    value: JSON.stringify({ kind: "graphics-template-library", version: 1, exportedAt: 3000, templates: [] }, null, 2),
+  });
+  const libraryExportModel = buildGraphicsTemplateLibraryExportModel([rawTemplate], { now: 3000 });
+  assert.equal(libraryExportModel.disabled, false);
+  assert.equal(libraryExportModel.count, 1);
+  assert.equal(JSON.parse(libraryExportModel.value).templates[0].label, " Relay ");
   assert.equal(isGraphicsTemplateLibraryPayload(library), true);
   assert.equal(isGraphicsTemplateLibraryPayload({ templates: [] }), true);
   assert.equal(isGraphicsTemplateLibraryPayload({ kind: "graphics-template", templates: [] }), false);

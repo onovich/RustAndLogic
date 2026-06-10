@@ -89,6 +89,25 @@ export function serializeGraphicsTemplateLibrary(templates, options = {}) {
   };
 }
 
+export function buildGraphicsTemplateExportModel(template, options = {}) {
+  if (!template) {
+    return { disabled: true, value: "" };
+  }
+  return {
+    disabled: false,
+    value: JSON.stringify(serializeGraphicsTemplate(template, options), null, 2),
+  };
+}
+
+export function buildGraphicsTemplateLibraryExportModel(templates, options = {}) {
+  const payload = serializeGraphicsTemplateLibrary(Array.isArray(templates) ? templates : [], options);
+  return {
+    disabled: payload.templates.length <= 0,
+    count: payload.templates.length,
+    value: JSON.stringify(payload, null, 2),
+  };
+}
+
 export function isGraphicsTemplateLibraryPayload(payload) {
   return (
     payload?.kind === "graphics-template-library" ||

@@ -46,9 +46,9 @@ import {
 } from "./graphics-studio/layers.js";
 import {
   buildGraphicsTemplateActionState,
+  buildGraphicsTemplateExportModel,
+  buildGraphicsTemplateLibraryExportModel,
   isGraphicsTemplateLibraryPayload,
-  serializeGraphicsTemplate,
-  serializeGraphicsTemplateLibrary,
 } from "./graphics-studio/templates.js";
 import {
   applyGraphicsTemplateToEntityVisual,
@@ -1546,10 +1546,11 @@ function importSelectedEntityVisual(source) {
 
 function exportGraphicsTemplate(templateId) {
   const template = getGraphicsTemplates().find((item) => item.id === templateId);
-  if (!template || !elements.graphicsEntityIo) {
+  const exportModel = buildGraphicsTemplateExportModel(template, graphicsTemplateSerializationOptions());
+  if (exportModel.disabled || !elements.graphicsEntityIo) {
     return;
   }
-  elements.graphicsEntityIo.value = JSON.stringify(serializeGraphicsTemplate(template, graphicsTemplateSerializationOptions()), null, 2);
+  elements.graphicsEntityIo.value = exportModel.value;
   elements.graphicsEntityIo.focus();
   elements.graphicsEntityIo.select();
   renderGraphicsEditor();
@@ -1560,15 +1561,15 @@ function exportGraphicsTemplateLibrary() {
   if (!elements.graphicsEntityIo) {
     return;
   }
-  const payload = serializeGraphicsTemplateLibrary(customGraphicsTemplates, graphicsTemplateSerializationOptions());
-  elements.graphicsEntityIo.value = JSON.stringify(payload, null, 2);
+  const exportModel = buildGraphicsTemplateLibraryExportModel(customGraphicsTemplates, graphicsTemplateSerializationOptions());
+  elements.graphicsEntityIo.value = exportModel.value;
   elements.graphicsEntityIo.focus();
   elements.graphicsEntityIo.select();
   renderGraphicsEditor();
   showToast(
     {
       title: t("graphics.templateLibraryExported"),
-      body: t("graphics.templateLibraryCount", { count: payload.templates.length }),
+      body: t("graphics.templateLibraryCount", { count: exportModel.count }),
     },
     "success",
   );
