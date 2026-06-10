@@ -70,7 +70,7 @@ import {
   importGraphicsTemplatePayload,
   normalizeGraphicsTemplateFilterForAvailableCategories,
   recordRecentGraphicsTemplateId,
-  removeGraphicsTemplateById,
+  removeGraphicsTemplateFromLibrary,
   saveGraphicsTemplateFromSelectedEntity,
 } from "./graphics-studio/template-library.js";
 import {
@@ -1708,8 +1708,8 @@ function removeCustomGraphicsTemplate(templateId) {
   if (!templateId) {
     return;
   }
-  const result = removeGraphicsTemplateById(customGraphicsTemplates, recentGraphicsTemplateIds, templateId);
-  if (!result.template) {
+  const result = removeGraphicsTemplateFromLibrary(customGraphicsTemplates, recentGraphicsTemplateIds, templateId);
+  if (!result.changed) {
     return;
   }
   customGraphicsTemplates = result.templates;

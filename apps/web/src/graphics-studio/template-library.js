@@ -139,6 +139,14 @@ export function removeGraphicsTemplateById(templates, recentTemplateIds, templat
   };
 }
 
+export function removeGraphicsTemplateFromLibrary(templates = [], recentTemplateIds = [], templateId = "") {
+  const result = removeGraphicsTemplateById(templates, recentTemplateIds, templateId);
+  return {
+    changed: Boolean(result.template),
+    ...result,
+  };
+}
+
 export function createGraphicsTemplateFromEntityVisual(options = {}) {
   const entityKey = String(options.entityKey ?? "").trim();
   if (!entityKey || !options.visual) {

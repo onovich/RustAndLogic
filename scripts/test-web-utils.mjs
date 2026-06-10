@@ -138,6 +138,7 @@ import {
   recordRecentGraphicsTemplateId,
   recordRecentGraphicsTemplateIds,
   removeGraphicsTemplateById,
+  removeGraphicsTemplateFromLibrary,
   resolveGraphicsTemplateImportId,
   saveGraphicsTemplateFromSelectedEntity,
   upsertGraphicsTemplate,
@@ -2442,6 +2443,18 @@ function testGraphicsTemplateLibraryHelpers() {
     recentTemplateIds: ["a"],
   });
   assert.deepEqual(removeGraphicsTemplateById([{ id: "a" }], ["a"], "missing"), {
+    template: null,
+    templates: [{ id: "a" }],
+    recentTemplateIds: ["a"],
+  });
+  assert.deepEqual(removeGraphicsTemplateFromLibrary([{ id: "a" }, { id: "b" }], ["b", "a"], "b"), {
+    changed: true,
+    template: { id: "b" },
+    templates: [{ id: "a" }],
+    recentTemplateIds: ["a"],
+  });
+  assert.deepEqual(removeGraphicsTemplateFromLibrary([{ id: "a" }], ["a"], "missing"), {
+    changed: false,
     template: null,
     templates: [{ id: "a" }],
     recentTemplateIds: ["a"],

@@ -268,6 +268,33 @@ try {
       storedRecentHasImported: (localStorage.getItem("rust-and-logic.template-history.v1") ?? "").includes(importedId),
     };
   });
+  if (!importedTemplate.importedId) {
+    throw new Error(`Expected imported template id before delete, got ${JSON.stringify(importedTemplate)}.`);
+  }
+
+  await page.locator(`[data-testid="graphics-templates"] [data-template-action="delete"][data-template-id="${importedTemplate.importedId}"]`).click();
+  await page.waitForFunction(
+    (deletedId) => {
+      const storedTemplates = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+      const storedRecent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+      return (
+        !document.querySelector(`[data-testid="graphics-templates"] [data-template="${deletedId}"]`) &&
+        !storedTemplates.includes("Imported Mini") &&
+        !storedRecent.includes(deletedId)
+      );
+    },
+    importedTemplate.importedId,
+  );
+  const deletedTemplate = await page.evaluate((deletedId) => {
+    const storedTemplates = localStorage.getItem("rust-and-logic.entity-templates.v1") ?? "";
+    const storedRecent = localStorage.getItem("rust-and-logic.template-history.v1") ?? "";
+    return {
+      deletedId,
+      templateStillVisible: Boolean(document.querySelector(`[data-testid="graphics-templates"] [data-template="${deletedId}"]`)),
+      storedTemplatesHasDeleted: storedTemplates.includes("Imported Mini"),
+      storedRecentHasDeleted: storedRecent.includes(deletedId),
+    };
+  }, importedTemplate.importedId);
 
   await mkdir(dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: false });
@@ -287,6 +314,7 @@ try {
         imported: summarizeLayerState(imported),
         savedTemplate,
         importedTemplate,
+        deletedTemplate,
       },
       null,
       2,
