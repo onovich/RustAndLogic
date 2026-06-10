@@ -27,6 +27,7 @@ import {
 } from "./graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
+  buildShapePresetListModel,
   buildVisualLayerActionState,
   createDefaultGlyphLayer,
   createDefaultShapeLayer,
@@ -1281,23 +1282,17 @@ function renderGraphicsPresets() {
   const group = elements.graphicsPresets.closest(".visual-preset-group");
   const visual = getSelectedEntityVisual();
   const layer = visual?.layers.find((item) => item.id === selectedVisualLayerId);
-  if (!layer || layer.type !== "shape") {
-    elements.graphicsPresets.hidden = true;
-    if (group) {
-      group.hidden = true;
-    }
-    return;
-  }
-  elements.graphicsPresets.hidden = false;
+  const presetList = buildShapePresetListModel(layer, graphicsEditorConfig.shapePresets, t);
+  elements.graphicsPresets.hidden = presetList.hidden;
   if (group) {
-    group.hidden = false;
+    group.hidden = presetList.hidden;
   }
-  for (const preset of graphicsEditorConfig.shapePresets ?? []) {
+  for (const preset of presetList.items) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.preset = preset.id;
-    button.textContent = t(preset.labelKey);
-    button.disabled = Boolean(layer.locked);
+    button.textContent = preset.label;
+    button.disabled = preset.disabled;
     elements.graphicsPresets.append(button);
   }
 }

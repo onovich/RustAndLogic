@@ -20,6 +20,7 @@ import {
 } from "../apps/web/src/graphics-studio/form-schema.js";
 import {
   applyShapePresetToLayer,
+  buildShapePresetListModel,
   buildVisualLayerActionState,
   buildVisualLayerListItems,
   createDefaultGlyphLayer,
@@ -1617,6 +1618,24 @@ function testGraphicsLayerHelpers() {
         lock: { active: "false", label: "Editable" },
       },
     ],
+  );
+  assert.deepEqual(buildShapePresetListModel({ type: "glyph" }, [{ id: "square", labelKey: "preset.square" }], translate), {
+    hidden: true,
+    items: [],
+  });
+  assert.deepEqual(
+    buildShapePresetListModel(
+      { type: "shape", locked: true },
+      [
+        { id: "square", labelKey: "preset.square" },
+        { labelKey: "preset.invalid" },
+      ],
+      (key) => ({ "preset.square": "Square" })[key] ?? key,
+    ),
+    {
+      hidden: false,
+      items: [{ id: "square", label: "Square", disabled: true }],
+    },
   );
 }
 

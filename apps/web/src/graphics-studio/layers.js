@@ -145,6 +145,22 @@ export function buildVisualLayerListItems(layers = [], selectedLayerId = "", tra
   }));
 }
 
+export function buildShapePresetListModel(layer, presets = [], translate = (key) => key) {
+  const visible = layer?.type === "shape";
+  return {
+    hidden: !visible,
+    items: visible
+      ? (Array.isArray(presets) ? presets : [])
+          .filter((preset) => preset?.id)
+          .map((preset) => ({
+            id: preset.id,
+            label: translate(preset.labelKey),
+            disabled: Boolean(layer.locked),
+          }))
+      : [],
+  };
+}
+
 export function applyShapePresetToLayer(layer, preset, visual, options = {}) {
   if (!visual || !layer || layer.type !== "shape" || layer.locked || !preset) {
     return false;
